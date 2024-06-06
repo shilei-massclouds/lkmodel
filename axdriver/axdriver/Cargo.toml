@@ -13,18 +13,18 @@ documentation = "https://rcore-os.github.io/arceos/axdriver/index.html"
 dyn = []
 bus-mmio = []
 bus-pci = []
-#net = ["driver_net"]
+net = ["driver_net"]
 block = []
-#display = ["driver_display"]
+display = ["driver_display"]
 
 # Enabled by features `virtio-*`
 virtio = []
 
 # various types of drivers
 virtio-blk = ["virtio"]
-#virtio-net = ["net", "virtio", "driver_virtio/net"]
-#virtio-gpu = ["display", "virtio", "driver_virtio/gpu"]
-#ramdisk = ["block", "driver_block/ramdisk"]
+virtio-net = ["net", "virtio", "driver_virtio/net"]
+virtio-gpu = ["display", "virtio", "driver_virtio/gpu"]
+ramdisk = ["block", "driver_block/ramdisk"]
 #bcm2835-sdhci = ["block", "driver_block/bcm2835-sdhci"]
 #ixgbe = ["net", "driver_net/ixgbe", "dep:axalloc", "dep:axhal"]
 # more devices example: e1000 = ["net", "driver_net/e1000"]
@@ -36,8 +36,8 @@ log = "0.4"
 cfg-if = "1.0"
 driver_common = { git = "ssh://git@github.com/shilei-massclouds/driver_common.git" }
 driver_block = { git = "ssh://git@github.com/shilei-massclouds/driver_block.git" }
-#driver_net = { path = "../../crates/driver_net", optional = true }
-#driver_display = { path = "../../crates/driver_display", optional = true }
+driver_net = { path = "../../driver_net/driver_net", optional = true }
+driver_display = { path = "../../driver_display/driver_display", optional = true }
 driver_pci = { git = "ssh://git@github.com/shilei-massclouds/driver_pci.git" }
 driver_virtio = { git = "ssh://git@github.com/shilei-massclouds/driver_virtio.git" }
 axalloc = { git = "ssh://git@github.com/shilei-massclouds/axalloc.git" }

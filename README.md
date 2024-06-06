@@ -16,7 +16,7 @@ cd ../..
 把lktool加入到环境变量，并采取短名称lk
 
 ```sh
-export PATH=$PATH:/home/cloud/gitWork/lkmodel/tools/lktool/target/debug
+export PATH=$PATH:/root/work/arceos_lkmodel/tools/lktool/target/debug
 alias lk='lktool'
 ```
 
@@ -98,8 +98,12 @@ lktool dep-graph
 1. 下载并编译ltp
 
 ```sh
+
+cd  ~/work
+
 git clone git@github.com:shilei-massclouds/ltp.git
 git checkout lkmodel
+# 在ltp 的 lkmodel 分支下  无 lkmodel 目录,怎么解决?
 cd lkmodel
 make autotools
 ./mk_riscv64.sh
@@ -113,5 +117,113 @@ make autotools
 
 ```
 [ltp]
-path = "/home/cloud/gitWork/ltp"
+path = "/root/work/ltp"
+```
+
+
+### 出现无法下载git 仓库时 , 准备:允许cargo通过ssh下载crate
+
+```shell
+vi ~/.cargo/config
+```
+
+
+在config文件中加如下内容:
+
+```shell
+
+[net]
+git-fetch-with-cli = true
+
+```
+
+
+-----
+
+
+
+
+
+
+了解 lktool list -c root 
+
+查看 tools/lktool/src/main.rs  #134  
+
+发现查找的是 let repo_path = format!("{}/tpl_files/Repo.toml", tool_path);
+
+这个文件   tools/lktool/tpl_files/Repo.toml
+
+在项目根目录下也需要添加
+在 Repo.toml 文件中 [root_list] 节中有对应内容
+
+
+```
+lktool chroot  rt_early_console
+lktool  prepare
+lktool  run
+
+root@os2:~/work/arceos_lkmodel# tree early_console
+early_console
+|-- LICENSE
+|-- README.json
+|-- README.md
+|-- early_console
+|   |-- Cargo.toml
+|   |-- build.rs
+|   `-- src
+|       |-- lib.rs
+|       |-- platform
+|       |   |-- dummy
+|       |   |   `-- mod.rs
+|       |   |-- mod.rs
+|       |   |-- riscv64_qemu_virt
+|       |   |   |-- mod.rs
+|       |   |   `-- time.rs
+|       |   `-- x86_pc
+|       |       |-- mod.rs
+|       |       |-- time.rs
+|       |       `-- uart16550.rs
+|       `-- time.rs
+`-- rt_early_console
+    |-- Cargo.toml
+    |-- LICENSE
+    |-- README.md
+    |-- defconfig
+    |   |-- aarch64
+    |   |-- loongarch64
+    |   |-- riscv64
+    |   |-- um
+    |   `-- x86_64
+    |-- rt_early_console_riscv64-qemu-virt.bin
+    |-- rt_early_console_riscv64-qemu-virt.elf
+    `-- src
+        `-- main.rs
+
+
+
+
+root@os2:~/work/arceos_lkmodel# tree macrokernel  
+macrokernel
+|-- LICENSE
+|-- README.md
+`-- rt_macrokernel
+    |-- Cargo.toml
+    |-- defconfig
+    |   |-- riscv64
+    |   `-- x86_64
+    `-- src
+        |-- main.rs
+        `-- mp.rs
+
+
+
+lktool chroot rt_macrokernel
+lktool  prepare
+lktool  run
+
+
+
+root@os2:~/work/arceos_lkmodel# lk new --root rt_hello hello
+Disable this subcommand in local mode.
+
 ```

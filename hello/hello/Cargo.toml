@@ -1,0 +1,16 @@
+[package]
+
+name = "hello"
+version = "0.1.0"
+edition = "2021"
+authors = ["xuejianxin <xuejianxinokok@163.com>"]
+
+[features]
+default = ["axstd"]
+
+[dependencies]
+axstd = { path = "../../axstd/axstd", optional = true }
+axconfig = { path = "../../axconfig/axconfig" }
+
+[build-dependencies]
+axconfig = { path = "../../axconfig/axconfig" }

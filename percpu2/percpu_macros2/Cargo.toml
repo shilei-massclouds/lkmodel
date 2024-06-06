@@ -12,6 +12,8 @@ documentation = "https://rcore-os.github.io/arceos/percpu_macros2/index.html"
 [features]
 # For single CPU use, just make the per-CPU data a global variable.
 sp-naive = []
+# Whether the system enables preemption.
+preempt = []
 
 default = []
 

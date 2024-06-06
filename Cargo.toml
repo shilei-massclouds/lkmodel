@@ -16,11 +16,12 @@ members = [
     "driver_block/rt_driver_block",
     "driver_virtio/rt_driver_virtio",
     "macrokernel/rt_macrokernel",
+    "hello/rt_hello", "hello/hello",
 ]
 
 [profile.release]
 lto = true
-
+# 参考 http://rust.e.lntu.edu.cn/edition-guide/rust-2018/cargo-and-crates-io/replacing-dependencies-with-patch.html
 [patch."ssh://git@github.com/shilei-massclouds/arch_boot"]
 arch_boot = { path = "./arch_boot/arch_boot" }
 

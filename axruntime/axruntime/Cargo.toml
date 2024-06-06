@@ -1,0 +1,40 @@
+[package]
+name = "axruntime"
+version = "0.1.0"
+edition = "2021"
+authors = ["Yuekai Jia <equation618@gmail.com>"]
+description = "Runtime library of ArceOS"
+license = "GPL-3.0-or-later OR Apache-2.0"
+homepage = "https://github.com/rcore-os/arceos"
+repository = "https://github.com/rcore-os/arceos/tree/main/modules/axruntime"
+documentation = "https://rcore-os.github.io/arceos/axruntime/index.html"
+
+[features]
+default = []
+
+smp = ["axhal/smp"]
+irq = ["axhal/irq", "axtask?/irq", "percpu2", "kernel_guard"]
+tls = ["axhal/tls", "axtask?/tls"]
+alloc = ["axalloc"]
+paging = ["axhal/paging", "lazy_init"]
+
+multitask = ["axtask/multitask"]
+fs = ["axdriver", "axfs"]
+net = ["axdriver", "axnet"]
+display = ["axdriver", "axdisplay"]
+
+[dependencies]
+axhal = { path = "../../axhal/axhal" }
+axlog = { path = "../../axlog/axlog" }
+axconfig = { path = "../../axconfig/axconfig" }
+axalloc = { path = "../../axalloc/axalloc", optional = true }
+axdriver = { path = "../../axdriver/axdriver", optional = true }
+axfs = { path = "../../axfs/axfs", optional = true }
+axnet = { path = "../../axnet/axnet", optional = true }
+axdisplay = { path = "../../axdisplay/axdisplay", optional = true }
+axtask = { path = "../../axtask/axtask", optional = true }
+
+crate_interface = { path = "../../crate_interface/crate_interface" }
+percpu2 = { path = "../../percpu2/percpu2", optional = true }
+kernel_guard = { path = "../../kernel_guard/kernel_guard", optional = true }
+lazy_init = { path = "../../lazy_init/lazy_init", optional = true }

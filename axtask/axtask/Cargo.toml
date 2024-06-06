@@ -1,0 +1,46 @@
+[package]
+name = "axtask"
+version = "0.1.0"
+edition = "2021"
+authors = ["Yuekai Jia <equation618@gmail.com>"]
+description = "ArceOS task management module"
+license = "GPL-3.0-or-later OR Apache-2.0"
+homepage = "https://github.com/rcore-os/arceos"
+repository = "https://github.com/rcore-os/arceos/tree/main/modules/axtask"
+documentation = "https://rcore-os.github.io/arceos/axtask/index.html"
+
+[features]
+default = []
+
+multitask = [
+    "dep:axconfig", "dep:percpu2", "dep:spinlock", "dep:lazy_init", "dep:memory_addr",
+    "dep:scheduler", "dep:timer_list", "kernel_guard", "dep:crate_interface",
+]
+irq = []
+tls = ["axhal/tls"]
+preempt = ["irq", "percpu2?/preempt", "kernel_guard/preempt"]
+
+sched_fifo = ["multitask"]
+sched_rr = ["multitask", "preempt"]
+sched_cfs = ["multitask", "preempt"]
+
+test = ["percpu2?/sp-naive"]
+
+[dependencies]
+cfg-if = "1.0"
+log = "0.4"
+axhal = { path = "../../axhal/axhal" }
+axconfig = { path = "../../axconfig/axconfig", optional = true }
+percpu2 = { path = "../../percpu2/percpu2", optional = true }
+spinlock = { path = "../../spinlock/spinlock", optional = true }
+lazy_init = { path = "../../lazy_init/lazy_init", optional = true }
+memory_addr = { path = "../../memory_addr/memory_addr", optional = true }
+scheduler = { path = "../../scheduler/scheduler", optional = true }
+timer_list = { path = "../../timer_list/timer_list", optional = true }
+kernel_guard = { path = "../../kernel_guard/kernel_guard", optional = true }
+crate_interface = { path = "../../crate_interface/crate_interface", optional = true }
+
+[dev-dependencies]
+rand = "0.8"
+axhal = { path = "../../axhal/axhal", features = ["fp_simd"] }
+axtask = { path = "../../axtask/axtask", features = ["test"] }

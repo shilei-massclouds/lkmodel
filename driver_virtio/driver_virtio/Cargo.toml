@@ -11,13 +11,13 @@ documentation = "https://rcore-os.github.io/arceos/driver_virtio/index.html"
 
 [features]
 block = []
-#net = ["driver_net"]
-#gpu = ["driver_display"]
+net = ["driver_net"]
+gpu = ["driver_display"]
 default = ["block"]
 
 [dependencies]
 driver_common = { git = "ssh://git@github.com/shilei-massclouds/driver_common.git" }
 driver_block = { git = "ssh://git@github.com/shilei-massclouds/driver_block.git" }
-#driver_net = { path = "../driver_net", optional = true }
-#driver_display = { path = "../driver_display", optional = true}
+driver_net = { path = "../../driver_net/driver_net", optional = true }
+driver_display = { path = "../../driver_display/driver_display", optional = true}
 virtio-drivers = { git = "https://github.com/rcore-os/virtio-drivers.git", rev = "409ee72" }

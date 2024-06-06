@@ -15,7 +15,7 @@ alloc = []
 fp_simd = []
 paging = []
 irq = []
-#tls = ["alloc"]
+tls = ["alloc"]
 monolithic = []
 default = ["irq"]
 
@@ -38,6 +38,7 @@ lazy_init = { git = "ssh://git@github.com/shilei-massclouds/lazy_init" }
 percpu2 = { git = "ssh://git@github.com/shilei-massclouds/percpu2" }
 memory_addr = { git = "ssh://git@github.com/shilei-massclouds/memory_addr" }
 #handler_table = { path = "../../crates/handler_table" }
+crate_interface = { path = "../../crate_interface/crate_interface" }
 early_console = { git = "ssh://git@github.com/shilei-massclouds/early_console" }
 
 [target.'cfg(target_arch = "x86_64")'.dependencies]
