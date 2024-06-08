@@ -1,0 +1,10 @@
+[package]
+name = "rt_helloworld"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+arch_boot = {  path = "../../arch_boot/arch_boot" } 
+axstd = {  path = "../../axstd" , features = ["print"]} 
