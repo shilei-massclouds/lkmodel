@@ -19,6 +19,14 @@ pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
     info!("Alloc string: {}", s);
     info!("[rt_axalloc]: ok!");
 
+    const RUN_START: usize = 0x48000000 - 0x10 ;
+    let address: *mut u8 = RUN_START as *const u8 as *mut u8;
+    unsafe {
+        *address = 0x30;
+        let value = *address;
+        ax_print!("The value at address 0x4010_0000 is: 0x{:02x}\n", value);
+    }
+
     axhal::misc::terminate();
 }
 

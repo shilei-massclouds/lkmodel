@@ -17,7 +17,7 @@ members = [
     "driver_virtio/rt_driver_virtio",
     "macrokernel/rt_macrokernel",
     "helloworld/rt_helloworld", 
-    "axstd", 
+    "axstd", "loader/rt_loader", 
 ]
 
 [profile.release]

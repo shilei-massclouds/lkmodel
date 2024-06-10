@@ -239,6 +239,7 @@ pub fn init() {
     let mut max_region_size = 0;
     let mut max_region_paddr = 0.into();
     for r in memory_regions() {
+        info!("paddr:0x{:0x} , size:0x{:0x} , name:{}" , r.paddr , r.size , r.name );
         if r.flags.contains(MemRegionFlags::FREE) && r.size > max_region_size {
             max_region_size = r.size;
             max_region_paddr = r.paddr;

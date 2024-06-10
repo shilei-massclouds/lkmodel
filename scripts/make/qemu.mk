@@ -1,6 +1,9 @@
 # QEMU arguments
 
+qemu_args-apps :=  -drive if=pflash,file=$(CURDIR)/payload/apps.bin,format=raw,unit=1
+
 QEMU := qemu-system-$(ARCH)
+QEMU += $(qemu_args-apps)
 
 ifeq ($(BUS), mmio)
   vdev-suffix := device
@@ -16,7 +19,7 @@ qemu_args-x86_64 := \
 
 qemu_args-riscv64 := \
   -machine virt \
-  -bios default \
+  -bios ~/opensbi/build/platform/generic/firmware/fw_jump.bin \
   -kernel $(OUT_BIN)
 
 qemu_args-aarch64 := \
