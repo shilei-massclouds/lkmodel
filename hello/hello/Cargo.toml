@@ -6,11 +6,12 @@ edition = "2021"
 authors = ["xuejianxin <xuejianxinokok@163.com>"]
 
 [features]
-default = ["axstd"]
+# default = ["axstd"]
 
 [dependencies]
-axstd = { path = "../../axstd/axstd", optional = true }
-# axconfig = { path = "../../axconfig/axconfig" }
+# https://course.rs/cargo/reference/features/intro.html
+# 当依赖被标记为 "可选 optional" 时，意味着它默认不会被编译。这种可选依赖的写法会自动定义一个与依赖同名的 feature
+# , optional = true  , features=["alloc"]
 
-[build-dependencies]
-# axconfig = { path = "../../axconfig/axconfig" }
+axstd = { path = "../../axstd/axstd" }
+

@@ -89,3 +89,4 @@ rt_fork = "fork"
 rt_macrokernel = "macrokernel"
 # 添加一个apps 下的helloworld 应用
 rt_hello = "hello"
+rt_memtest = "memtest"

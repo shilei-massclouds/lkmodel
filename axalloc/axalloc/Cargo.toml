@@ -13,7 +13,7 @@ documentation = "https://rcore-os.github.io/arceos/axalloc/index.html"
 default = ["tlsf"]
 tlsf = ["allocator/tlsf"]
 #slab = ["allocator/slab"]
-#buddy = ["allocator/buddy"]
+buddy = ["allocator/buddy"]
 
 [dependencies]
 log = "0.4"

@@ -9,7 +9,7 @@
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => {
-        $crate::io::__print_impl(format_args!($($arg)*));
+        $crate::axlog2::__print_impl(format_args!($($arg)*));
     }
 }
 
@@ -18,6 +18,6 @@ macro_rules! print {
 macro_rules! println {
     () => { $crate::print!("\n") };
     ($($arg:tt)*) => {
-        $crate::io::__print_impl(format_args!("{}\n", format_args!($($arg)*)));
+        $crate::axlog2::__print_impl(format_args!("{}\n", format_args!($($arg)*)));
     }
 }

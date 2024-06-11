@@ -32,7 +32,7 @@ irq = ["arceos_api/irq", "axfeat/irq"]
 alloc = ["arceos_api/alloc", "axfeat/alloc", "axio/alloc"]
 alloc-tlsf = ["axfeat/alloc-tlsf"]
 #alloc-slab = ["axfeat/alloc-slab"]
-#alloc-buddy = ["axfeat/alloc-buddy"]
+alloc-buddy = ["axfeat/alloc-buddy"]
 paging = ["axfeat/paging"]
 tls = ["axfeat/tls"]
 
@@ -68,9 +68,11 @@ log-level-info = ["axfeat/log-level-info"]
 log-level-debug = ["axfeat/log-level-debug"]
 log-level-trace = ["axfeat/log-level-trace"]
 
+
 [dependencies]
 axfeat = { path = "../../axfeat/axfeat" }
 arceos_api = { path = "../../arceos_api/arceos_api" }
 axio = { path = "../../axio/axio" }
 axerrno = { path = "../../axerrno/axerrno" }
 spinlock = { path = "../../spinlock/spinlock" }
+axlog2 = { path = "../../axlog2/axlog2" }

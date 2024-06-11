@@ -1,0 +1,12 @@
+[package]
+name = "rt_memtest"
+version = "0.1.0"
+edition = "2021"
+authors = ["Yuekai Jia <equation618@gmail.com>"]
+
+[features]
+default = ["axstd"]
+
+[dependencies]
+rand = { version = "0.8", default-features = false, features = ["small_rng"] }
+axstd = { path = "../../axstd/axstd", features = ["alloc"], optional = true }

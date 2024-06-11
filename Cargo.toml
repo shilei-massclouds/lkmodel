@@ -17,6 +17,7 @@ members = [
     "driver_virtio/rt_driver_virtio",
     "macrokernel/rt_macrokernel",
     "hello/rt_hello", "hello/hello",
+    "memtest/rt_memtest",
 ]
 
 [profile.release]

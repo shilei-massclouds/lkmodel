@@ -227,3 +227,18 @@ root@os2:~/work/arceos_lkmodel# lk new --root rt_hello hello
 Disable this subcommand in local mode.
 
 ```
+
+
+## 关于featrue的启用
+
+https://course.rs/cargo/reference/features/intro.html
+
+```shell
+
+cargo tree -e features
+
+cargo tree -f "{p} {f}" 命令会提供一个更加紧凑的视图
+
+cargo tree -e features -i foo，该命令会显示 features 会如何"流入"指定的包 foo 中
+
+```

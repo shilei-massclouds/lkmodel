@@ -65,7 +65,6 @@ handler_table = "handler_table"
 elf = "elf"
 fork = "fork"
 
-hello = "hello"
 
 # Root components list
 # Styles are just as [mod_list]
@@ -90,3 +89,4 @@ rt_page_table = "page_table"
 rt_mm = "mm"
 # 添加一个apps 下的helloworld 应用
 rt_hello = "hello"
+rt_memtest = "memtest"

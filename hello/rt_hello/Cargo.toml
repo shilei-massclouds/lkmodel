@@ -8,5 +8,6 @@ authors = ["xuejianxin <xuejianxinokok@163.com>"]
 
 
 [dependencies]
-# arch_boot = { git = "ssh://git@github.com/shilei-massclouds/arch_boot.git" }
+arch_boot = {path = "../../arch_boot/arch_boot"  }
 hello = { path = "../hello" }
+# early_console = { path = "../../early_console/early_console" }

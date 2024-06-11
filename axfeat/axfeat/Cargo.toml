@@ -25,7 +25,7 @@ irq = ["axhal/irq", "axruntime/irq", "axtask?/irq"]
 alloc = ["axalloc", "axruntime/alloc"]
 alloc-tlsf = ["axalloc/tlsf"]
 #alloc-slab = ["axalloc/slab"]
-#alloc-buddy = ["axalloc/buddy"]
+alloc-buddy = ["axalloc/buddy"]
 paging = ["alloc", "axhal/paging", "axruntime/paging"]
 tls = ["alloc", "axhal/tls", "axruntime/tls", "axtask?/tls"]
 

@@ -1,9 +1,5 @@
-#![cfg_attr(feature = "axstd", no_std)]
-
-#[macro_use]
-#[cfg(feature = "axstd")]
-extern crate axstd as std;
-
+#![no_std]
+use axstd::println;
 
 pub fn say_hello(){
     println!("Hello, world!");
