@@ -71,6 +71,6 @@ log-level-trace = ["axfeat/log-level-trace"]
 [dependencies]
 axfeat = { path = "../../axfeat/axfeat" }
 arceos_api = { path = "../../arceos_api/arceos_api" }
-axio = { git="ssh://git@github.com/shilei-massclouds/axio" }
-axerrno = { git="ssh://git@github.com/shilei-massclouds/axerrno" }
+axio = { path = "../../axio/axio" }
+axerrno = { path = "../../axerrno/axerrno" }
 spinlock = { path = "../../spinlock/spinlock" }

@@ -53,17 +53,17 @@ bus-pci = ["axdriver?/bus-pci"]
 # driver-bcm2835-sdhci = ["axdriver?/bcm2835-sdhci"]
 
 # Logging
-log-level-off = ["axlog/log-level-off"]
-log-level-error = ["axlog/log-level-error"]
-log-level-warn = ["axlog/log-level-warn"]
-log-level-info = ["axlog/log-level-info"]
-log-level-debug = ["axlog/log-level-debug"]
-log-level-trace = ["axlog/log-level-trace"]
+log-level-off = ["axlog2/log-level-off"]
+log-level-error = ["axlog2/log-level-error"]
+log-level-warn = ["axlog2/log-level-warn"]
+log-level-info = ["axlog2/log-level-info"]
+log-level-debug = ["axlog2/log-level-debug"]
+log-level-trace = ["axlog2/log-level-trace"]
 
 [dependencies]
 axruntime = { path = "../../axruntime/axruntime" }
 axhal = { path = "../../axhal/axhal" }
-axlog = { path = "../../axlog/axlog" }
+axlog2 = { path = "../../axlog2/axlog2" }
 axalloc = { path = "../../axalloc/axalloc", optional = true }
 axdriver = { path = "../../axdriver/axdriver", optional = true }
 axfs = { path = "../../axfs/axfs", optional = true }

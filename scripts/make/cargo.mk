@@ -36,8 +36,8 @@ define cargo_build
 endef
 
 define cargo_clippy
-  $(call run_cmd,cargo clippy,--all-features --workspace --exclude axlog $(1) $(verbose))
-  $(call run_cmd,cargo clippy,-p axlog -p percpu -p percpu_macros $(1) $(verbose))
+  $(call run_cmd,cargo clippy,--all-features --workspace --exclude axlog2 $(1) $(verbose))
+  $(call run_cmd,cargo clippy,-p axlog2 -p percpu -p percpu_macros $(1) $(verbose))
 endef
 
 all_packages := $(shell ls $(CURDIR))

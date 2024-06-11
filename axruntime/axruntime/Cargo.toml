@@ -25,7 +25,7 @@ display = ["axdriver", "axdisplay"]
 
 [dependencies]
 axhal = { path = "../../axhal/axhal" }
-axlog = { path = "../../axlog/axlog" }
+axlog2 = { path = "../../axlog2/axlog2" }
 axconfig = { path = "../../axconfig/axconfig" }
 axalloc = { path = "../../axalloc/axalloc", optional = true }
 axdriver = { path = "../../axdriver/axdriver", optional = true }

@@ -11,7 +11,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! axlog = { version = "0.1", features = ["std"] }
+//! axlog2 = { version = "0.1", features = ["std"] }
 //! ```
 //!
 //! # Cargo features:
@@ -29,12 +29,12 @@
 //! # Examples
 //!
 //! ```
-//! use axlog::{debug, error, info, trace, warn};
+//! use axlog2::{debug, error, info, trace, warn};
 //!
 //! // Initialize the logger.
-//! axlog::init();
+//! axlog2::init();
 //! // Set the maximum log level to `info`.
-//! axlog::set_max_level("info");
+//! axlog2::set_max_level("info");
 //!
 //! // The following logs will be printed.
 //! error!("error");
@@ -54,6 +54,9 @@ use core::fmt::{self, Write};
 use core::str::FromStr;
 
 use log::{Level, LevelFilter, Log, Metadata, Record};
+
+#[cfg(not(feature = "std"))]
+use crate_interface::call_interface;
 
 pub use log::{debug, error, info, trace, warn};
 
@@ -102,6 +105,26 @@ enum ColorCode {
     BrightMagenta = 95,
     BrightCyan = 96,
     BrightWhite = 97,
+}
+
+/// Extern interfaces that must be implemented in other crates.
+#[crate_interface::def_interface]
+pub trait LogIf {
+    /// Writes a string to the console.
+    fn console_write_str(s: &str);
+
+    /// Gets current clock time.
+    fn current_time() -> core::time::Duration;
+
+    /// Gets current CPU ID.
+    ///
+    /// Returns [`None`] if you don't want to show the CPU ID in the log.
+    fn current_cpu_id() -> Option<usize>;
+
+    /// Gets current task ID.
+    ///
+    /// Returns [`None`] if you don't want to show the task ID in the log.
+    fn current_task_id() -> Option<u64>;
 }
 
 struct Logger;

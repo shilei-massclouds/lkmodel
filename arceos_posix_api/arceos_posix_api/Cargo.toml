@@ -32,7 +32,7 @@ epoll = ["fd"]
 axfeat = { path = "../axfeat" }
 axruntime = { path = "../../modules/axruntime" }
 axconfig = { path = "../../modules/axconfig" }
-axlog = { path = "../../modules/axlog" }
+axlog2 = { path = "../../axlog2/axlog2" }
 axhal = { path = "../../modules/axhal" }
 axsync = { path = "../../modules/axsync" }
 axalloc = { path = "../../modules/axalloc", optional = true }

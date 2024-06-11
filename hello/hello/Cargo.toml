@@ -10,7 +10,7 @@ default = ["axstd"]
 
 [dependencies]
 axstd = { path = "../../axstd/axstd", optional = true }
-axconfig = { path = "../../axconfig/axconfig" }
+# axconfig = { path = "../../axconfig/axconfig" }
 
 [build-dependencies]
-axconfig = { path = "../../axconfig/axconfig" }
+# axconfig = { path = "../../axconfig/axconfig" }

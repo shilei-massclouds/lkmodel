@@ -10,7 +10,7 @@
 #![allow(clippy::missing_safety_doc)]
 
 #[macro_use]
-extern crate axlog;
+extern crate axlog2;
 extern crate axruntime;
 
 #[cfg(feature = "alloc")]

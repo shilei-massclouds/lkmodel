@@ -20,7 +20,7 @@
 #![feature(doc_auto_cfg)]
 
 #[macro_use]
-extern crate axlog;
+extern crate axlog2;
 
 #[cfg(all(target_os = "none", not(test)))]
 mod lang_items;
@@ -50,7 +50,7 @@ extern "C" {
 struct LogIfImpl;
 
 #[crate_interface::impl_interface]
-impl axlog::LogIf for LogIfImpl {
+impl axlog2::LogIf for LogIfImpl {
     fn console_write_str(s: &str) {
         axhal::console::write_bytes(s.as_bytes());
     }
@@ -121,8 +121,8 @@ pub extern "C" fn rust_main(cpu_id: usize, dtb: usize) -> ! {
         option_env!("AX_LOG").unwrap_or(""),
     );
 
-    axlog::init();
-    axlog::set_max_level(option_env!("AX_LOG").unwrap_or("")); // no effect if set `log-level-*` features
+    axlog2::init("info");
+    axlog2::set_max_level(option_env!("AX_LOG").unwrap_or("")); // no effect if set `log-level-*` features
     info!("Logging is enabled.");
     info!("Primary CPU {} started, dtb = {:#x}.", cpu_id, dtb);
 

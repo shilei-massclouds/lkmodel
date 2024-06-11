@@ -93,7 +93,7 @@ cfg_task! {
         }
 
         if timeout.is_some() {
-            axlog::warn!("ax_wait_queue_wait: the `timeout` argument is ignored without the `irq` feature");
+            axlog2::warn!("ax_wait_queue_wait: the `timeout` argument is ignored without the `irq` feature");
         }
         wq.0.wait_until(until_condition);
         false
