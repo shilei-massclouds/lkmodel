@@ -2,29 +2,45 @@
 #![no_main]
 #![feature(asm_const)]
 use core::panic::PanicInfo;
-
+use axlog2::info;
 const PLASH_START: usize = 0x22000000;
+
 
 use axstd::println;
 #[no_mangle]
 pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
+    axlog2::init("debug");
+    axhal::arch_init_early(_cpu_id);
+
+    info!("Initialize global memory allocator...");
+    axalloc::init();
+
+    info!("Initialize kernel page table...");
+    page_table::init();
+
+    info!("Initialize schedule system ...");
+    task::init();
+    axtrap::early_init();
+    axtrap::final_init();
     let apps_start = PLASH_START as *const u8;
     let apps_size = 32; // Dangerous!!! We need to get accurate size of apps.
 
-    //println!("Execute lab4 ...");
-    const RUN_START: usize = 0x4010_0000;
-
-    let address: *const u8 = RUN_START as *const u8;
-    unsafe {
-        let value = *address;
-        println!("The value at address 0x4010_0000 is: 0x{:02x}", value);
-    }
-
-    let code = unsafe { core::slice::from_raw_parts(apps_start , 10000) };
+    println!("Execute lab4 ...");
+    const RUN_START: usize = 0x44000000;
+    let code = unsafe { core::slice::from_raw_parts(apps_start , 73552) };
     let run_code = unsafe {
-        core::slice::from_raw_parts_mut(RUN_START as *mut u8, 10000)
+        core::slice::from_raw_parts_mut(RUN_START as *mut u8, 73552)
     };
     run_code.copy_from_slice(code);
+
+    let address: *const u32 = 0x44004046 as *const u32;
+
+    // 使用不安全代码块读取该地址处的值
+    let instruction: u32 = unsafe { *address };
+
+    // 输出该值
+    println!("Instruction at 0x44004046: 0x{:08X}", instruction);
+
 
     unsafe { core::arch::asm!("
         addi sp, sp, -16*8
@@ -77,7 +93,7 @@ pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
         li x30 , 0
         li x31 , 0
 
-        li sp , 0x40180000
+        li sp , 0x45180000
         li      t2, {run_start}
         jalr    ra , t2 , 0
 

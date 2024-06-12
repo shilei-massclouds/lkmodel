@@ -1,7 +1,7 @@
 #![no_std]
 
 #[macro_use]
-extern crate log;
+extern crate axlog2;
 
 mod arch;
 pub use arch::rt_sigreturn;
@@ -138,6 +138,7 @@ pub fn do_signal(tf: &mut TrapFrame) {
     if let Some(ksig) = get_signal() {
         /* Actually deliver the signal */
         arch::handle_signal(&ksig, tf);
+        info!("do_signal done!");
         return;
     }
 

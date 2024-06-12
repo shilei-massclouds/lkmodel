@@ -2,7 +2,7 @@
 #![feature(asm_const)]
 
 #[macro_use]
-extern crate log;
+extern crate axlog2;
 
 mod arch;
 pub mod irq;

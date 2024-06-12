@@ -10,7 +10,7 @@ irq = ["axhal/irq"]
 default = ["irq"]
 
 [dependencies]
-log = "0.4"
+axlog2 = { git = "ssh://git@github.com/shilei-massclouds/axlog2.git" }
 cfg-if = "1.0"
 axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal.git" }
 axsyscall = { git = "ssh://git@github.com/shilei-massclouds/axsyscall.git" }
@@ -22,7 +22,7 @@ lazy_init = { git = "ssh://git@github.com/shilei-massclouds/lazy_init.git" }
 percpu2 = { git = "ssh://git@github.com/shilei-massclouds/percpu2" }
 run_queue = { git = "ssh://git@github.com/shilei-massclouds/run_queue" }
 axconfig = { git = "ssh://git@github.com/shilei-massclouds/axconfig" }
-
+axstd = {  path = "../../axstd" , features = ["print"]} 
 [target.'cfg(any(target_arch = "riscv32", target_arch = "riscv64"))'.dependencies]
 riscv = "0.10"
 

@@ -265,7 +265,9 @@ pub struct CurrentCtx(ManuallyDrop<CtxRef>);
 
 impl CurrentCtx {
     pub fn try_get() -> Option<Self> {
+        info!("try_get()");
         let ptr: *const SchedInfo = axhal::cpu::current_task_ptr();
+        info!("prt get");
         if !ptr.is_null() {
             Some(Self(unsafe { ManuallyDrop::new(CtxRef::from_raw(ptr)) }))
         } else {

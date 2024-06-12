@@ -275,7 +275,7 @@ pub fn init() {
     let init_task = Arc::new(init_task);
     let tid = alloc_tid();
     assert_eq!(tid, 0);
-    register_task(init_task.clone());
+    register_task(init_task.clone());//<  tid,Arc<TaskStruct>  > map
     unsafe { CurrentTask::init_current(init_task.clone()) }
     run_queue::init(init_task.sched_info.clone());
 }

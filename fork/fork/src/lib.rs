@@ -342,6 +342,7 @@ pub fn sys_vfork() -> usize {
 pub fn set_tid_address(tidptr: usize) -> usize {
     info!("set_tid_address: tidptr {:#X}", tidptr);
     let mut ctx = taskctx::current_ctx();
+    info!("get current context");
     ctx.as_ctx_mut().clear_child_tid = tidptr;
     0
 }

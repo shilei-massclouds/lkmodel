@@ -4,8 +4,10 @@ use axsyscall::SyscallArgs;
 use riscv::register::scause::{self, Exception as E, Trap};
 use riscv::register::stval;
 use riscv::register::stvec;
+use riscv::register::sstatus;
 use preempt_guard::NoPreempt;
-
+use axstd::println;
+use core::arch::asm;
 axhal::include_asm_marcos!();
 
 core::arch::global_asm!(
@@ -23,12 +25,41 @@ pub fn init_trap() {
 }
 
 #[no_mangle]
-pub fn riscv_trap_handler(tf: &mut TrapFrame, _from_user: bool) {
+pub fn riscv_trap_handler(tf: &mut TrapFrame, _from_user: u64) {
     let scause = scause::read();
+    //println!( "sepc:0x{:0x}  ,  a7:{}  , scause:{}" , tf.sepc , tf.regs.a7 , scause.code());
+    let sstatus_value = sstatus::read();
+
+    // 打印sstatus的原始值
+    //println!("sstatus: 0x{:x}", sstatus_value.bits());
+
+    // 提取并打印SPP位
+    // let spp_bit = sstatus_value.spp();
+    // println!("SPP bit: {:?}", spp_bit);
+
+    if scause.code() == 0x9 {
+        if tf.regs.a7 == 96 {
+            tf.sepc += 4;
+            let satp_value: usize;
+            unsafe {
+                asm!("csrr {0}, satp", out(reg) satp_value);
+            }
+            //info!("fake done and stval:0x{:0x} , sapt:0x{:0x}" , stval::read() , satp_value );
+            return ();
+        }
+        handle_linux_syscall(tf);
+        return;
+    }
+
     match scause.cause() {
+        
         Trap::Exception(E::Breakpoint) => handle_breakpoint(&mut tf.sepc),
         Trap::Exception(E::UserEnvCall) => handle_linux_syscall(tf),
         Trap::Exception(E::InstructionPageFault) => {
+            let satp_value: usize;
+            unsafe {
+                asm!("csrr {0}, satp", out(reg) satp_value);
+            }
             handle_page_fault(stval::read(), scause.code(), tf);
         }
         Trap::Exception(E::LoadPageFault) => {
@@ -72,7 +103,8 @@ fn handle_breakpoint(sepc: &mut usize) {
 fn handle_linux_syscall(tf: &mut TrapFrame) {
     debug!("handle_linux_syscall");
     syscall(tf, axsyscall::do_syscall);
-    signal::do_signal(tf);
+    //signal::do_signal(tf);
+    return;
 }
 
 fn syscall_args(tf: &TrapFrame) -> SyscallArgs {
@@ -92,4 +124,5 @@ where
     // and cause strange behavior.
     tf.sepc += 4;
     tf.regs.a0 = do_syscall(args, tf.regs.a7);
+    info!("0x{:0x}" , tf.regs.a0 );
 }

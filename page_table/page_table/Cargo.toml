@@ -10,7 +10,7 @@ repository = "https://github.com/rcore-os/arceos/tree/main/crates/page_table"
 documentation = "https://rcore-os.github.io/arceos/page_table/index.html"
 
 [dependencies]
-log = "0.4"
+axlog2 = { git = "ssh://git@github.com/shilei-massclouds/axlog2" }
 cfg-if = "1.0"
 memory_addr = { git = "ssh://git@github.com/shilei-massclouds/memory_addr" }
 page_table_entry = { git = "ssh://git@github.com/shilei-massclouds/page_table" }

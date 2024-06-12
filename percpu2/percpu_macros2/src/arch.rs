@@ -1,5 +1,5 @@
 use quote::{format_ident, quote};
-use syn::{Ident, Type};
+use syn::{ext, Ident, Type};
 
 fn macos_unimplemented(item: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
     quote! {
