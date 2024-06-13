@@ -1,0 +1,15 @@
+[package]
+name = "rt_loader"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["axstd"]
+
+[dependencies]
+axstd = { path = "../../axstd/axstd", optional = true }
+axconfig = { path = "../../axconfig/axconfig" }
+arch_boot = {path = "../../arch_boot/arch_boot"  }
+
+[target.'cfg(any(target_arch = "riscv32", target_arch = "riscv64"))'.dependencies]
+riscv = "0.10"

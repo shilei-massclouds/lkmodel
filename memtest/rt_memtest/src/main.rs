@@ -1,5 +1,5 @@
-#![cfg_attr(feature = "axstd", no_std)]
-#![cfg_attr(feature = "axstd", no_main)]
+#![no_std]
+#![no_main]
 
 #[macro_use]
 #[cfg(feature = "axstd")]
@@ -38,19 +38,9 @@ fn test_btree_map(rng: &mut impl RngCore) {
     println!("test_btree_map() OK!");
 }
 
-// #[cfg_attr(feature = "axstd", no_mangle)]
-// fn main() {
-//     println!("Running memory tests...");
-
-//     let mut rng = SmallRng::seed_from_u64(0xdead_beef);
-//     test_vec(&mut rng);
-//     test_btree_map(&mut rng);
-
-//     println!("Memory tests run OK!");
-// }
 
 
-#[cfg_attr(feature = "axstd", no_mangle)]
+#[no_mangle]
 pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
     println!("Running memory tests...");
 
@@ -60,3 +50,10 @@ pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
 
     println!("Memory tests run OK!");
 }
+
+
+// use core::panic::PanicInfo;
+// #[panic_handler]
+// pub fn panic(info: &PanicInfo) -> ! {
+//     arch_boot::panic(info)
+// }

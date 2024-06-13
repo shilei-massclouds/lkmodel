@@ -9,4 +9,8 @@ default = ["axstd"]
 
 [dependencies]
 rand = { version = "0.8", default-features = false, features = ["small_rng"] }
-axstd = { path = "../../axstd/axstd", features = ["alloc"], optional = true }
+axstd = { path = "../../axstd/axstd"  ,features = ["alloc"], optional = true}
+
+
+# std = { package = "axstd" , path = "../../axstd/axstd"  ,features = ["alloc"], optional = true}
+# arch_boot = {path = "../../arch_boot/arch_boot"  }

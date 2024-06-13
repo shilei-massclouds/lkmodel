@@ -2,10 +2,6 @@
 #![no_main]
 
 
-
-
-use core::panic::PanicInfo;
-
 use hello;
 #[no_mangle]
 pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
@@ -14,6 +10,8 @@ pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
     panic!("Reach here!");
 }
 
+
+use core::panic::PanicInfo;
 #[panic_handler]
 pub fn panic(info: &PanicInfo) -> ! {
     arch_boot::panic(info)

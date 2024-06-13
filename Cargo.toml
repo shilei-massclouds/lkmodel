@@ -18,6 +18,7 @@ members = [
     "macrokernel/rt_macrokernel",
     "hello/rt_hello", "hello/hello",
     "memtest/rt_memtest",
+    "loader/rt_loader",
 ]
 
 [profile.release]

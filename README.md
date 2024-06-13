@@ -104,7 +104,8 @@ cd  ~/work
 git clone git@github.com:shilei-massclouds/ltp.git
 git checkout lkmodel
 # 在ltp 的 lkmodel 分支下  无 lkmodel 目录,怎么解决?
-cd lkmodel
+# cd lkmodel
+cd ltp
 make autotools
 ./mk_riscv64.sh
 ```

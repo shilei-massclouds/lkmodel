@@ -49,22 +49,24 @@
 #![cfg_attr(all(not(test), not(doc)), no_std)]
 #![feature(doc_cfg)]
 #![feature(doc_auto_cfg)]
-#![feature(ip_in_core)]
+// #![feature(ip_in_core)]
 
-// #[cfg(feature = "alloc")]
-// extern crate alloc;
+#[cfg(feature = "alloc")]
+extern crate alloc;
 
-// #[cfg(feature = "alloc")]
-// #[doc(no_inline)]
-// pub use alloc::{boxed, collections, format, string, vec};
+#[cfg(feature = "alloc")]
+#[doc(no_inline)]
+pub use alloc::{boxed, collections, format, string, vec};
 
-// #[doc(no_inline)]
-// pub use core::{arch, cell, cmp, hint, marker, mem, ops, ptr, slice, str};
+#[doc(no_inline)]
+pub use core::{arch, cell, cmp, hint, marker, mem, ops, ptr, slice, str};
 
 #[macro_use]
 mod macros;
 
-// pub mod env;
+pub mod env;
+
+// 运行loader 不需要 io,os,process,sync,thread.time
 // pub mod io;
 // pub mod os;
 // pub mod process;
@@ -72,10 +74,10 @@ mod macros;
 // pub mod thread;
 // pub mod time;
 
-// #[cfg(feature = "fs")]
-// pub mod fs;
-// #[cfg(feature = "net")]
-// pub mod net;
+#[cfg(feature = "fs")]
+pub mod fs;
+#[cfg(feature = "net")]
+pub mod net;
 
 // for print
 pub use  axlog2;

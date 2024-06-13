@@ -90,3 +90,4 @@ rt_mm = "mm"
 # 添加一个apps 下的helloworld 应用
 rt_hello = "hello"
 rt_memtest = "memtest"
+rt_loader = "loader"
