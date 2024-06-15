@@ -103,7 +103,7 @@ fn handle_breakpoint(sepc: &mut usize) {
 fn handle_linux_syscall(tf: &mut TrapFrame) {
     debug!("handle_linux_syscall");
     syscall(tf, axsyscall::do_syscall);
-    //signal::do_signal(tf);
+    signal::do_signal(tf);
     return;
 }
 
@@ -117,7 +117,7 @@ fn syscall<F>(tf: &mut TrapFrame, do_syscall: F)
 where
     F: FnOnce(SyscallArgs, usize) -> usize,
 {
-    warn!("Syscall: {:#x}, {}, {:#x}", tf.regs.a7, tf.regs.a7, tf.sepc);
+    warn!("Syscall: {:#x} , Sepc:{:#x}", tf.regs.a7, tf.sepc);
     let args = syscall_args(tf);
     // Note: "tf.sepc += 4;" must be put before do_syscall. Or:
     // E.g., when we do clone, child task will call clone again

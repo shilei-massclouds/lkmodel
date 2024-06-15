@@ -266,6 +266,7 @@ impl CurrentCtx {
     pub fn try_get() -> Option<Self> {
         unsafe{
             let ptr: *const SchedInfo = CURRENT as *const SchedInfo;
+            //let ptr: *const SchedInfo = axhal::cpu::current_task_ptr();
             if !ptr.is_null() {
                 Some(Self(unsafe { ManuallyDrop::new(CtxRef::from_raw(ptr)) }))
             } else {
@@ -299,7 +300,8 @@ impl CurrentCtx {
         let Self(arc) = prev;
         ManuallyDrop::into_inner(arc); // `call Arc::drop()` to decrease prev task reference count.
         let ptr = Arc::into_raw(next.clone());
-        axhal::cpu::set_current_task_ptr(ptr);
+        CURRENT = ptr as *const usize as usize;
+        //axhal::cpu::set_current_task_ptr(ptr);
     }
 }
 

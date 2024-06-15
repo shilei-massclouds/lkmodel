@@ -241,6 +241,7 @@ impl CurrentTask {
         let ptr = Arc::into_raw(init_task.sched_info.clone());
         info!("set prt:0x{:0x}" , ptr as *const usize as usize );
         CURRENT = ptr as *const usize as usize;
+        //axhal::cpu::set_current_task_ptr(ptr);
     }
 
     pub unsafe fn set_current(prev: Self, next: TaskRef) {
@@ -248,7 +249,8 @@ impl CurrentTask {
         let Self(arc) = prev;
         ManuallyDrop::into_inner(arc); // `call Arc::drop()` to decrease prev task reference count.
         let ptr = Arc::into_raw(next.sched_info.clone());
-        axhal::cpu::set_current_task_ptr(ptr);
+        CURRENT = ptr as *const usize as usize;
+        //axhal::cpu::set_current_task_ptr(ptr);
     }
 }
 
