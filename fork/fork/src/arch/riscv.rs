@@ -23,7 +23,6 @@ pub fn copy_thread(
     group_leader: Option<Arc<SchedInfo>>,
 ) -> LinuxResult {
     info!("copy_thread ...");
-
     let mut sched_info = SchedInfo::new();
     //sched_info.init(self.entry, task_entry as usize, 0.into());
     /////////////////////

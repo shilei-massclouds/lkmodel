@@ -198,14 +198,19 @@ pub fn as_task_mut(task: TaskRef) -> &'static mut TaskStruct {
 /// The reference type of a task.
 pub type TaskRef = Arc<TaskStruct>;
 
+pub use taskctx::CURRENT;
 /// A wrapper of [`TaskRef`] as the current task.
 pub struct CurrentTask(ManuallyDrop<TaskRef>);
 
 impl CurrentTask {
     pub(crate) fn try_get() -> Option<Self> {
+        info!("get here222");
         if let Some(ctx) = taskctx::try_current_ctx() {
+            info!("get ok");
             let tid = ctx.tid();
+            info!("tid ok");
             let task = get_task(tid).expect("try_get None");
+            info!("task ok");
             Some(Self(ManuallyDrop::new(task)))
         } else {
             None
@@ -234,7 +239,8 @@ impl CurrentTask {
     pub(crate) unsafe fn init_current(init_task: TaskRef) {
         info!("CurrentTask::init_current...");
         let ptr = Arc::into_raw(init_task.sched_info.clone());
-        axhal::cpu::set_current_task_ptr(ptr);
+        info!("set prt:0x{:0x}" , ptr as *const usize as usize );
+        CURRENT = ptr as *const usize as usize;
     }
 
     pub unsafe fn set_current(prev: Self, next: TaskRef) {
@@ -259,6 +265,7 @@ impl Deref for CurrentTask {
 ///
 /// Panics if the current task is not initialized.
 pub fn current() -> CurrentTask {
+    info!("get here2222222");
     CurrentTask::get()
 }
 
@@ -278,4 +285,12 @@ pub fn init() {
     register_task(init_task.clone());//<  tid,Arc<TaskStruct>  > map
     unsafe { CurrentTask::init_current(init_task.clone()) }
     run_queue::init(init_task.sched_info.clone());
+    match init_task.mm {
+        None => {
+            debug!("OOOOOOOOOOOOOOOO");
+        }
+        _ => {
+            debug!("HAVE MM");
+        }
+    }
 }

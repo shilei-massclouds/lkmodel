@@ -259,19 +259,19 @@ impl SchedInfo {
 
 /// The reference type of a task.
 pub type CtxRef = Arc<SchedInfo>;
-
+pub static mut CURRENT:usize = 0;
 /// A wrapper of [`TaskCtxRef`] as the current task contex.
 pub struct CurrentCtx(ManuallyDrop<CtxRef>);
-
 impl CurrentCtx {
     pub fn try_get() -> Option<Self> {
-        info!("try_get()");
-        let ptr: *const SchedInfo = axhal::cpu::current_task_ptr();
-        info!("prt get");
-        if !ptr.is_null() {
-            Some(Self(unsafe { ManuallyDrop::new(CtxRef::from_raw(ptr)) }))
-        } else {
-            None
+        unsafe{
+            let ptr: *const SchedInfo = CURRENT as *const SchedInfo;
+            if !ptr.is_null() {
+                Some(Self(unsafe { ManuallyDrop::new(CtxRef::from_raw(ptr)) }))
+            } else {
+                debug!("ptr is NULL");
+                None
+            }
         }
     }
 
@@ -315,6 +315,7 @@ pub fn current_ctx() -> CurrentCtx {
 }
 
 pub fn try_current_ctx() -> Option<CurrentCtx> {
+    info!("get here24444");
     CurrentCtx::try_get()
 }
 

@@ -138,7 +138,18 @@ pub fn init() {
             ).unwrap();
             info!("------paddr:{:0x}  ,  size:{:0x}   ,  name:{}" , r.paddr , r.size , r.name );
         }
-        //add
+        
+        
+        kernel_page_table.map_region(
+            phys_to_virt( PhysAddr::from(0x22000000) ),
+            PhysAddr::from(0x22000000),
+            0x2000000,
+            (MemRegionFlags::READ | MemRegionFlags::WRITE | MemRegionFlags::EXECUTE).into(),
+            true,
+        ).unwrap();
+        
+        //add fujunjie
+        /* 
         kernel_page_table.map_region(
             VirtAddr::from(0x40000000),
             PhysAddr::from(0x80000000),
@@ -153,6 +164,7 @@ pub fn init() {
             (MemRegionFlags::READ | MemRegionFlags::WRITE | MemRegionFlags::EXECUTE).into(),
             true,
         ).unwrap();
+        */
         paging::setup_page_table_root(kernel_page_table);
         info!("set up page_table!");
     } else {

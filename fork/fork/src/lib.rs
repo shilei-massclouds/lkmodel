@@ -239,7 +239,7 @@ impl KernelCloneArgs {
             task.mm = current().mm.clone();
         } else {
             info!("copy_mm: NO CLONE_VM");
-            let mm = current().mm().lock().deep_dup();
+            let mm: mm::MmStruct = current().mm().lock().deep_dup();
             task.mm = Some(Arc::new(SpinNoIrq::new(mm)));
         }
         Ok(())

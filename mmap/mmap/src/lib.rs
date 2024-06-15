@@ -88,6 +88,7 @@ pub fn mmap(
     fd: usize,
     offset: usize,
 ) -> LinuxResult<usize> {
+    info!("get here");
     let current = task::current();
     let filetable = current.filetable.lock();
     let file = if (flags & MAP_ANONYMOUS) != 0 {
@@ -121,7 +122,7 @@ pub fn _mmap(
 ) -> LinuxResult<usize> {
     assert!(is_aligned_4k(va));
     len = align_up_4k(len);
-    info!("mmap va {:#X} offset {:#X} flags {:#X} prot {:#X}", va, offset, flags, prot);
+    info!("mmap va {:#X} offset {:#X} flags {:#X} prot {:#X} len {:#X}", va, offset, flags, prot , len);
 
     /* force arch specific MAP_FIXED handling in get_unmapped_area */
     if (flags & MAP_FIXED_NOREPLACE) != 0 {
@@ -178,7 +179,7 @@ pub fn _mmap(
         prot
     );
     let vma = VmAreaStruct::new(va, va + len, offset >> PAGE_SHIFT, file, vm_flags);
-    mm.lock().vmas.insert(va, vma);
+    //mm.lock().vmas.insert(va, vma);
 
     Ok(va)
 }
@@ -228,6 +229,7 @@ const fn in_vma(start: usize, end: usize, vma: &VmAreaStruct) -> bool {
 }
 
 pub fn get_unmapped_vma(_va: usize, len: usize) -> usize {
+    debug!("get mm");
     let mm = task::current().mm();
     let locked_mm = mm.lock();
     let mut gap_end = TASK_UNMAPPED_BASE;
@@ -262,6 +264,8 @@ const SEGV_ACCERR: usize = 2;
 pub fn faultin_page(va: usize, cause: usize) -> usize {
     let va = align_down_4k(va);
     info!("--------- faultin_page... va {:#X} cause {}", va, cause);
+    //fjj add
+    axhal::misc::terminate();
     let mm = task::current().mm();
     let mut locked_mm = mm.lock();
     if locked_mm.mapped.get(&va).is_some() {

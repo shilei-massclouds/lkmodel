@@ -229,14 +229,14 @@ fn linux_syscall_mmap(args: SyscallArgs) -> usize {
     let [va, len, prot, flags, fd, offset] = args;
     assert!(is_aligned_4k(va));
     info!(
-        "###### mmap!!! {:#x} {:#x} prot {:#x} flags {:#x} {:#x} {:#x}",
+        "###### mmap!!! va:{:#x} len:{:#x} prot:{:#x} flags:{:#x} fd:{:#x} offset:{:#x}",
         va, len, prot, flags, fd, offset
     );
-
     mmap::mmap(va, len, prot, flags, fd, offset)
         .unwrap_or_else(|e| {
             linux_err_from!(e)
         })
+        
 }
 
 fn linux_syscall_munmap(args: SyscallArgs) -> usize {

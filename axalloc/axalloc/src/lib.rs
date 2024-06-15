@@ -17,7 +17,7 @@ use allocator::{AllocResult, BaseAllocator, BitmapPageAllocator, ByteAllocator, 
 use core::alloc::{GlobalAlloc, Layout};
 use core::ptr::NonNull;
 use spinbase::SpinNoIrq;
-use axhal::mem::{MemRegionFlags, memory_regions, phys_to_virt};
+use axhal::mem::{memory_regions, phys_to_virt, virt_to_phys, MemRegionFlags};
 
 const PAGE_SIZE: usize = 0x1000;
 const MIN_HEAP_SIZE: usize = 0x8000; // 32 K
@@ -239,8 +239,9 @@ pub fn init() {
     let mut max_region_size = 0;
     let mut max_region_paddr = 0.into();
     for r in memory_regions() {
-        //info!("paddr:0x{:0x} , size:0x{:0x} , name:{}" , r.paddr , r.size , r.name );
         if r.flags.contains(MemRegionFlags::FREE) && r.size > max_region_size {
+            info!("have free region");
+            info!("paddr:0x{:0x} , size:0x{:0x} , name:{}" , r.paddr , r.size , r.name );
             max_region_size = r.size;
             max_region_paddr = r.paddr;
         }

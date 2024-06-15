@@ -36,7 +36,7 @@ pub struct AxRunQueue {
 
 impl AxRunQueue {
     pub fn new(idle: Arc<SchedInfo>) -> SpinNoIrq<Self> {
-        let idle = Arc::new(SchedItem::new(idle));
+        let idle: Arc<scheduler::CFSTask<Arc<SchedInfo>>> = Arc::new(SchedItem::new(idle));
         let scheduler = Scheduler::new();
         SpinNoIrq::new(Self { scheduler, idle })
     }

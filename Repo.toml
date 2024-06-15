@@ -69,6 +69,7 @@ fork = "fork"
 # Root components list
 # Styles are just as [mod_list]
 [root_list]
+rt_elfloader = "elfloader"
 rt_loader = "loader"
 rt_helloworld = "helloworld"
 rt_early_console = "early_console"

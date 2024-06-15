@@ -87,3 +87,27 @@ pub fn pgd_alloc() -> PageTable {
     sync_kernel_mappings(kernel_pg_root_paddr(), pgtable.root_paddr());
     pgtable
 }
+
+static mut APP_PG_DIR : OnceCell<PageTable> = OnceCell::new();
+
+pub fn init_app_pg_dir() {
+    unsafe{
+        if APP_PG_DIR.get().is_none() {
+            APP_PG_DIR = KERNEL_PAGE_TABLE.clone();
+            debug!("############ APP_PG_DIR clone {:?}" , APP_PG_DIR.get().unwrap().root_paddr() );
+        }
+    }
+}
+
+pub fn add_app_vm_page( vaddr : usize , paddr : usize , size : usize , flags: axhal::mem::MemRegionFlags, allow_huge: bool,){
+    unsafe{
+        APP_PG_DIR.get_mut().unwrap().map_region( vaddr.into() , paddr.into() , size, flags.into() , allow_huge );
+    }
+}
+
+pub fn set_app_vm_page(){
+    unsafe{
+        assert!(APP_PG_DIR.get().is_some());
+        write_page_table_root(APP_PG_DIR.get().unwrap().root_paddr());
+    }
+}

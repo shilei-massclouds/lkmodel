@@ -93,7 +93,7 @@ pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
         li x30 , 0
         li x31 , 0
 
-        li sp , 0x45180000
+        li sp , 0x44009000 + 0x1000*15
         li      t2, {run_start}
         jalr    ra , t2 , 0
 
