@@ -1,6 +1,8 @@
 pipeline {
     agent any
 
+   def currentRepoName
+
     environment {
         // 主仓名
         mainRepoName = "lkmodel"
