@@ -2,7 +2,7 @@
 
 rm -f ./hello1
 rm -f ./hello2
-rm -f ../apps.bin
+rm -f ../apps1.bin
 
 # 编译
 riscv64-linux-gnu-gcc -static ./main1.c -o hello1
@@ -13,7 +13,7 @@ riscv64-linux-gnu-strip ./hello2
 
 
 # 打包
-APP_OUT=../apps.bin
+APP_OUT=../apps1.bin
 MAGIC_NUM='\xAB\xCD'
 MAGIC_LEN=2
 # 定义应用程序列表

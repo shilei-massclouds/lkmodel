@@ -19,6 +19,7 @@ members = [
     "hello/rt_hello", "hello/hello",
     "memtest/rt_memtest",
     "loader/rt_loader",
+    "sbi-rt/sbi-rt",
 ]
 
 [profile.release]

@@ -3,8 +3,22 @@
 #![no_main]
 
 #[macro_use]
+extern crate axlog2;
+
+#[macro_use]
 #[cfg(feature = "axstd")]
 extern crate axstd as std;
+
+
+
+
+
+use axerrno::{LinuxError, LinuxResult};
+use axhal::mem::{memory_regions, phys_to_virt};
+use axtype::DtbInfo;
+use core::sync::atomic::{AtomicUsize, Ordering};
+use fork::{user_mode_thread, CloneFlags};
+
 
 mod abi;
 use abi::{register_all_abi, ABI_TABLE};
@@ -18,18 +32,30 @@ const PLASH_START: usize = 0x22000000;
 // 注意：这个 0x4010_0000 所在的 1G 空间在原始的内核地址空间中是不存在的。
 const RUN_START: usize = 0x4010_0000;
 
-/*
 
-
-外部的app 项目 在  apps/other/hello_app/src/main.rs
-
-构建应用的脚本 在 payload/makebin.sh
-
-
-*/
 
 #[cfg_attr(not(test), no_mangle)]
-pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
+pub extern "Rust" fn runtime_main(cpu_id: usize, dtb_pa: usize) {
+
+
+    axlog2::init(option_env!("AX_LOG").unwrap_or(""));
+    axhal::arch_init_early(cpu_id);
+    axtrap::early_init();
+    info!("Initialize global memory allocator...");
+    axalloc::init();
+    // info!("Initialize kernel page table...");
+    // page_table::init();
+    // info!("Initialize platform devices...");
+    // axhal::platform_init();
+    // info!("Initialize schedule system ...");
+    // task::init();
+    // axtrap::final_init();
+
+
+
+
+
+
     let apps_start = PLASH_START as *const u8;
 
     //1. 注册所有abi
@@ -93,13 +119,8 @@ fn load_app(start: *const u8) -> Option<&'static [u8]> {
     println!("app_size: {:#x}", size);
     //3. 读取app 内容
     let code = unsafe { core::slice::from_raw_parts(start.offset(4), size) };
-    // 十六进制表示
-    // println!("app_content:");
-    // for &byte in code {
-    //     print!("{:02X} ", byte);
-    // }
+   
     println!();
-    // println!("load code {:?}; address [{:?}]", code, code.as_ptr());
     Some(code)
 }
 
@@ -107,11 +128,7 @@ fn load_app(start: *const u8) -> Option<&'static [u8]> {
 fn copy_app(app_bytes: &[u8], to_addr: usize) {
     let run_code = unsafe { core::slice::from_raw_parts_mut(to_addr as *mut u8, app_bytes.len()) };
     run_code.copy_from_slice(app_bytes);
-    // println!(
-    //     "run  code {:?}; address [{:?}]",
-    //     run_code,
-    //     run_code.as_ptr()
-    // );
+   
 }
 
 fn run_apps_with_abi_table_lab5(_index: u16) -> () {
@@ -186,45 +203,9 @@ static mut APP2_PT_SV39: [u64; 512] = [0; 512];
 unsafe fn init_app_page_table(app_id: u16) {
     match app_id {
         1 => {
-            // 页表项参考 https://learningos.cn/rCore-Tutorial-Guide-2024S/chapter4/3sv39-implementation-1.html
-            // 0xef =1  1  1  0  1  1  1  1
-            //       D  A  G  U  X  W  R  V
-            // 仅当 V(Valid) 位为 1 时，页表项才是合法的；
-            // R/W/X 分别控制索引到这个页表项的对应虚拟页面是否允许读/写/取指；
-            // U 控制索引到这个页表项的对应虚拟页面是否在 CPU 处于 U 特权级的情况下是否被允许访问；
-            // G 我们不理会；
-            // A(Accessed) 记录自从页表项上的这一位被清零之后，页表项的对应虚拟页面是否被访问过；
-            // D(Dirty) 则记录自从页表项上的这一位被清零之后，页表项的对应虚拟页表是否被修改过。
-            
-            
-            // 物理页帧PPN 在页表项目中偏移位10 ,所以得左移10位  <<10
-
-
-            // 0x8000_0000..0xc000_0000, VRWX_GAD, 1G block 恒等隐射
-            // 恒等映射保证虚拟空间与物理空间有一个相等范围的地址空间映射(0x80000000~0xC0000000)。切换前后地址范围不变，但地址空间已经从物理空间切换到虚拟空间
-            // 虚拟地址除以1G => 0x8000_0000 >> 30   ，对应pgd_idx = 2
             APP1_PT_SV39[2] = (0x80000 << 10) | 0xef;
-
-
-            // 0xffff_ffc0_8000_0000..0xffff_ffc0_c000_0000, VRWX_GAD, 1G block
-
-            // 完成Paging切换后，建立从虚拟空间0xffff_ffc0_8000_0000 ~ 0xffff_ffc0_8000_0000到物理空间0x8000_0000~0xC000_0000 的映射，范围1G
-            // 初始化根页表BOOT_PT_SV39，只有一级，即每个页表项直接映射到1G的地址空间。
-            // 1G = 2^30 因此pgd_idx = (VA>>30)&(512-1) 
-            // 0x8000_0000 >> 30          ，对应pgd_idx = 2
-            // 0xffff_ffc0_8000_0000 >> 30，只保留低9位，对应pgd_idx = 0x102
-            // 物理页帧号 = 物理地址 >> 12，故0x80000
             APP1_PT_SV39[0x102] = (0x80000 << 10) | 0xef;
-
-            // ArceOS 目前没有对 pflash 所在的地址空间进行映射，增加映射
-            // qemu 有两个 pflash，其中第一个被保留做扩展的 bios，我们只能用第二个，它的开始地址 0x22000000。
-            // 下行是我们新增的映射，这样 ArceOS 就可以访问 pflash 所在的地址空间了
-            // 恒等映射从 0 开始的 1G 空间
-            // 0x0000_0000..0x4000_0000, VRWX_GAD, 1G block
             APP1_PT_SV39[0] = (0x00000 << 10) | 0xef;
-
-            // For App aspace!
-            // 0x4000_0000..0x8000_0000, VRWX_GAD, 1G block
             APP1_PT_SV39[1] = (0x80000 << 10) | 0xef;
         }
         2 => {

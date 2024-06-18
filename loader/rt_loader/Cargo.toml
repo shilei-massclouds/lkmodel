@@ -11,5 +11,26 @@ axstd = { path = "../../axstd/axstd", optional = true }
 axconfig = { path = "../../axconfig/axconfig" }
 arch_boot = {path = "../../arch_boot/arch_boot"  }
 
+axhal = { path = "../../axhal/axhal" }
+axtrap = { path = "../../axtrap/axtrap" }
+axlog2 = { path = "../../axlog2/axlog2" }
+
+axalloc = { path = "../../axalloc/axalloc" }
+axsyscall = { path = "../../axsyscall/axsyscall" }
+task = { path = "../../task/task" }
+run_queue = { path = "../../run_queue/run_queue" }
+#axdriver = { path = "../../axdriver/axdriver" }
+#axmount = { path = "../../axmount/axmount" }
+percpu2 ={ path = "../../percpu2/percpu2" }
+fork ={ path = "../../fork/fork" }
+exec = { path = "../../exec/exec" }
+axerrno = { path = "../../axerrno/axerrno" }
+axtype ={ path = "../../axtype/axtype" }
+axdtb = { path = "../../axdtb/axdtb" }
+preempt_guard ={ path = "../../preempt_guard/preempt_guard" }
+page_table = { path = "../../page_table/page_table" }
+
+
+
 [target.'cfg(any(target_arch = "riscv32", target_arch = "riscv64"))'.dependencies]
 riscv = "0.10"
