@@ -6,7 +6,6 @@ use spinlock::SpinNoIrq;
 
 use crate::task::{CurrentTask, TaskState};
 use crate::{AxTaskRef, Scheduler, TaskInner, WaitQueue};
-
 // TODO: per-CPU
 pub(crate) static RUN_QUEUE: LazyInit<SpinNoIrq<AxRunQueue>> = LazyInit::new();
 
@@ -15,7 +14,8 @@ static EXITED_TASKS: SpinNoIrq<VecDeque<AxTaskRef>> = SpinNoIrq::new(VecDeque::n
 
 static WAIT_FOR_EXIT: WaitQueue = WaitQueue::new();
 
-#[percpu::def_percpu]
+// use percpu_macros2::def_percpu;
+// #[percpu_macros2::def_percpu] 
 static IDLE_TASK: LazyInit<AxTaskRef> = LazyInit::new();
 
 pub(crate) struct AxRunQueue {

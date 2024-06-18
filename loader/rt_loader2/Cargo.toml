@@ -1,0 +1,34 @@
+[package]
+name = "rt_loader"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+
+
+[dependencies]
+
+arch_boot = { path = "../../arch_boot/arch_boot" }
+axhal = { path = "../../axhal/axhal" }
+axtrap = { path = "../../axtrap/axtrap" }
+axalloc = { path = "../../axalloc/axalloc" }
+axconfig ={ path = "../../axconfig/axconfig" }
+axlog2 = { path = "../../axlog2/axlog2" }
+axsyscall = { path = "../../axsyscall/axsyscall" }
+task = { path = "../../task/task" }
+run_queue = { path = "../../run_queue/run_queue" }
+axdriver = { path = "../../axdriver/axdriver" }
+axmount = { path = "../../axmount/axmount" }
+percpu2 ={ path = "../../percpu2/percpu2" }
+fork ={ path = "../../fork/fork" }
+exec = { path = "../../exec/exec" }
+axerrno = { path = "../../axerrno/axerrno" }
+axtype ={ path = "../../axtype/axtype" }
+axdtb = { path = "../../axdtb/axdtb" }
+preempt_guard ={ path = "../../preempt_guard/preempt_guard" }
+page_table = { path = "../../page_table/page_table" }
+
+
+[target.'cfg(target_arch = "x86_64")'.dependencies]
+raw-cpuid = "11.0"
+

@@ -164,7 +164,7 @@ pub fn stdout() -> Stdout {
 #[doc(hidden)]
 pub fn __print_impl(args: core::fmt::Arguments) {
     if cfg!(feature = "smp") {
-        // synchronize using the lock in axlog2, to avoid interleaving
+        // synchronize using the lock in axlog, to avoid interleaving
         // with kernel logs
         arceos_api::stdio::ax_console_write_fmt(args).unwrap();
     } else {

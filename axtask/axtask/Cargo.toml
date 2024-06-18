@@ -32,6 +32,7 @@ log = "0.4"
 axhal = { path = "../../axhal/axhal" }
 axconfig = { path = "../../axconfig/axconfig", optional = true }
 percpu2 = { path = "../../percpu2/percpu2", optional = true }
+percpu_macros2 = { path = "../../percpu2/percpu_macros2", optional = true }
 spinlock = { path = "../../spinlock/spinlock", optional = true }
 lazy_init = { path = "../../lazy_init/lazy_init", optional = true }
 memory_addr = { path = "../../memory_addr/memory_addr", optional = true }

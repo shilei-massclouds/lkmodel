@@ -10,6 +10,8 @@
 #![feature(const_mut_refs)]
 
 mod cfs;
+mod fifo;
+mod round_robin;
 
 #[cfg(test)]
 mod tests;
@@ -17,6 +19,8 @@ mod tests;
 extern crate alloc;
 
 pub use cfs::{CFSTask, CFScheduler};
+pub use fifo::{FifoScheduler, FifoTask};
+pub use round_robin::{RRScheduler, RRTask};
 
 /// The base scheduler trait that all schedulers should implement.
 ///

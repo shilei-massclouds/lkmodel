@@ -17,7 +17,8 @@ qemu_args-x86_64 := \
 qemu_args-riscv64 := \
   -machine virt \
   -bios default \
-  -kernel $(OUT_BIN)
+  -kernel $(OUT_BIN) \
+  -drive if=pflash,file=/root/work/arceos/payload/apps.bin,format=raw,unit=1
 
 qemu_args-aarch64 := \
   -cpu cortex-a72 \

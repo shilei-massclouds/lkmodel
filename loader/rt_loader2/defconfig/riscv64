@@ -1,0 +1,3 @@
+blk=y
+bus="mmio"
+block_dev="virtio-blk"

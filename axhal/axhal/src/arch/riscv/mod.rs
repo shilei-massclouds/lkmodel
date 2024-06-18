@@ -10,7 +10,9 @@ use crate::mem::PAGE_SIZE_4K;
 use memory_addr::{PhysAddr, VirtAddr};
 use riscv::asm;
 use riscv::register::{satp, sstatus, stvec};
-
+// use crate::mem::MemRegionFlags;
+// use crate::paging::{PageTable, PagingResult, PagingError};
+// use core::cell::OnceCell;
 pub use self::context::{start_thread, GeneralRegisters, TaskContext, TrapFrame};
 
 pub const TASK_SIZE: usize = 0x40_0000_0000;
@@ -163,3 +165,55 @@ pub const EXC_STORE_PAGE_FAULT: usize = 15;
 
 pub fn early_init() {
 }
+
+
+
+// #[cfg(feature = "paging")]
+// static mut KERNEL_PAGE_TABLE: OnceCell<PageTable> = OnceCell::new();
+
+// #[cfg(feature = "paging")]
+// pub fn setup_page_table_root(pt: PageTable) {
+//     unsafe {
+//         let _ = KERNEL_PAGE_TABLE.set(pt);
+//         write_page_table_root(KERNEL_PAGE_TABLE.get().unwrap().root_paddr());
+//     }
+// }
+
+// #[cfg(feature = "paging")]
+// // #[thread_local]
+// static mut APP_PG_DIR: OnceCell<PageTable> = OnceCell::new();
+
+// #[cfg(feature = "paging")]
+// pub fn init_tls_pg_dir() {
+//     unsafe {
+//         if APP_PG_DIR.get().is_none() {
+//             APP_PG_DIR = KERNEL_PAGE_TABLE.clone();
+//             debug!("############ APP_PG_DIR clone {:?}",
+//                    APP_PG_DIR.get().unwrap().root_paddr());
+//         }
+//         write_page_table_root(APP_PG_DIR.get().unwrap().root_paddr());
+//     }
+// }
+
+// #[cfg(feature = "paging")]
+// pub fn map_region(va: usize, pa: usize, len: usize, flags: usize) -> PagingResult {
+//     let flags = MemRegionFlags::from_bits(flags).ok_or(PagingError::NoMemory)?;
+//     unsafe { APP_PG_DIR.get_mut().unwrap().map_region(
+//         va.into(),
+//         pa.into(),
+//         len,
+//         flags.into(),
+//         true,
+//     )}
+// }
+
+// // #[thread_local]
+// static mut BRK: usize = 0;
+
+// pub unsafe fn get_tls_brk() -> usize {
+//     BRK
+// }
+
+// pub unsafe fn set_tls_brk(brk: usize) {
+//     BRK = brk;
+// }

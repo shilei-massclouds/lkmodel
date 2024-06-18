@@ -129,6 +129,16 @@ pub fn def_percpu(attr: TokenStream, item: TokenStream) -> TokenStream {
                 &mut *(self.current_ptr() as *mut #ty)
             }
 
+            /// Manipulate the per-CPU data on the current CPU in the given closure.
+            /// Preemption will be disabled during the call.
+            pub fn with_current<F, T>(&self, f: F) -> T
+            where
+                F: FnOnce(&mut #ty) -> T,
+            {
+                //#no_preempt_guard
+                f(unsafe { self.current_ref_mut_raw() })
+            }
+
             #read_write_methods
         }
     }

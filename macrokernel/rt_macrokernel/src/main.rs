@@ -169,6 +169,9 @@ fn parse_cmdline(cmd: &str, dtb_info: &mut DtbInfo) {
     let cmd = cmd.trim_end_matches(char::from(0));
     if cmd.len() > 0 {
         assert!(cmd.starts_with("init="));
+
+        //info!("cmd:{}",&cmd);
+        //cmd:init=/sbin/init
         let cmd = cmd.strip_prefix("init=").unwrap();
         dtb_info.set_init_cmd(cmd);
     }

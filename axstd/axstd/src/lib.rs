@@ -49,7 +49,7 @@
 #![cfg_attr(all(not(test), not(doc)), no_std)]
 #![feature(doc_cfg)]
 #![feature(doc_auto_cfg)]
-// #![feature(ip_in_core)]
+//#![feature(ip_in_core)]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -65,14 +65,13 @@ pub use core::{arch, cell, cmp, hint, marker, mem, ops, ptr, slice, str};
 mod macros;
 
 pub mod env;
-
-// 运行loader 不需要 io,os,process,sync,thread.time
 // pub mod io;
 // pub mod os;
 // pub mod process;
 // pub mod sync;
 // pub mod thread;
 // pub mod time;
+// pub mod vm;
 
 #[cfg(feature = "fs")]
 pub mod fs;

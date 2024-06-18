@@ -63,6 +63,13 @@ pub mod mem {
         /// Deallocate the memory block at the given `ptr` pointer with the given
         /// `layout`, which should be allocated by [`ax_alloc`].
         pub fn ax_dealloc(ptr: NonNull<u8>, layout: Layout);
+
+        pub fn alloc_pages(num_pages: usize, align_pow2: usize) -> usize;
+        // pub fn map_region(va: usize, pa: usize, len: usize, flags: usize);
+
+        // pub fn get_brk() -> usize;
+
+        // pub fn set_brk(brk: usize);
     }
 }
 
