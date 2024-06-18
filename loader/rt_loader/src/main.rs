@@ -35,22 +35,24 @@ const RUN_START: usize = 0x4010_0000;
 
 
 #[cfg_attr(not(test), no_mangle)]
-pub extern "Rust" fn runtime_main(cpu_id: usize, dtb_pa: usize) {
+pub extern "Rust" fn runtime_main(cpu_id: usize, _dtb_pa: usize) {
 
 
     axlog2::init(option_env!("AX_LOG").unwrap_or(""));
     axhal::arch_init_early(cpu_id);
+    // trap初始化
     axtrap::early_init();
-    info!("Initialize global memory allocator...");
+    info!("1 Initialize global memory allocator...");
     axalloc::init();
-    // info!("Initialize kernel page table...");
-    // page_table::init();
-    // info!("Initialize platform devices...");
-    // axhal::platform_init();
-    // info!("Initialize schedule system ...");
-    // task::init();
-    // axtrap::final_init();
-
+    info!("2 Initialize kernel page table...");
+    page_table::init();
+    info!("3 Initialize platform devices...");
+    axhal::platform_init();
+    info!("4 Initialize schedule system ...");
+    task::init();
+    info!("5 Initialize schedule system ...");
+    axtrap::final_init();
+    info!("6 Initialize");
 
 
 

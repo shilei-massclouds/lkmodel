@@ -25,6 +25,7 @@ pub fn init_trap() {
 #[no_mangle]
 pub fn riscv_trap_handler(tf: &mut TrapFrame, _from_user: bool) {
     let scause = scause::read();
+    info!("=======riscv_trap_handler...............{}",scause.code());
     match scause.cause() {
         Trap::Exception(E::Breakpoint) => handle_breakpoint(&mut tf.sepc),
         Trap::Exception(E::UserEnvCall) => handle_linux_syscall(tf),

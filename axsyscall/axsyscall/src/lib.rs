@@ -15,6 +15,7 @@ const MAX_SYSCALL_ARGS: usize = 6;
 pub type SyscallArgs = [usize; MAX_SYSCALL_ARGS];
 
 pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
+    info!("=======linux_syscall...............");
     match sysno {
         LINUX_SYSCALL_IOCTL => linux_syscall_ioctl(args),
         LINUX_SYSCALL_GETCWD => linux_syscall_getcwd(args),
