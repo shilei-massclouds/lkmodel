@@ -6,7 +6,7 @@ pipeline {
         // 提交仓名
         currentRepoName = "${GIT_URL.substring(GIT_URL.lastIndexOf('/')+1, GIT_URL.length()-4)}"
         NODE_BASE_NAME = "ui-node-${GIT_COMMIT.substring(0, 6)}"
-        JENKINS_URL = "http://10.1.145.177:8080"
+        JENKINS_URL = "http://49.51.192.19:9095/"
         JOB_PATH = "job/github_test_lkmodel"
         REPORT_PATH = "allure"
         GITHUB_URL_PREFIX = "https://github.com/henshing/"
@@ -19,7 +19,7 @@ pipeline {
         REPORT_EMAIL = "1445323887@qq.com"
 
         // 将 GITHUB_TOKEN 替换为在 Jenkins 中存储的 GitHub 访问令牌的凭据 ID
-        GITHUB_TOKEN = credentials('github_jsptb_sl')
+        GITHUB_TOKEN = credentials('13ce2ab5-9264-41c5-9ca8-32a58ee51351')
         REPO_OWNER = 'henshing'
         REPO_NAME = "${currentRepoName}"
         // 动态获取当前构建的提交 SHA
