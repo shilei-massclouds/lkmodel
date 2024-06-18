@@ -19,7 +19,7 @@ pipeline {
         REPORT_EMAIL = "1445323887@qq.com"
 
         // 将 GITHUB_TOKEN 替换为在 Jenkins 中存储的 GitHub 访问令牌的凭据 ID
-        //GITHUB_TOKEN = credentials('github_test_sl')
+        GITHUB_TOKEN = credentials('github_test_sl')
         REPO_OWNER = 'henshing'
         REPO_NAME = "${currentRepoName}"
         // 动态获取当前构建的提交 SHA
