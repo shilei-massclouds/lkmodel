@@ -19,7 +19,7 @@ pipeline {
         FROM_EMAIL="bityk@163.com"
         REPORT_EMAIL="1445323887@qq.com"
         // 将GA_TOKEN(GA = Github Access)替换为在 Jenkins 中存储的 GitHub 访问令牌的凭据 ID
-        GA_TOKEN = credentials("github_test_sl")
+        GA_TOKEN = credentials("lkmodel_token")
         GA_REPO_OWNER = 'henshing'
         GA_REPO_NAME = "${currentRepoName}"
         // 动态获取当前构建的提交 SHA
