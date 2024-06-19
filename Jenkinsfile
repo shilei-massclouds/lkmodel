@@ -137,11 +137,12 @@ def repoJobs() {
                                 echo "$repo 编译测试"
                                 sh 'printenv'
                                 sh "cp -r /home/jenkins_home/pytest $WORKSPACE/$repo"
+				sh "cd $WORKSPACE/$repo && git checkout tutorial && cd tools/lktool && cargo build && cd ../.. && export PATH=home/lkmodel/tools/lktool/target/debug:$PATH && alias lk='lktool'"
                                 echo "--------------------------------------------$repo test start------------------------------------------------"
                                 if (repoName == mainRepoName){
-                                  sh 'export pywork=$WORKSPACE/${repoName} repoName=${repoName} && cd $pywork/pytest && python3 -m pytest -m mainrepo --cmdrepo=${repoName} -sv --alluredir report/result testcase/test_arceos.py --clean-alluredir'
+                                  sh 'export pywork=$WORKSPACE/${repoName} repoName=${repoName} && cd $pywork/pytest && python3 -m pytest -m mainrepo --cmdrepo=${repoName} -sv --alluredir report/result testcase/test_lkmodel.py --clean-alluredir'
                                 } else {
-                                  sh 'export pywork=$WORKSPACE/${repoName} repoName=${repoName} && cd $pywork/pytest && python3 -m pytest -m childrepo --cmdrepo=${repoName} -sv --alluredir report/result testcase/test_arceos.py --clean-alluredir'
+                                  sh 'export pywork=$WORKSPACE/${repoName} repoName=${repoName} && cd $pywork/pytest && python3 -m pytest -m childrepo --cmdrepo=${repoName} -sv --alluredir report/result testcase/test_lkmodel.py --clean-alluredir'
                                 }
                                 echo "--------------------------------------------$repo test end  ------------------------------------------------"
                           }
