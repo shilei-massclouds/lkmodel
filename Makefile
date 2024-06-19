@@ -95,7 +95,7 @@ endif
 
 ifeq ($(ARCH), x86_64)
   # Don't enable kvm for WSL/WSL2.
-  ACCEL ?= $(if $(findstring -microsoft, $(shell uname -r | tr '[:upper:]' '[:lower:]')),n,y)
+  ACCEL ?= n
   PLATFORM_NAME ?= x86_64-qemu-q35
   TARGET := x86_64-unknown-none
   BUS := pci
