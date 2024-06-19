@@ -5,7 +5,7 @@ pipeline {
         // 主仓名
         mainRepoName = "lkmodel"
         // 提交仓名
-        //currentRepoName = "${GIT_URL.substring(GIT_URL.lastIndexOf('/')+1, GIT_URL.length()-4)}"
+        currentRepoName = "${GIT_URL.substring(GIT_URL.lastIndexOf('/')+1, GIT_URL.length()-4)}"
         NODE_BASE_NAME = "ui-node-${GIT_COMMIT.substring(0, 6)}"
         JENKINS_URL = "http://49.51.192.19:9095"
         JOB_PATH = "job/github_test_lkmodel"
@@ -21,13 +21,11 @@ pipeline {
         // 将GA_TOKEN(GA = Github Access)替换为在 Jenkins 中存储的 GitHub 访问令牌的凭据 ID
         GA_TOKEN = credentials("github_test_sl")
         GA_REPO_OWNER = 'henshing'
-        //GA_REPO_NAME = "${currentRepoName}"
+        GA_REPO_NAME = "${currentRepoName}"
         // 动态获取当前构建的提交 SHA
         GA_COMMIT_SHA = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
     }
 
-def currentRepoName = "${GIT_URL.substring(GIT_URL.lastIndexOf('/')+1, GIT_URL.length()-4)}"
-def GA_REPO_NAME = "${currentRepoName}"
 
     stages {
         stage("多仓CI") {
@@ -80,7 +78,7 @@ def sendResultMail(){
         mail subject:"PipeLine '${JOB_NAME}'(${BUILD_NUMBER}) Build ${currentBuild.currentResult}",
         body: """
 <div id="content">
-<h1>仓库${currentRepoName} CI报告</h1>
+<h1>仓库${env.currentRepoName} CI报告</h1>
 <div id="sum2">
   <h2>构建结果</h2>
   <ul>
@@ -115,12 +113,12 @@ def updateGithubCommitStatus(String state, String description) {
     sh """
     curl -s -X POST -H "Authorization: token ${GA_TOKEN}" \
     -d '{\"state\": \"${state}\", \"target_url\": \"${target_url}\", \"description\": \"${description}\", \"context\": \"${context}\"}' \
-    https://api.github.com/repos/${GA_REPO_OWNER}/${GA_REPO_NAME}/statuses/${GA_COMMIT_SHA}
+    https://api.github.com/repos/${GA_REPO_OWNER}/${env.GA_REPO_NAME}/statuses/${GA_COMMIT_SHA}
     """
 }
 
 def repos() {
-  return ["$currentRepoName", "$mainRepoName"]
+  return ["$env.currentRepoName", "$mainRepoName"]
 }
 
 def repoJobs() {
