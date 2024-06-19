@@ -43,7 +43,7 @@ pipeline {
             }
         } 
     }
-
+}
 
 def repos() {
   return ["$currentRepoName", "$mainRepoName"]
