@@ -1,6 +1,8 @@
 pipeline {
     agent any
 
+
+	
     environment {
         // 主仓名
         mainRepoName = "lkmodel"
