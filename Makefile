@@ -33,7 +33,8 @@ LOG ?= info
 V ?=
 
 # App options
-A ?= early_console/rt_early_console
+# A ?= early_console/rt_early_console
+A ?= loader/rt_loader
 APP ?= $(A)
 FEATURES ?=
 APP_FEATURES ?=

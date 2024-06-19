@@ -32,7 +32,7 @@
 cfg_if::cfg_if! {
     if #[cfg(feature = "multitask")] {
         #[macro_use]
-        extern crate log;
+        extern crate axlog2;
         extern crate alloc;
 
         mod run_queue;

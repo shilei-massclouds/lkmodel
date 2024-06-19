@@ -16,11 +16,12 @@ qemu_args-x86_64 := \
 
 qemu_args-riscv64 := \
   -machine virt \
-  -bios /root/work/fw_jump1.4.bin \
+  -bios /root/work/fw_jump1.4.bin  \
   -kernel $(OUT_BIN) \
-  -drive if=pflash,file=/root/work/arceos_lkmodel/payload/apps1.bin,format=raw,unit=1
-  # -bios /root/work/opensbi/build/platform/generic/firmware/fw_jump.bin 
+  -drive if=pflash,file=/root/work/arceos_lkmodel/payload/apps.bin,format=raw,unit=1
+  # -bios /root/work/opensbi/build/platform/generic/firmware/fw_jump.bin   /root/work/fw_jump1.4.bin 
   # -drive if=pflash,file=/root/work/arceos/payload/apps.bin,format=raw,unit=1
+  # -drive if=pflash,file=/root/work/arceos_lkmodel/payload/apps1.bin,format=raw,unit=1
 
 qemu_args-aarch64 := \
   -cpu cortex-a72 \

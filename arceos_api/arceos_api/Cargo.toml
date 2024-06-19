@@ -26,9 +26,7 @@ dummy-if-not-enabled = []
 
 [dependencies]
 axfeat = { path = "../../axfeat/axfeat" }
-axruntime = { path = "../../axruntime/axruntime" }
 axconfig = { path = "../../axconfig/axconfig" }
-axlog2 = { path = "../../axlog2/axlog2" }
 axio = { path = "../../axio/axio" }
 axerrno = { path = "../../axerrno/axerrno" }
 axhal = { path = "../../axhal/axhal" }
@@ -37,3 +35,5 @@ axtask = { path = "../../axtask/axtask", optional = true }
 axfs = { path = "../../axfs/axfs", optional = true }
 axnet = { path = "../../axnet/axnet", optional = true }
 axdisplay = { path = "../../axdisplay/axdisplay", optional = true }
+axlog2 = { path = "../../axlog2/axlog2" }
+# axruntime = { path = "../../axruntime/axruntime" }

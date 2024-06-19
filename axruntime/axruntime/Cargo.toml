@@ -38,3 +38,5 @@ crate_interface = { path = "../../crate_interface/crate_interface" }
 percpu2 = { path = "../../percpu2/percpu2", optional = true }
 kernel_guard = { path = "../../kernel_guard/kernel_guard", optional = true }
 lazy_init = { path = "../../lazy_init/lazy_init", optional = true }
+
+arch_boot = {path = "../../arch_boot/arch_boot"  }

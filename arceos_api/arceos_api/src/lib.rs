@@ -16,7 +16,7 @@
     feature = "dummy-if-not-enabled"
 ))]
 extern crate alloc;
-extern crate axruntime;
+// extern crate axruntime;
 
 #[macro_use]
 mod macros;

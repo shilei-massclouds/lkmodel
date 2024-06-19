@@ -50,8 +50,13 @@ unsafe fn init_boot_page_table() {
     // 0xffff_ffc0_8000_0000..0xffff_ffc0_c000_0000, VRWX_GAD, 1G block
     BOOT_PT_SV39[0x102] = (0x80000 << 10) | 0xef;
 
-    //pflash  0x0000_0000..0x4000_0000, VRWX_GAD, 1G block
-    BOOT_PT_SV39[0] = (0x00000 << 10) | 0xef;
+    //https://oslearning365.github.io/oscamp_unikernel/ch2-5.html
+    // 0x0000_0000..0x4000_0000, VRWX_GAD, 1G block
+    // BOOT_PT_SV39[0] = (0x00000 << 10) | 0xef;
+
+    // For App aspace!
+    // 0x4000_0000..0x8000_0000, VRWX_GAD, 1G block
+    // BOOT_PT_SV39[1] = (0x80000 << 10) | 0xef;
 }
 
 unsafe fn init_mmu() {

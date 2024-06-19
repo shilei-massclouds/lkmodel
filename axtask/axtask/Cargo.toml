@@ -13,7 +13,7 @@ documentation = "https://rcore-os.github.io/arceos/axtask/index.html"
 default = []
 
 multitask = [
-    "dep:axconfig", "dep:percpu2", "dep:spinlock", "dep:lazy_init", "dep:memory_addr",
+    "dep:axconfig", "dep:percpu2","dep:percpu_macros2", "dep:spinlock", "dep:lazy_init", "dep:memory_addr",
     "dep:scheduler", "dep:timer_list", "kernel_guard", "dep:crate_interface",
 ]
 irq = []
@@ -40,7 +40,7 @@ scheduler = { path = "../../scheduler/scheduler", optional = true }
 timer_list = { path = "../../timer_list/timer_list", optional = true }
 kernel_guard = { path = "../../kernel_guard/kernel_guard", optional = true }
 crate_interface = { path = "../../crate_interface/crate_interface", optional = true }
-
+axlog2 = { path = "../../axlog2/axlog2" }
 [dev-dependencies]
 rand = "0.8"
 axhal = { path = "../../axhal/axhal", features = ["fp_simd"] }
