@@ -59,14 +59,14 @@ use core::ptr::NonNull;
 const TLS_ALIGN: usize = 0x10;
 
 cfg_if::cfg_if! {
-    if #[cfg(target_arch = "x86_64")] {
-        const TCB_SIZE: usize = 8; // to store TLS self pointer
+    if #[cfg(target_arch = "riscv64")] {
+        const TCB_SIZE: usize = 0;
         const GAP_ABOVE_TP: usize = 0;
     } else if #[cfg(target_arch = "aarch64")] {
         const TCB_SIZE: usize = 0;
         const GAP_ABOVE_TP: usize = 16;
-    } else if #[cfg(target_arch = "riscv64")] {
-        const TCB_SIZE: usize = 0;
+    } else if #[cfg(target_arch = "x86_64")] {
+        const TCB_SIZE: usize = 8; // to store TLS self pointer
         const GAP_ABOVE_TP: usize = 0;
     }
 }

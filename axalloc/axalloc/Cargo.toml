@@ -15,10 +15,11 @@ tlsf = ["allocator/tlsf"]
 
 
 [dependencies]
-log = "0.4"
+axlog2 = { git = "ssh://git@github.com/shilei-massclouds/axlog2" }
 cfg-if = "1.0"
 spinbase = { git = "ssh://git@github.com/shilei-massclouds/spinbase" }
 memory_addr = { git = "ssh://git@github.com/shilei-massclouds/memory_addr" }
 allocator = { git = "ssh://git@github.com/shilei-massclouds/allocator" }
 axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno" }
 axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal" }
+axstd = {  path = "../../axstd" , features = ["print"]} 

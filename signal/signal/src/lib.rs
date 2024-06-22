@@ -2,7 +2,7 @@
 
 #[macro_use]
 extern crate axlog2;
-
+use core::arch::asm;
 mod arch;
 pub use arch::rt_sigreturn;
 
@@ -122,8 +122,8 @@ pub fn rt_sigaction(sig: usize, act: usize, oact: usize, sigsetsize: usize) -> u
     if act != 0 {
         let act = unsafe { &(*(act as *const SigAction)) };
         info!("act: {:#X} {:#X} {:#X}", act.handler, act.flags, act.mask);
-        assert!((act.flags & SA_RESTART) != 0);
-        assert!((act.flags & SA_RESTORER) == 0);
+        //assert!((act.flags & SA_RESTART) != 0);
+        //assert!((act.flags & SA_RESTORER) == 0);
 
         let mut kact = act.clone();
         sigdelsetmask(&mut kact.mask, sigmask(SIGKILL) | sigmask(SIGSTOP));
@@ -135,13 +135,21 @@ pub fn rt_sigaction(sig: usize, act: usize, oact: usize, sigsetsize: usize) -> u
 
 pub fn do_signal(tf: &mut TrapFrame) {
     info!("do_signal ...");
+    unsafe {
+        let ra: usize;
+
+        asm!(
+            "mv {}, ra", out(reg) ra
+        );
+
+        info!("RA (Return Address): {:#x}", ra);
+    }
     if let Some(ksig) = get_signal() {
         /* Actually deliver the signal */
         arch::handle_signal(&ksig, tf);
         info!("do_signal done!");
         return;
     }
-
     // Todo: handle 'regs->cause == EXC_SYSCALL';
 }
 

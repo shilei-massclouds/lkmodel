@@ -122,7 +122,7 @@ pub fn _mmap(
 ) -> LinuxResult<usize> {
     assert!(is_aligned_4k(va));
     len = align_up_4k(len);
-    info!("mmap va {:#X} offset {:#X} flags {:#X} prot {:#X} len {:#X}", va, offset, flags, prot , len);
+    info!("mmap va {:#X} offset {:#X} flags {:#X} prot {:#X}", va, offset, flags, prot);
 
     /* force arch specific MAP_FIXED handling in get_unmapped_area */
     if (flags & MAP_FIXED_NOREPLACE) != 0 {
@@ -179,7 +179,7 @@ pub fn _mmap(
         prot
     );
     let vma = VmAreaStruct::new(va, va + len, offset >> PAGE_SHIFT, file, vm_flags);
-    //mm.lock().vmas.insert(va, vma);
+    mm.lock().vmas.insert(va, vma);
 
     Ok(va)
 }
@@ -211,7 +211,7 @@ fn find_overlap(va: usize, len: usize) -> Option<VmAreaStruct> {
     });
 
     if let Some((key, _)) = ret {
-        warn!("### Removed!!!");
+        info!("### Removed!!!");
         mm.lock().vmas.remove(&key)
     } else {
         None
@@ -229,7 +229,6 @@ const fn in_vma(start: usize, end: usize, vma: &VmAreaStruct) -> bool {
 }
 
 pub fn get_unmapped_vma(_va: usize, len: usize) -> usize {
-    debug!("get mm");
     let mm = task::current().mm();
     let locked_mm = mm.lock();
     let mut gap_end = TASK_UNMAPPED_BASE;
@@ -262,10 +261,10 @@ pub fn get_unmapped_vma(_va: usize, len: usize) -> usize {
 const SEGV_ACCERR: usize = 2;
 
 pub fn faultin_page(va: usize, cause: usize) -> usize {
-    let va = align_down_4k(va);
     info!("--------- faultin_page... va {:#X} cause {}", va, cause);
+    let va = align_down_4k(va);
     //fjj add
-    axhal::misc::terminate();
+    //axhal::misc::terminate();
     let mm = task::current().mm();
     let mut locked_mm = mm.lock();
     if locked_mm.mapped.get(&va).is_some() {
@@ -278,6 +277,7 @@ pub fn faultin_page(va: usize, cause: usize) -> usize {
         .upper_bound(Bound::Included(&va))
         .value()
         .unwrap();
+    info!("vma.vm_start:0x{:0x}-------vma.vm_end:0x{:0x}" , vma.vm_start , vma.vm_end );
     assert!(
         va >= vma.vm_start && va < vma.vm_end,
         "va {:#X} in {:#X} - {:#X}",
@@ -285,7 +285,6 @@ pub fn faultin_page(va: usize, cause: usize) -> usize {
         vma.vm_start,
         vma.vm_end
     );
-
     #[cfg(target_arch = "riscv64")]
     {
         if access_error(cause, vma) {
@@ -293,10 +292,8 @@ pub fn faultin_page(va: usize, cause: usize) -> usize {
             return usize::MAX;
         }
     }
-
     let delta = va - vma.vm_start;
     let offset = (vma.vm_pgoff << PAGE_SHIFT) + delta;
-
     if (vma.vm_flags & VM_SHARED) != 0 {
         assert!(vma.vm_file.get().is_some());
         let f = vma.vm_file.get().unwrap().clone();
@@ -308,11 +305,12 @@ pub fn faultin_page(va: usize, cause: usize) -> usize {
             return phys_to_virt((*pa).into()).into();
         }
     }
-
+    info!("before allocator");
     let direct_va: usize = axalloc::global_allocator()
         .alloc_pages(1, PAGE_SIZE_4K)
         .unwrap();
 
+    info!("before to zero");
     // Todo: check whether we need to zero it.
     let buf = unsafe { core::slice::from_raw_parts_mut(direct_va as *mut u8, PAGE_SIZE_4K) };
     buf.fill(0);
@@ -326,9 +324,11 @@ pub fn faultin_page(va: usize, cause: usize) -> usize {
             f.lock().shared_map.insert(offset, pa);
         }
     }
+    info!("va:0x{:0x} , pa:-----0x{:0x}" , va , pa );
     locked_mm.map_region(va, pa, PAGE_SIZE_4K, 1)
         .unwrap_or_else(|e| { panic!("{:?}", e) });
 
+    info!("before end");
     if (vma.vm_flags & VM_SHARED) == 0 {
         // Todo: temporarily record mapped va->pa(direct_va)
         locked_mm.mapped.insert(va, direct_va);
@@ -401,7 +401,6 @@ pub fn set_brk(va: usize) -> usize {
 
     assert!(is_aligned_4k(brk));
     debug!("brk!!! {:#x}, {:#x}", va, brk);
-
     if va == 0 {
         brk
     } else {
@@ -509,7 +508,8 @@ pub fn munmap(va: usize, mut len: usize) -> usize {
 pub fn mprotect(va: usize, len: usize, prot: usize) -> usize {
     info!("mprotect: va {:#X} len {:#X} prot {:#X}", va, len, prot);
     assert!(is_aligned_4k(va));
-
+    //fjj add
+    return 0;
     let mut vma;
     let mm = task::current().mm();
     if let Some(mut overlap) = find_overlap(va, len) {

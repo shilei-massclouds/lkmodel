@@ -29,7 +29,7 @@ pub use taskctx::Tid;
 pub use taskctx::current_ctx;
 pub use taskctx::{TaskStack, THREAD_SIZE};
 pub use tid::alloc_tid;
-
+use core::cell::Cell;
 mod tid;
 mod tid_map;
 
@@ -94,7 +94,6 @@ pub struct TaskStruct {
     pub sigpending: SpinLock<SigPending>,
     pub sighand: Arc<SpinLock<SigHand>>,
     pub sched_info: Arc<SchedInfo>,
-
     pub exit_state: AtomicUsize,
     pub exit_code: AtomicU32,
     pub vfork_done: Option<WaitQueue>,
@@ -106,13 +105,12 @@ unsafe impl Sync for TaskStruct {}
 impl TaskStruct {
     pub fn new() -> Self {
         Self {
-            mm: None,
+            mm: Some(Arc::new(SpinNoIrq::new(MmStruct::new()))),
             fs: fstree::init_fs(),
             filetable: filetable::init_files(),
             sigpending: SpinLock::new(SigPending::new()),
             sighand: Arc::new(SpinLock::new(SigHand::new())),
             sched_info: taskctx::init_sched_info(),
-
             exit_state: AtomicUsize::new(0),
             exit_code: AtomicU32::new(0),
             vfork_done: None,
@@ -204,13 +202,9 @@ pub struct CurrentTask(ManuallyDrop<TaskRef>);
 
 impl CurrentTask {
     pub(crate) fn try_get() -> Option<Self> {
-        info!("get here222");
         if let Some(ctx) = taskctx::try_current_ctx() {
-            info!("get ok");
             let tid = ctx.tid();
-            info!("tid ok");
             let task = get_task(tid).expect("try_get None");
-            info!("task ok");
             Some(Self(ManuallyDrop::new(task)))
         } else {
             None
@@ -267,7 +261,6 @@ impl Deref for CurrentTask {
 ///
 /// Panics if the current task is not initialized.
 pub fn current() -> CurrentTask {
-    info!("get here2222222");
     CurrentTask::get()
 }
 

@@ -27,7 +27,7 @@ pub fn init_trap() {
 #[no_mangle]
 pub fn riscv_trap_handler(tf: &mut TrapFrame, _from_user: u64) {
     let scause = scause::read();
-    //println!( "sepc:0x{:0x}  ,  a7:{}  , scause:{}" , tf.sepc , tf.regs.a7 , scause.code());
+    println!( "sepc:0x{:0x}  ,  a7:{}  , scause:{}" , tf.sepc , tf.regs.a7 , scause.code());
     let sstatus_value = sstatus::read();
 
     // 打印sstatus的原始值

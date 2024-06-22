@@ -61,8 +61,6 @@ pub fn copy_thread(
     let sp = sched_info.pt_regs_addr();
     sched_info.thread.get_mut().init(crate::task_entry as usize, sp.into(), 0.into());
     task.sched_info = Arc::new(sched_info);
-
-    info!("copy_thread!");
     Ok(())
 }
 

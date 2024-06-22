@@ -1,7 +1,11 @@
 #![no_std]
 #![no_main]
 #![feature(asm_const)]
+use axhal::console::task_id;
+use mm::VmAreaStruct;
+use task::current;
 use core::panic::PanicInfo;
+use fork::user_mode_thread;
 use axhal::mem::{ virt_to_phys , phys_to_virt };
 use axlog2::{ debug , error ,info };
 const PLASH_START: usize = 0xffff_ffc022000000;
@@ -15,7 +19,7 @@ use elf::segment::ProgramHeader;
 use page_table::paging;
 use axhal::mem::MemRegionFlags;
 use core::arch::asm;
-
+use core::mem::transmute;
 fn get_elf_data() -> &'static [u8] {
     unsafe { slice::from_raw_parts(PLASH_START as *const u8, 0x2000000) }
 }
@@ -24,16 +28,11 @@ fn get_elf_data() -> &'static [u8] {
 #[no_mangle]
 pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
     init(_cpu_id);
-    //test
-    paging::init_app_pg_dir();
-    paging::set_app_vm_page();
     let elf_data = get_elf_data();
     let elf = ElfBytes::<LittleEndian>::minimal_parse(elf_data).expect("Failed to parse ELF");
     let entry = elf.ehdr.e_entry as usize;
     let program_headers = elf.segments().ok_or("Failed to read program headers").unwrap();
-    let mut app_page_table = paging::PageTable::try_new().unwrap();
     let mut max_addr:usize = 0;
-
     for ph in program_headers.iter() {
         if ph.p_type == elf::abi::PT_LOAD {
             let flags = convert_flags( ph.p_flags );
@@ -45,7 +44,9 @@ pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
             match axalloc::global_allocator().alloc_pages(page_num, PAGE_SIZE ){
                 Ok(memory_addr) => {
                     let pa : usize = virt_to_phys(memory_addr.into()).into();
-                    paging::add_app_vm_page(map_start  , pa  as usize , page_num * PAGE_SIZE ,flags | MemRegionFlags::WRITE, true );
+                    let mm = task::current().mm();
+                    mm.lock().map_region(map_start, pa, page_num * PAGE_SIZE, 0);
+                    //paging::add_app_vm_page(map_start  , pa  as usize , page_num * PAGE_SIZE ,flags | MemRegionFlags::WRITE, true );
                 }
                 Err(err) => {
                     info!("Failed to allocate memory: {:?}", err);
@@ -73,15 +74,52 @@ pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
     match axalloc::global_allocator().alloc_pages(20, PAGE_SIZE ){
         Ok(memory_addr) => {
             let pa : usize = virt_to_phys(memory_addr.into()).into();
-            paging::add_app_vm_page(max_addr as usize  , pa as usize , 20 * PAGE_SIZE ,MemRegionFlags::READ | MemRegionFlags::WRITE, true );
+            let mm = task::current().mm();
+            mm.lock().map_region(max_addr as usize, pa as usize, 20 * PAGE_SIZE, 0);
+            //paging::add_app_vm_page(max_addr as usize  , pa as usize , 20 * PAGE_SIZE ,MemRegionFlags::READ | MemRegionFlags::WRITE, true );
         }
         Err(err) => {
             panic!("Failed to allocate memory");
         }
     }
-    //sp = sp_top
-    let sp_top = max_addr + 19 * PAGE_SIZE;
 
+
+    {
+        match axalloc::global_allocator().alloc_pages(16, PAGE_SIZE ){
+            Ok(memory_addr) => {
+                let pa : usize = virt_to_phys(memory_addr.into()).into();
+                let mm = task::current().mm();
+                mm.lock().map_region(0 as usize, pa as usize, 10 * PAGE_SIZE, 0);
+                //paging::add_app_vm_page(max_addr as usize  , pa as usize , 20 * PAGE_SIZE ,MemRegionFlags::READ | MemRegionFlags::WRITE, true );
+            }
+            Err(err) => {
+                panic!("Failed to allocate memory");
+            }
+        }
+        task::current().mm().lock().set_brk(max_addr + 20 * PAGE_SIZE);
+    }
+
+    print_bytes_at(0xFFFFFFC0802A0BB0, 3);
+
+    unsafe{
+        info!("start thread ...");
+        let func : fn() = transmute(entry);
+        let tid = user_mode_thread(
+            move || {
+                func()
+            },
+            fork::CloneFlags::CLONE_FS,
+        );
+    }
+    //let x = task::get_task(tid).unwrap();
+
+
+    //let task = task::current();
+    let rq = run_queue::task_rq(&task.sched_info);
+    info!("sp_top:0x{:0x}" , max_addr + 19 * PAGE_SIZE );
+    rq.lock().resched(false);
+    //sp = sp_top
+    let sp_top = max_addr + 19 * PAGE_SIZE ;
     let program_name = b"./a\0";
     let argv = [program_name.as_ptr(), core::ptr::null()];
     let envp:[*const u8;1] = [core::ptr::null()];
@@ -229,6 +267,7 @@ fn init(_cpu_id:usize){
     task::init();
     axtrap::early_init();
     axtrap::final_init();
+    paging::set_app_vm_page( task::current().mm().lock().root_paddr().into())
 }
 
 

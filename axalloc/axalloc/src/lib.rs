@@ -8,9 +8,9 @@
 #![no_std]
 
 #[macro_use]
-extern crate log;
+extern crate axlog2;
 extern crate alloc;
-
+use axstd::println;
 mod page;
 
 use allocator::{AllocResult, BaseAllocator, BitmapPageAllocator, ByteAllocator, PageAllocator};
@@ -78,12 +78,14 @@ impl GlobalAllocator {
     /// a small region (32 KB) to initialize the byte allocator. Therefore,
     /// the given region must be larger than 32 KB.
     pub fn init(&self, start_vaddr: usize, size: usize) {
+        println!("111111111111111111111111111");
         assert!(size > MIN_HEAP_SIZE);
         let init_heap_size = MIN_HEAP_SIZE;
         self.palloc.lock().init(start_vaddr, size);
         let heap_ptr = self
             .alloc_pages(init_heap_size / PAGE_SIZE, PAGE_SIZE)
             .unwrap();
+        println!("heap_start:0x{:0x}    ,   ballocend:0x{:0x}" , heap_ptr , heap_ptr + init_heap_size );
         self.balloc.lock().init(heap_ptr, init_heap_size);
     }
 

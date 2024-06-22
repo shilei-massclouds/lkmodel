@@ -6,7 +6,7 @@ use crate::run_queue::RUN_QUEUE;
 use spinbase::SpinNoIrq;
 
 #[macro_use]
-extern crate log;
+extern crate axlog2;
 extern crate alloc;
 use alloc::sync::Arc;
 
@@ -29,5 +29,6 @@ pub fn force_unlock() {
 ///
 /// For example, advance scheduler states, checks timed events, etc.
 pub fn on_timer_tick() {
+    info!("-----------------timer_tick---------------");
     RUN_QUEUE.lock().scheduler_timer_tick();
 }

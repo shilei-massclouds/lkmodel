@@ -10,6 +10,7 @@ use alloc::string::String;
 use alloc::sync::Arc;
 
 use axerrno::{LinuxError, LinuxResult};
+use mm::MmStruct;
 use task::{current, Tid, TaskRef, TaskStruct};
 use spinbase::SpinNoIrq;
 use task::SIGCHLD;
@@ -91,7 +92,6 @@ impl KernelCloneArgs {
     fn perform(&self) -> LinuxResult<Tid> {
         // Todo: handle ptrace in future.
         let trace = !self.flags.contains(CloneFlags::CLONE_UNTRACED);
-
         let task = self.copy_process(None, trace)?;
         debug!(
             "sched task fork: tid[{}] -> tid[{}].",
@@ -134,18 +134,26 @@ impl KernelCloneArgs {
         };
 
         let mut task = current().dup_task_struct();
-
         //copy_files();
         self.copy_fs(&mut task)?;
         self.copy_sighand(&mut task)?;
         //copy_signal();
+        
         self.copy_mm(&mut task)?;
+        
         self.copy_thread(&mut task, tid)?;
-
+        match task.sched_info.kstack {
+            None => {
+                info!("user mode stack is NOne");
+            }
+            _ => {
+                info!(" user mode stack set ok");
+            }
+        }
         if self.flags.contains(CloneFlags::CLONE_VFORK) {
             task.init_vfork_done();
         }
-
+        info!("new_brk:0x{:0x}" , task.mm().lock().brk());
         let arc_task = Arc::new(task);
         task::register_task(arc_task.clone());
         info!("copy_process tid: {} -> {}", current().tid(), arc_task.tid());
@@ -235,8 +243,17 @@ impl KernelCloneArgs {
 
     fn copy_mm(&self, task: &mut TaskStruct) -> LinuxResult {
         if self.flags.contains(CloneFlags::CLONE_VM) {
-            info!("copy_mm: CLONE_VM");
+            let direct_va: usize = axalloc::global_allocator()
+            .alloc_pages(1, 4096)
+            .unwrap();
+            info!("now:0x:{:0x}" , direct_va);
+            
             task.mm = current().mm.clone();
+
+            let direct_va: usize = axalloc::global_allocator()
+            .alloc_pages(1, 4096)
+            .unwrap();
+            info!("now:0x:{:0x}" , direct_va);
         } else {
             info!("copy_mm: NO CLONE_VM");
             let mm: mm::MmStruct = current().mm().lock().deep_dup();

@@ -20,3 +20,4 @@ task = { git = "ssh://git@github.com/shilei-massclouds/task.git" }
 fork = { git = "ssh://git@github.com/shilei-massclouds/fork.git" }
 page_table = { git = "ssh://git@github.com/shilei-massclouds/page_table" }
 elf = { path = "../../elf/elf" }
+mm = { path = "../../mm/mm" }

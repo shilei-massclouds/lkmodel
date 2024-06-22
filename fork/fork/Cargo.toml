@@ -17,3 +17,4 @@ axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno.git" }
 axtype = { git = "ssh://git@github.com/shilei-massclouds/axtype.git" }
 spinbase = { git = "ssh://git@github.com/shilei-massclouds/spinbase.git" }
 axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal.git" }
+axalloc = { git = "ssh://git@github.com/shilei-massclouds/axalloc.git" }

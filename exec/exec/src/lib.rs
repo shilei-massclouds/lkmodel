@@ -1,7 +1,7 @@
 #![no_std]
 
 #[macro_use]
-extern crate log;
+extern crate axlog2;
 extern crate alloc;
 use alloc::sync::Arc;
 use alloc::{vec, vec::Vec};

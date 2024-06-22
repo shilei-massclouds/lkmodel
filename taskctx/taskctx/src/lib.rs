@@ -317,7 +317,6 @@ pub fn current_ctx() -> CurrentCtx {
 }
 
 pub fn try_current_ctx() -> Option<CurrentCtx> {
-    info!("get here24444");
     CurrentCtx::try_get()
 }
 

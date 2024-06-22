@@ -68,6 +68,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_SCHED_GETAFFINITY => linux_syscall_sched_getaffinity(args),
         LINUX_SYSCALL_CAPGET => linux_syscall_capget(args),
         LINUX_SYSCALL_SETITIMER => linux_syscall_setitimer(args),
+        LINUX_SYSCALL_FCNTL => linux_syscall_fcntl(args),
         #[cfg(target_arch = "riscv64")]
         LINUX_SYSCALL_GETDENTS64 => linux_syscall_getdents64(args),
         #[cfg(target_arch = "x86_64")]
@@ -76,6 +77,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_ARCH_PRCTL => linux_syscall_arch_prctl(args),
         #[cfg(target_arch = "x86_64")]
         LINUX_SYSCALL_VFORK => linux_syscall_vfork(args),
+        LINUX_SYSCALL_GETUID => linux_syscall_getuid(args),
         _ => panic!("Unsupported syscall: {}, {:#x}", sysno, sysno),
     }
 }
@@ -445,9 +447,18 @@ fn linux_syscall_exit_group(args: SyscallArgs) -> usize {
     sys::exit_group(exit_code as u32)
 }
 
+fn linux_syscall_getuid(args: SyscallArgs) -> usize {
+    return 1;
+}
+
+fn linux_syscall_fcntl(args: SyscallArgs) -> usize {
+    0
+}
+
 #[cfg(target_arch = "x86_64")]
 fn linux_syscall_vfork(_args: SyscallArgs) -> usize {
     fork::sys_vfork()
 }
+
 
 pub fn init() {}

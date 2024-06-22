@@ -127,6 +127,7 @@ impl From<PageSize> for usize {
 pub fn init() {
     if axhal::cpu::_this_cpu_is_bsp() {
         let mut kernel_page_table = paging::PageTable::try_new().unwrap();
+        info!("KERNEL_PAGE_Phdr:0x{:0x}" , kernel_page_table.root_paddr() );
         info!("start page init");
         for r in memory_regions() {
             kernel_page_table.map_region(
@@ -136,7 +137,7 @@ pub fn init() {
                 r.flags.into(),
                 true,
             ).unwrap();
-            info!("------paddr:{:0x}  ,  size:{:0x}   ,  name:{}" , r.paddr , r.size , r.name );
+            info!("vaddr:{:0x} , paddr:{:0x}  ,  size:{:0x}   ,  name:{}" , phys_to_virt(r.paddr).as_usize() , r.paddr , r.size , r.name );
         }
         
         
