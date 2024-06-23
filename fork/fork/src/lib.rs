@@ -9,6 +9,7 @@ use alloc::boxed::Box;
 use alloc::string::String;
 use alloc::sync::Arc;
 
+use axalloc::global_allocator;
 use axerrno::{LinuxError, LinuxResult};
 use mm::MmStruct;
 use task::{current, Tid, TaskRef, TaskStruct};
@@ -248,7 +249,7 @@ impl KernelCloneArgs {
             .unwrap();
             info!("now:0x:{:0x}" , direct_va);
             
-            task.mm = current().mm.clone();
+            //task.mm = current().mm.clone();
 
             let direct_va: usize = axalloc::global_allocator()
             .alloc_pages(1, 4096)
@@ -282,21 +283,105 @@ impl KernelCloneArgs {
 // Now schedule_tail: 'run_queue::force_unlock();` hinders us.
 // Consider to move it to sched first!
 extern "C" fn task_entry() -> ! {
-    info!("################ task_entry ...");
+    info!("################ task_entry ...1111");
     // schedule_tail
     // unlock runqueue for freshly created task
     run_queue::force_unlock();
-
+    info!("--------");
     let task = crate::current();
     if task.sched_info.set_child_tid != 0 {
         let ctid_ptr = task.sched_info.set_child_tid as *mut usize;
         unsafe { (*ctid_ptr) = task.sched_info.tid(); }
     }
-
+    info!("-------z");
+    let sp_top =  axalloc::global_allocator().alloc_pages(20, 4096 ).unwrap() + 19 * 4096;
     if let Some(entry) = task.sched_info.entry {
-        unsafe { Box::from_raw(entry)() };
+        unsafe{
+            let boxed_fn: Box<dyn FnOnce()> = Box::from_raw(entry);
+            let entry_address = &*boxed_fn as *const _;
+
+            let ent = *(entry_address as *const usize );
+            core::arch::asm!("
+        addi sp, sp, -16*8
+        sd ra, 120(sp)
+        sd t0, 112(sp)
+        sd t1, 104(sp)
+        sd t2, 96(sp)
+        sd t3, 88(sp)
+        sd t4, 80(sp)
+        sd t5, 72(sp)
+        sd t6, 64(sp)
+        sd a0, 56(sp)
+        sd a1, 48(sp)
+        sd a2, 40(sp)
+        sd a3, 32(sp)
+        sd a4, 24(sp)
+        sd a5, 16(sp)
+        sd a6, 8(sp)
+        sd a7, 0(sp)
+
+        mv t0, {0}
+        mv t2, {1}
+        mv sp, t0
+
+        li x0 , 0
+        li x1 , 0
+
+        li x3 , 0
+        li x4 , 0
+        li x5 , 0
+        li x6 , 0
+
+        li x8 , 0
+        li x9 , 0
+        li x11 , 0
+        li x12 , 0
+        li x13 , 0
+        li x14 , 0
+        li x15 , 0
+        li x16 , 0
+        li x17 , 0
+        li x18 , 0
+        li x19 , 0
+        li x20 , 0
+        li x21 , 0
+        li x22 , 0
+        li x23 , 0
+        li x24 , 0
+        li x25 , 0
+        li x26 , 0
+        li x27 , 0
+        li x28 , 0
+        li x29 , 0
+        li x30 , 0
+        li x31 , 0
+        li a0 , 0
+        jalr    ra , t2 , 0
+
+        ld ra, 120(sp)
+        ld t0, 112(sp)
+        ld t1, 104(sp)
+        ld t2, 96(sp)
+        ld t3, 88(sp)
+        ld t4, 80(sp)
+        ld t5, 72(sp)
+        ld t6, 64(sp)
+        ld a0, 56(sp)
+        ld a1, 48(sp)
+        ld a2, 40(sp)
+        ld a3, 32(sp)
+        ld a4, 24(sp)
+        ld a5, 16(sp)
+        ld a6, 8(sp)
+        ld a7, 0(sp)
+        addi sp, sp, 16*8",
+        in(reg) sp_top,
+        in(reg) ent
+        )}
+        //unsafe { Box::from_raw(entry)() };
     }
 
+    info!("-------zrrrrrrrrrrrrr");
     let sp = task::current().pt_regs_addr();
     axhal::arch::ret_from_fork(sp);
     unimplemented!("task_entry!");
@@ -312,6 +397,7 @@ where
     info!("create a user mode thread ...");
     assert_eq!(flags.intersection(CloneFlags::CSIGNAL).bits(), 0);
     //assert!((flags.bits() & CloneFlags::CSIGNAL.bits()) == 0);
+    info!("-------------");
     let f = Box::into_raw(Box::new(f));
     let args = KernelCloneArgs::new(
         flags | CloneFlags::CLONE_VM | CloneFlags::CLONE_UNTRACED,

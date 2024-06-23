@@ -135,15 +135,6 @@ pub fn rt_sigaction(sig: usize, act: usize, oact: usize, sigsetsize: usize) -> u
 
 pub fn do_signal(tf: &mut TrapFrame) {
     info!("do_signal ...");
-    unsafe {
-        let ra: usize;
-
-        asm!(
-            "mv {}, ra", out(reg) ra
-        );
-
-        info!("RA (Return Address): {:#x}", ra);
-    }
     if let Some(ksig) = get_signal() {
         /* Actually deliver the signal */
         arch::handle_signal(&ksig, tf);

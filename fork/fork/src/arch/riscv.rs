@@ -22,7 +22,7 @@ pub fn copy_thread(
     real_parent: Option<Arc<SchedInfo>>,
     group_leader: Option<Arc<SchedInfo>>,
 ) -> LinuxResult {
-    info!("copy_thread ...");
+    info!("copy_thread ...zzz");
     let mut sched_info = SchedInfo::new();
     //sched_info.init(self.entry, task_entry as usize, 0.into());
     /////////////////////
@@ -59,6 +59,7 @@ pub fn copy_thread(
     }
 
     let sp = sched_info.pt_regs_addr();
+    info!("sched_info_thread,and sp:0x{:0x}" , sp as usize);
     sched_info.thread.get_mut().init(crate::task_entry as usize, sp.into(), 0.into());
     task.sched_info = Arc::new(sched_info);
     match task.sched_info.pgd {

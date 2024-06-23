@@ -110,6 +110,7 @@ impl GlobalAllocator {
         let mut balloc = self.balloc.lock();
         loop {
             if let Ok(ptr) = balloc.alloc(layout) {
+                info!("balloc:0x{:0x}" , ptr.as_ptr() as *const u8 as usize );
                 return Ok(ptr);
             } else {
                 let old_size = balloc.total_bytes();
@@ -136,6 +137,7 @@ impl GlobalAllocator {
     ///
     /// [`alloc`]: GlobalAllocator::alloc
     pub fn dealloc(&self, pos: NonNull<u8>, layout: Layout) {
+        info!("dealloc:0x{:0x}" , pos.as_ptr() as *const u8 as usize );
         self.balloc.lock().dealloc(pos, layout)
     }
 

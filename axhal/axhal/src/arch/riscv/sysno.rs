@@ -58,3 +58,4 @@ pub const LINUX_SYSCALL_RT_SIGACTION: usize = 0x86;
 pub const LINUX_SYSCALL_RT_SIGPROCMASK: usize = 0x87;
 pub const LINUX_SYSCALL_GETUID: usize = 0xae;
 pub const LINUX_SYSCALL_FCNTL: usize = 0x19;
+pub const LINUX_SYSCALL_SOCKET: usize = 0x62;

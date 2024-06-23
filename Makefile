@@ -33,7 +33,7 @@ LOG ?= info
 V ?=
 
 # App options
-A ?= early_console/rt_early_console
+A ?= elfloader/rt_elfloader
 APP ?= $(A)
 FEATURES ?=
 APP_FEATURES ?=

@@ -4,6 +4,9 @@ use memory_addr::VirtAddr;
 
 include_asm_marcos!();
 
+
+use axlog2;
+
 /// General registers of RISC-V.
 #[allow(missing_docs)]
 #[repr(C)]
@@ -99,6 +102,7 @@ impl TaskContext {
     /// Initializes the context for a new task, with the given entry point and
     /// kernel stack.
     pub fn init(&mut self, entry: usize, kstack_top: VirtAddr, tls_area: VirtAddr) {
+        info!("task entry , kstack_top and tls_area init.... entry:0x{:0x}  , sp:0x{:0x} " , entry , kstack_top.as_usize());
         self.sp = kstack_top.as_usize();
         self.ra = entry;
         self.tp = tls_area.as_usize();
@@ -109,6 +113,7 @@ impl TaskContext {
     /// It first saves the current task's context from CPU to this place, and then
     /// restores the next task's context from `next_ctx` to CPU.
     pub fn switch_to(&mut self, next_ctx: &Self) {
+        axlog2::info!("switch_to");
         #[cfg(feature = "tls")]
         {
             self.tp = super::read_thread_pointer();
@@ -116,6 +121,7 @@ impl TaskContext {
         }
         unsafe {
             // TODO: switch FP states
+            info!("context_switch,entry:0x{:0x}" , next_ctx.ra);
             context_switch(self, next_ctx)
         }
     }
@@ -140,7 +146,7 @@ unsafe extern "C" fn context_switch(_current_task: &mut TaskContext, _next_task:
         STR     s9, a0, 11
         STR     s10, a0, 12
         STR     s11, a0, 13
-
+        
         // restore new context
         LDR     s11, a1, 13
         LDR     s10, a1, 12
