@@ -27,7 +27,7 @@ elf = { version = "0.7.3", default-features = false }
 #axmount = { path = "../../axmount/axmount" }
 #percpu2 ={ path = "../../percpu2/percpu2" }
 fork ={ path = "../../fork/fork" }
-exec = { path = "../../exec/exec" }
+#exec = { path = "../../exec/exec" }
 #axerrno = { path = "../../axerrno/axerrno" }
 #axtype ={ path = "../../axtype/axtype" }
 #axdtb = { path = "../../axdtb/axdtb" }

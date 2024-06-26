@@ -34,7 +34,7 @@ const RUN_START: usize = 0xffff_ffc0_8010_0000;
 #[cfg_attr(not(test), no_mangle)]
 pub extern "Rust" fn runtime_main(cpu_id: usize, _dtb_pa: usize) {
     // 初始化
-    init();
+    init(cpu_id);
     // 加载后运行
     load_and_run_app(PFLASH_START);
 
@@ -42,7 +42,8 @@ pub extern "Rust" fn runtime_main(cpu_id: usize, _dtb_pa: usize) {
     axhal::misc::terminate()
 }
 
-fn init() {
+// 加载后运行
+fn init(cpu_id: usize) {
     // 初始化日志
     axlog2::init(option_env!("AX_LOG").unwrap_or(""));
     // 对于 riscv 在 axhal/axhal/src/arch/riscv/mod.rs
