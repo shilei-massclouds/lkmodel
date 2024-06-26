@@ -255,6 +255,7 @@ impl KernelCloneArgs {
 
     fn copy_fs(&self, task: &mut TaskStruct) -> LinuxResult {
         if self.flags.contains(CloneFlags::CLONE_FS) {
+            info!("clone fs ssss");
             /* task.fs is already what we want */
             let fs = task::current().fs.clone();
             let mut locked_fs = fs.lock();
@@ -343,7 +344,7 @@ pub fn sys_clone(
         flags.bits(), stack, ptid, tls, ctid);
 
     let exit_signal = flags.intersection(CloneFlags::CSIGNAL).bits() as i32;
-    let flags = flags.difference(CloneFlags::CSIGNAL);
+    let flags = flags.difference(CloneFlags::CSIGNAL) | CloneFlags::CLONE_FS;
     let stack = if stack == 0 {
         None
     } else {

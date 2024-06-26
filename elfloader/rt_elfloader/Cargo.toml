@@ -21,3 +21,5 @@ fork = { git = "ssh://git@github.com/shilei-massclouds/fork.git" }
 page_table = { git = "ssh://git@github.com/shilei-massclouds/page_table" }
 elf = { path = "../../elf/elf" }
 mm = { path = "../../mm/mm" }
+axdriver = { git = "ssh://git@github.com/shilei-massclouds/axdriver.git" }
+axmount = { git = "ssh://git@github.com/shilei-massclouds/axmount.git" }

@@ -71,37 +71,12 @@ pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
                     core::ptr::write_bytes(bss_ptr, 0, bss_size as usize);
                 }
             }
-        }
-    }
-    match axalloc::global_allocator().alloc_pages(20, PAGE_SIZE ){
-        Ok(memory_addr) => {
-            let pa : usize = virt_to_phys(memory_addr.into()).into();
-            let mm = task::current().mm();
-            mm.lock().map_region(max_addr as usize, pa as usize, 20 * PAGE_SIZE, 0);
-            //paging::add_app_vm_page(max_addr as usize  , pa as usize , 20 * PAGE_SIZE ,MemRegionFlags::READ | MemRegionFlags::WRITE, true );
-        }
-        Err(err) => {
-            panic!("Failed to allocate memory");
+
+            task::current().mm().lock().set_brk(max_addr);
         }
     }
 
-
-    {
-        match axalloc::global_allocator().alloc_pages(16, PAGE_SIZE ){
-            Ok(memory_addr) => {
-                let pa : usize = virt_to_phys(memory_addr.into()).into();
-                let mm = task::current().mm();
-                mm.lock().map_region(0 as usize, pa as usize, 10 * PAGE_SIZE, 0);
-                //paging::add_app_vm_page(max_addr as usize  , pa as usize , 20 * PAGE_SIZE ,MemRegionFlags::READ | MemRegionFlags::WRITE, true );
-            }
-            Err(err) => {
-                panic!("Failed to allocate memory");
-            }
-        }
-        task::current().mm().lock().set_brk(max_addr + 20 * PAGE_SIZE);
-    }
-
-    print_bytes_at(0xFFFFFFC0802A0BB0, 3);
+    set_zero_page();
 
     unsafe{
         info!("start thread ...");
@@ -120,6 +95,20 @@ pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
     rq.lock().resched(false);
     //sp = sp_top
     misc::terminate();
+}
+
+fn set_zero_page(){
+    match axalloc::global_allocator().alloc_pages(16, PAGE_SIZE ){
+        Ok(memory_addr) => {
+            let pa : usize = virt_to_phys(memory_addr.into()).into();
+            let mm = task::current().mm();
+                        mm.lock().map_region(0 as usize, pa as usize, 1 * PAGE_SIZE, 0);
+            //paging::add_app_vm_page(max_addr as usize  , pa as usize , 20 * PAGE_SIZE ,MemRegionFlags::READ | MemRegionFlags::WRITE, true );
+        }
+        Err(err) => {
+            panic!("Failed to allocate memory");
+        }
+    }
 }
 
 fn run_app( entry:usize ) {
@@ -253,8 +242,9 @@ fn convert_flags( fplags : u32 ) -> MemRegionFlags {
 
 
 fn init(_cpu_id:usize){
-    axlog2::init("error");
+    axlog2::init("info");
     axhal::arch_init_early(_cpu_id);
+
 
     info!("Initialize global memory allocator...");
     axalloc::init();
@@ -262,8 +252,12 @@ fn init(_cpu_id:usize){
     info!("Initialize kernel page table...");
     page_table::init();
 
+
     info!("Initialize schedule system ...");
     task::init();
+    let all_devices = axdriver::init_drivers();
+    let root_dir = axmount::init(all_devices.block);
+    task::current().fs.lock().init(root_dir);
     axtrap::early_init();
     axtrap::final_init();
     paging::set_app_vm_page( task::current().mm().lock().root_paddr().into())
