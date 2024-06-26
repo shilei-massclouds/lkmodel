@@ -10,12 +10,14 @@ extern crate axlog2;
 extern crate axstd as std;
 
 use axhal::mem::memory_regions; //phys_to_virt
-use core::{ ops::BitOr, sync::atomic::{AtomicUsize, Ordering}};
+use core::{
+    ops::BitOr,
+    sync::atomic::{AtomicUsize, Ordering},
+};
+use memory_addr::{align_down_4k, align_up_4k, PAGE_SIZE_4K};
 use mm::MmStruct;
-use memory_addr::{PAGE_SIZE_4K, align_down_4k, align_up_4k};
 use page_table::MappingFlags;
-use std::{vec::Vec,string::String,thread};
-
+use std::{string::String, thread, vec::Vec};
 
 use core::panic::PanicInfo;
 #[panic_handler]
@@ -23,23 +25,24 @@ pub fn panic(info: &PanicInfo) -> ! {
     arch_boot::panic(info)
 }
 
-// use axerrno::{LinuxError, LinuxResult};
-// use axtype::DtbInfo;
 use fork::{user_mode_thread, CloneFlags};
-
-
-
 
 const PAGE_SHIFT: usize = 12;
 const PFLASH_START: usize = 0xffff_ffc0_2200_0000;
 const RUN_START: usize = 0xffff_ffc0_8010_0000;
 
-
-
-
 #[cfg_attr(not(test), no_mangle)]
 pub extern "Rust" fn runtime_main(cpu_id: usize, _dtb_pa: usize) {
+    // 初始化
+    init();
+    // 加载后运行
+    load_and_run_app(PFLASH_START);
 
+    println!("Load payload ok!");
+    axhal::misc::terminate()
+}
+
+fn init() {
     // 初始化日志
     axlog2::init(option_env!("AX_LOG").unwrap_or(""));
     // 对于 riscv 在 axhal/axhal/src/arch/riscv/mod.rs
@@ -78,28 +81,11 @@ pub extern "Rust" fn runtime_main(cpu_id: usize, _dtb_pa: usize) {
     while !is_init_ok() {
         core::hint::spin_loop();
     }
-
-
-    let apps_start = PFLASH_START ;
-    
-   load_app(apps_start);
-    
-
-    println!("Load payload ok!");
-   
-    axhal::misc::terminate()
 }
-
-
 
 fn bytes_to_u16(bytes: &[u8]) -> u16 {
     u16::from_be_bytes(bytes.try_into().unwrap())
 }
-
-
-
-
-
 
 fn parse_literal_hex(pos: usize) -> usize {
     let hex = unsafe { core::slice::from_raw_parts(pos as *const u8, 8) };
@@ -107,7 +93,7 @@ fn parse_literal_hex(pos: usize) -> usize {
     usize::from_str_radix(&hex, 16).expect("NOT hex number.")
 }
 
-fn load_app(start: usize)  {
+fn load_and_run_app(start: usize) {
     let mut pos = start;
     let app_num = parse_literal_hex(pos);
     assert_eq!(app_num, 2);
@@ -118,12 +104,9 @@ fn load_app(start: usize)  {
         println!("app size: {}", size);
         pos += 8;
 
-        let code = unsafe {
-            core::slice::from_raw_parts(pos as *const u8, size)
-        };
+        let code = unsafe { core::slice::from_raw_parts(pos as *const u8, size) };
         pos += size;
         println!("app pos: {:#X}", pos);
-
 
         // thread::spawn(move || {
         //        // println!("\n=====thread::spawn=========");
@@ -135,46 +118,27 @@ fn load_app(start: usize)  {
         //        // axhal::misc::terminate()
         //        // thread::yield_now()
         // });
-        
+
         let mut vm = MmStruct::new();
-        let (entry, end) = parse_elf(code,& mut  vm);
+        let (entry, end) = parse_elf(code, &mut vm);
         let tid = user_mode_thread(
             move || {
                 // println!("\n=====user_mode_thread=========");
-                run_app(entry, end,& mut vm);
-                
+                run_app(entry, end, &mut vm);
             },
             CloneFlags::CLONE_FS,
         );
-
-       
     }
 }
-
-
-/// 拷贝app 到目的地址
-fn copy_app(app_bytes: &[u8], to_addr: usize) {
-    let run_code = unsafe { core::slice::from_raw_parts_mut(to_addr as *mut u8, app_bytes.len()) };
-    run_code.copy_from_slice(app_bytes);
-   
-}
-
-
-
-
 
 static INITED_CPUS: AtomicUsize = AtomicUsize::new(0);
 fn is_init_ok() -> bool {
     INITED_CPUS.load(Ordering::Acquire) == axconfig::SMP
 }
 
-
-
-
-
 fn elfflags_to_mapflags(flags: usize) -> usize {
     const PF_X: usize = 1 << 0; // Segment is executable
-    const PF_W: usize =	1 << 1; // Segment is writable
+    const PF_W: usize = 1 << 1; // Segment is writable
     const PF_R: usize = 1 << 2; // Segment is readable
 
     let mut mapflags = MappingFlags::empty();
@@ -190,26 +154,30 @@ fn elfflags_to_mapflags(flags: usize) -> usize {
     mapflags.bits()
 }
 
-fn parse_elf(code: &[u8],vm:& MmStruct) -> (usize, usize) {
+fn parse_elf(code: &[u8], vm: &MmStruct) -> (usize, usize) {
     use elf::abi::PT_LOAD;
     use elf::endian::AnyEndian;
-    use elf::ElfBytes;
     use elf::segment::ProgramHeader;
+    use elf::ElfBytes;
 
     let file = ElfBytes::<AnyEndian>::minimal_parse(code).unwrap();
     println!("e_entry: {:#X}", file.ehdr.e_entry);
 
-    let phdrs: Vec<ProgramHeader> = file.segments().unwrap()
+    let phdrs: Vec<ProgramHeader> = file
+        .segments()
+        .unwrap()
         .iter()
-        .filter(|phdr|{phdr.p_type == PT_LOAD})
+        .filter(|phdr| phdr.p_type == PT_LOAD)
         .collect();
 
     let mut end = 0;
 
     println!("There are {} PT_LOAD segments", phdrs.len());
     for phdr in phdrs {
-        println!("phdr: offset: {:#X}=>{:#X} size: {:#X}=>{:#X}, flags {:#X}",
-            phdr.p_offset, phdr.p_vaddr, phdr.p_filesz, phdr.p_memsz, phdr.p_flags);
+        println!(
+            "phdr: offset: {:#X}=>{:#X} size: {:#X}=>{:#X}, flags {:#X}",
+            phdr.p_offset, phdr.p_vaddr, phdr.p_filesz, phdr.p_memsz, phdr.p_flags
+        );
 
         let fdata = file.segment_data(&phdr).unwrap();
         println!("fdata: {:#x}", fdata.len());
@@ -218,7 +186,9 @@ fn parse_elf(code: &[u8],vm:& MmStruct) -> (usize, usize) {
         let va = align_down_4k(phdr.p_vaddr as usize);
         let num_pages = (va_end - va) >> PAGE_SHIFT;
         // let pa = vm::alloc_pages(num_pages, PAGE_SIZE_4K);
-        let pa: usize = axalloc::global_allocator().alloc_pages(num_pages, PAGE_SIZE_4K) .unwrap();
+        let pa: usize = axalloc::global_allocator()
+            .alloc_pages(num_pages, PAGE_SIZE_4K)
+            .unwrap();
         println!("va: {:#x} pa: {:#x} num {}", va, pa, num_pages);
 
         let flags = elfflags_to_mapflags(phdr.p_flags as usize);
@@ -226,7 +196,15 @@ fn parse_elf(code: &[u8],vm:& MmStruct) -> (usize, usize) {
         // Whatever we need vm::WRITE for initialize segment.
         // Fix it in future.
         // vm.map_region(va, pa, num_pages << PAGE_SHIFT, flags|vm::WRITE);
-        vm.map_region(va, pa, num_pages << PAGE_SHIFT, MappingFlags::from_bits(flags).unwrap().union(MappingFlags::WRITE).bits() );
+        vm.map_region(
+            va,
+            pa,
+            num_pages << PAGE_SHIFT,
+            MappingFlags::from_bits(flags)
+                .unwrap()
+                .union(MappingFlags::WRITE)
+                .bits(),
+        );
 
         let mdata = unsafe {
             core::slice::from_raw_parts_mut(phdr.p_vaddr as *mut u8, phdr.p_filesz as usize)
@@ -236,7 +214,10 @@ fn parse_elf(code: &[u8],vm:& MmStruct) -> (usize, usize) {
 
         if phdr.p_memsz != phdr.p_filesz {
             let edata = unsafe {
-                core::slice::from_raw_parts_mut((phdr.p_vaddr+phdr.p_filesz) as *mut u8, (phdr.p_memsz - phdr.p_filesz) as usize)
+                core::slice::from_raw_parts_mut(
+                    (phdr.p_vaddr + phdr.p_filesz) as *mut u8,
+                    (phdr.p_memsz - phdr.p_filesz) as usize,
+                )
             };
             edata.fill(0);
             println!("edata: {:#x}", edata.len());
@@ -250,24 +231,20 @@ fn parse_elf(code: &[u8],vm:& MmStruct) -> (usize, usize) {
     (file.ehdr.e_entry as usize, end)
 }
 
-fn run_app(entry: usize, end: usize,vm:& mut MmStruct) {
+fn run_app(entry: usize, end: usize, vm: &mut MmStruct) {
     const TASK_SIZE: usize = 0x40_0000_0000;
     // let pa = vm::alloc_pages(1, PAGE_SIZE_4K);
-    let pa: usize = axalloc::global_allocator().alloc_pages(1, PAGE_SIZE_4K) .unwrap();
+    let pa: usize = axalloc::global_allocator()
+        .alloc_pages(1, PAGE_SIZE_4K)
+        .unwrap();
     let va = TASK_SIZE - PAGE_SIZE_4K;
     println!("va: {:#x} pa: {:#x}", va, pa);
-    
 
-  
-    let flag=MappingFlags::READ | MappingFlags::WRITE;
-    
+    let flag = MappingFlags::READ | MappingFlags::WRITE;
+
     vm.map_region(va, pa, PAGE_SIZE_4K, flag.bits());
     let sp = TASK_SIZE - 32;
-    let stack = unsafe {
-        core::slice::from_raw_parts_mut(
-            sp as *mut usize, 4
-        )
-    };
+    let stack = unsafe { core::slice::from_raw_parts_mut(sp as *mut usize, 4) };
     stack[0] = 0;
     stack[1] = TASK_SIZE - 16;
     stack[2] = 0;
@@ -277,32 +254,36 @@ fn run_app(entry: usize, end: usize,vm:& mut MmStruct) {
     vm.set_brk(end);
 
     // let pa = vm::alloc_pages(4, PAGE_SIZE_4K);
-    let pa: usize = axalloc::global_allocator().alloc_pages(1, PAGE_SIZE_4K) .unwrap();
-    vm.map_region(end, pa, 4*PAGE_SIZE_4K, flag.bits());
+    let pa: usize = axalloc::global_allocator()
+        .alloc_pages(1, PAGE_SIZE_4K)
+        .unwrap();
+    vm.map_region(end, pa, 4 * PAGE_SIZE_4K, flag.bits());
     println!("### app end: {:#X}; {:#X}", end, vm.brk());
 
-    setup_zero_page( vm);
+    setup_zero_page(vm);
 
     println!("Start app ...\n");
     // execute app
-    unsafe { core::arch::asm!("
+    unsafe {
+        core::arch::asm!("
         jalr    t2
         j       .",
-        in("t0") entry,
-        in("t1") sp,
-        in("t2") start_app,
-    )};
+            in("t0") entry,
+            in("t1") sp,
+            in("t2") start_app,
+        )
+    };
 
     extern "C" {
         fn start_app();
     }
 }
 
-fn setup_zero_page(vm:& MmStruct) {
+fn setup_zero_page(vm: &MmStruct) {
     // let pa = vm::alloc_pages(1, PAGE_SIZE_4K);
-    let pa: usize = axalloc::global_allocator().alloc_pages(1, PAGE_SIZE_4K) .unwrap();
-    let flag=MappingFlags::READ ;
+    let pa: usize = axalloc::global_allocator()
+        .alloc_pages(1, PAGE_SIZE_4K)
+        .unwrap();
+    let flag = MappingFlags::READ;
     vm.map_region(0x0, pa, PAGE_SIZE_4K, flag.bits());
 }
-
-
