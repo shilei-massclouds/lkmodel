@@ -12,6 +12,7 @@ use taskctx::TaskStack;
 use crate::CloneFlags;
 use crate::KernelCloneArgs;
 
+use axlog2;
 pub fn copy_thread(
     task: &mut TaskStruct,
     args: &KernelCloneArgs,
@@ -22,7 +23,7 @@ pub fn copy_thread(
     real_parent: Option<Arc<SchedInfo>>,
     group_leader: Option<Arc<SchedInfo>>,
 ) -> LinuxResult {
-    info!("copy_thread ...zzz");
+    info!("copy_thread ...222");
     let mut sched_info = SchedInfo::new();
     //sched_info.init(self.entry, task_entry as usize, 0.into());
     /////////////////////
@@ -49,6 +50,8 @@ pub fn copy_thread(
     } else {
         let ctx = taskctx::current_ctx();
         *pt_regs = ctx.pt_regs().clone();
+        info!(" ctx.pt_regs:0x{:0x}" , ctx.pt_regs() as *const _ as *const usize  as usize );
+        info!(" pt_regs.regs.ra:0x{:0x}" , pt_regs.regs.ra );
         if let Some(sp) = args.stack {
             pt_regs.regs.sp = sp; // User fork
         }
@@ -59,7 +62,6 @@ pub fn copy_thread(
     }
 
     let sp = sched_info.pt_regs_addr();
-    info!("sched_info_thread,and sp:0x{:0x}" , sp as usize);
     sched_info.thread.get_mut().init(crate::task_entry as usize, sp.into(), 0.into());
     task.sched_info = Arc::new(sched_info);
     match task.sched_info.pgd {

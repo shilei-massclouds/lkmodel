@@ -32,7 +32,7 @@
 
 #[allow(unused_imports)]
 #[macro_use]
-extern crate axlog2;
+extern crate log;
 
 pub mod platform;
 

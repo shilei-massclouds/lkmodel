@@ -451,10 +451,6 @@ fn linux_syscall_getuid(args: SyscallArgs) -> usize {
     return 1;
 }
 
-fn linux_syscall_sokect(args: SyscallArgs) -> usize {
-    return 1;
-}
-
 fn linux_syscall_fcntl(args: SyscallArgs) -> usize {
     0
 }

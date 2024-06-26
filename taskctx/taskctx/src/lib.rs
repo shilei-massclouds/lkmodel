@@ -2,7 +2,7 @@
 #![feature(get_mut_unchecked)]
 
 #[macro_use]
-extern crate log;
+extern crate axlog2;
 extern crate alloc;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
@@ -15,7 +15,7 @@ use axhal::arch::TaskContext as ThreadStruct;
 use axhal::arch::TrapFrame;
 use axhal::mem::VirtAddr;
 use axhal::trap::{TRAPFRAME_SIZE, STACK_ALIGN};
-use memory_addr::{align_up_4k, align_down, PAGE_SIZE_4K};
+use memory_addr::{align_down, align_up, align_up_4k, PAGE_SIZE_4K};
 use spinbase::SpinNoIrq;
 use axhal::arch::write_page_table_root0;
 use page_table::paging::PageTable;
@@ -212,7 +212,8 @@ impl SchedInfo {
     }
 
     pub fn pt_regs_addr(&self) -> usize {
-        self.kstack.as_ref().unwrap().top() - align_down(TRAPFRAME_SIZE, STACK_ALIGN)
+        axlog2::info!("alsdasd:0x{:0x}" ,TRAPFRAME_SIZE);
+        self.kstack.as_ref().unwrap().top() - TRAPFRAME_SIZE
     }
 
     pub fn pt_regs(&self) -> &mut TrapFrame {

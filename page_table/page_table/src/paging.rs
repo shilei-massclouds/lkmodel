@@ -2,7 +2,6 @@
 
 use axalloc::global_allocator;
 use core::cell::OnceCell;
-use core::iter::Map;
 use crate::PagingIf;
 use core::arch::asm;
 use axhal::arch::write_page_table_root;
@@ -138,7 +137,7 @@ pub fn pgd_total_new() -> PageTable {
             phys_to_virt(r.paddr),
             r.paddr,
             r.size,
-            MappingFlags::READ | MappingFlags::WRITE | MappingFlags::EXECUTE ,
+            r.flags.into(),
             true,
         ).unwrap();
     }

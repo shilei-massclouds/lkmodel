@@ -4,6 +4,7 @@ use scheduler::BaseScheduler;
 use taskctx::switch_mm;
 use taskctx::TaskState;
 use taskctx::SchedInfo;
+use core::arch::asm;
 /*
 use alloc::collections::VecDeque;
 

@@ -9,6 +9,7 @@ extern crate alloc;
 use axerrno::{LinuxError, LinuxResult};
 use axhal::mem::{memory_regions, phys_to_virt};
 use axtype::DtbInfo;
+use task::get_task;
 use core::sync::atomic::{AtomicUsize, Ordering};
 use fork::{user_mode_thread, CloneFlags};
 use core::panic::PanicInfo;
@@ -74,6 +75,9 @@ pub fn run(_cpu_id: usize, dtb: usize) {
         },
         CloneFlags::CLONE_FS,
     );
+    let task = task::current();
+    let rq = run_queue::task_rq(&task.sched_info);
+    rq.lock().resched(false);
 }
 
 #[panic_handler]

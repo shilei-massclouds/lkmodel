@@ -26,8 +26,16 @@ pub fn init_trap() {
 
 #[no_mangle]
 pub fn riscv_trap_handler(tf: &mut TrapFrame, _from_user: u64) {
+    let sp = 0xffffffc080386fc0 as usize;
+    unsafe {
+        let debugsp = (sp - 264) as *const usize as *const TrapFrame;
+        info!("zzzzspec:0x{:0x}" , (*debugsp).sepc);
+        let tf_address = tf as *const TrapFrame as *const usize as usize;
+        info!("tf address:0x{:0x}" , tf_address );
+        info!(" real_gap = :0x{:0x}" , sp - tf_address );
+    }
     let scause = scause::read();
-    println!( "sepc:0x{:0x}  ,  a7:{}  , scause:{}" , tf.sepc , tf.regs.a7 , scause.code());
+    info!( "sepc:0x{:0x}  ,  a7:{}  , scause:{}" , tf.sepc , tf.regs.a7 , scause.code());
     let sstatus_value = sstatus::read();
 
     // 打印sstatus的原始值
