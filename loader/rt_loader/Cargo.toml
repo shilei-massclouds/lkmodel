@@ -6,7 +6,7 @@ edition = "2021"
 [features]
 default = ["axstd"]
 [dependencies]
-axstd = { path = "../../axstd/axstd",features=["alloc","multitask"], optional = true }
+axstd = { path = "../../axstd/axstd",features=["alloc"], optional = true }
 axlog2 = { path = "../../axlog2/axlog2" }
 arch_boot = {path = "../../arch_boot/arch_boot"  }
 axconfig = { path = "../../axconfig/axconfig" }
@@ -19,14 +19,15 @@ mm = { path = "../../mm/mm"}
 memory_addr = { path = "../../memory_addr/memory_addr" }
 elf = { version = "0.7.3", default-features = false }
 
+# axtask = { path = "../../axtask/axtask" }
 
 #axsyscall = { path = "../../axsyscall/axsyscall" }
 #run_queue = { path = "../../run_queue/run_queue" }
 #axdriver = { path = "../../axdriver/axdriver" }
 #axmount = { path = "../../axmount/axmount" }
 #percpu2 ={ path = "../../percpu2/percpu2" }
-#fork ={ path = "../../fork/fork" }
-#exec = { path = "../../exec/exec" }
+fork ={ path = "../../fork/fork" }
+exec = { path = "../../exec/exec" }
 #axerrno = { path = "../../axerrno/axerrno" }
 #axtype ={ path = "../../axtype/axtype" }
 #axdtb = { path = "../../axdtb/axdtb" }
