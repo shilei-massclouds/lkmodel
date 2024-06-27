@@ -148,5 +148,6 @@ pub fn pgd_total_new() -> PageTable {
         (MemRegionFlags::READ | MemRegionFlags::WRITE | MemRegionFlags::EXECUTE).into(),
         true,
     ).unwrap();
+    info!("real_paddr:0x:{:0x}" , app_page_table.root_paddr());
     app_page_table
 }

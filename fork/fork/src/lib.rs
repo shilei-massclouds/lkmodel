@@ -47,6 +47,8 @@ bitflags::bitflags! {
         const CLONE_UNTRACED        = 0x00800000;
         /// set the TID in the child
         const CLONE_CHILD_SETTID    = 0x01000000;
+        ///NOT CLONE
+        const NOT_CLONE_VM      = 0x00001200;
     }
 }
 
@@ -243,7 +245,11 @@ impl KernelCloneArgs {
     }
 
     fn copy_mm(&self, task: &mut TaskStruct) -> LinuxResult {
-        if self.flags.contains(CloneFlags::CLONE_VM) {
+        if self.flags.contains(CloneFlags::NOT_CLONE_VM) {
+            
+        }
+        else if self.flags.contains(CloneFlags::CLONE_VM) {
+            info!("new_taskpgd:0x:{:0x}" , task.mm().lock().root_paddr());
             task.mm = current().mm.clone();
         } else {
             info!("copy_mm: NO CLONE_VM");

@@ -7,12 +7,13 @@ use axhal::misc;
 use axtype::PAGE_SIZE;
 use mm::VmAreaStruct;
 use task::current;
+use core::iter::Scan;
 use core::panic::PanicInfo;
 use fork::user_mode_thread;
 use axhal::mem::{ virt_to_phys , phys_to_virt };
 use axlog2::{ debug , error ,info };
 const PLASH_START: usize = 0xffff_ffc022000000;
-use axstd::println;
+use axstd::{print, println};
 use core::slice;
 use elf::ElfBytes;
 use elf::endian::{AnyEndian, LittleEndian};
@@ -22,17 +23,82 @@ use page_table::paging;
 use axhal::mem::MemRegionFlags;
 use core::arch::asm;
 use core::mem::transmute;
-fn get_elf_data() -> &'static [u8] {
-    unsafe { slice::from_raw_parts(PLASH_START as *const u8, 0x2000000) }
+
+
+const MARKERS: [&str; 3] = ["APP1_START", "APP2_START","APP3_START"];
+
+fn get_elf_data( offset:usize , len:usize ) -> &'static [u8] {
+    unsafe { slice::from_raw_parts(offset as *const u8, len) }
 }
+
+fn find_marker(base_addr: *const u8, length: usize, marker: &str) -> Option<usize> {
+    let marker_bytes = marker.as_bytes();
+    let marker_len = marker_bytes.len();
+
+    for i in 0..(length - marker_len) {
+        let mut match_found = true;
+        for j in 0..marker_len {
+            unsafe {
+                if *base_addr.add(i + j) != marker_bytes[j] {
+                    match_found = false;
+                    break;
+                }
+            }
+        }
+        if match_found {
+            return Some(i);
+        }
+    }
+
+    None
+}
+
 
 
 #[no_mangle]
 pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
     init(_cpu_id);
-    let elf_data = get_elf_data();
+
+    let app_num = 3;
+    for i in 0..app_num {
+        start_app(i);
+        println!("APP_{} START RUN!!!!!" , i + 1 );
+        let task = task::current();
+        let rq = run_queue::task_rq(&task.sched_info);
+        rq.lock().resched(false);
+    }
+    misc::terminate();
+}
+
+fn start_app( app_id:usize ){
+    let apps_bin = PLASH_START as *const u8;
+    let apps_bin_len = 32 * 1024 * 1024; 
+    if let Some(app_pos) = find_marker(apps_bin, apps_bin_len, MARKERS[app_id]) {
+        let app_start_address = PLASH_START as u64 + app_pos as u64 + MARKERS[app_id].len() as u64;
+        print_bytes_at(app_start_address as usize, 5);
+        load_app(app_start_address as usize, 0x2000000);
+    } else {
+        println!("App1 marker not found.");
+    }
+}
+
+fn load_app( offset : usize , len : usize) {
+    let elf_data = get_elf_data(offset,len);
     let elf = ElfBytes::<LittleEndian>::minimal_parse(elf_data).expect("Failed to parse ELF");
     let entry = elf.ehdr.e_entry as usize;
+    let mut app_tid:usize = 0;
+    unsafe{
+        info!("start thread ...");
+        app_tid = user_mode_thread(
+            move || {
+                run_app(entry)
+            },
+            fork::CloneFlags::CLONE_FS | fork::CloneFlags::NOT_CLONE_VM,
+        );
+    }
+
+    let user_task = task::get_task(app_tid).unwrap();
+
     let program_headers = elf.segments().ok_or("Failed to read program headers").unwrap();
     let mut max_addr:usize = 0;
     for ph in program_headers.iter() {
@@ -43,12 +109,13 @@ pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
             let map_start = axtype::align_down_4k(ph.p_paddr as usize);//align_down;
             let map_size = (ph.p_paddr as usize - map_start) + ph.p_memsz as usize;
             let page_num: usize = axtype::align_up_4k(map_size) / PAGE_SIZE;
+            let mut cpaddr = ph.p_paddr as usize  - map_start;
             match axalloc::global_allocator().alloc_pages(page_num, PAGE_SIZE ){
                 Ok(memory_addr) => {
+                    cpaddr = memory_addr + cpaddr;
                     let pa : usize = virt_to_phys(memory_addr.into()).into();
-                    let mm = task::current().mm();
+                    let mm = user_task.mm();
                     mm.lock().map_region(map_start, pa, page_num * PAGE_SIZE, 0);
-                    //paging::add_app_vm_page(map_start  , pa  as usize , page_num * PAGE_SIZE ,flags | MemRegionFlags::WRITE, true );
                 }
                 Err(err) => {
                     info!("Failed to allocate memory: {:?}", err);
@@ -58,42 +125,33 @@ pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
             if map_start  + page_num * PAGE_SIZE > max_addr {
                 max_addr = map_start + page_num * PAGE_SIZE;
             }
-
-            copy_slice_to_address( segment , ph.p_paddr as usize  );
+            copy_slice_to_address( segment , cpaddr  );
 
             if ph.p_filesz < ph.p_memsz{
-                let bss_start = ph.p_vaddr + ph.p_filesz;
+                let bss_start = cpaddr as u64 + ph.p_filesz;
                 let bss_size = ph.p_memsz - ph.p_filesz;
-
                 let bss_ptr = (bss_start as usize) as *mut u8;
-
                 unsafe {
                     core::ptr::write_bytes(bss_ptr, 0, bss_size as usize);
                 }
             }
-
-            task::current().mm().lock().set_brk(max_addr);
         }
     }
+    
+    user_task.mm().lock().set_brk(max_addr);
 
-    set_zero_page();
-
-    unsafe{
-        info!("start thread ...");
-        let tid = user_mode_thread(
-            move || {
-                run_app(entry)
-            },
-            fork::CloneFlags::CLONE_FS,
-        );
+    {
+        match axalloc::global_allocator().alloc_pages(1, PAGE_SIZE ){
+            Ok(memory_addr) => {
+                let pa : usize = virt_to_phys(memory_addr.into()).into();
+                let mm = user_task.mm();
+                mm.lock().map_region(0 as usize, pa as usize, 1 * PAGE_SIZE, 0);
+            }
+            Err(err) => {
+                panic!("Failed to allocate memory");
+            }
+        }
     }
-
-
-    let task = task::current();
-    let rq = run_queue::task_rq(&task.sched_info);
-    info!("sp_top:0x{:0x}" , max_addr + 19 * PAGE_SIZE );
-    rq.lock().resched(false);
-    misc::terminate();
 }
 
 fn set_zero_page(){
@@ -206,7 +264,6 @@ fn print_bytes_at(address: usize, num_bytes: usize) {
 }
 
 fn copy_slice_to_address(slice: &[u8], address: usize) {
-    println!("Start Copy");
     unsafe {
         let dst_ptr = address as *mut u8;
 
@@ -214,8 +271,6 @@ fn copy_slice_to_address(slice: &[u8], address: usize) {
             *dst_ptr.add(i) = byte;
         }
     }
-
-    println!("Copied {} bytes to address 0x{:x}", slice.len(), address);
 }
 
 
@@ -241,7 +296,7 @@ fn convert_flags( fplags : u32 ) -> MemRegionFlags {
 
 
 fn init(_cpu_id:usize){
-    axlog2::init("info");
+    axlog2::init("error");
     axhal::arch_init_early(_cpu_id);
 
 

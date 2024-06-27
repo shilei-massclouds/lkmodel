@@ -135,6 +135,10 @@ impl MmStruct {
         self.pgd.clone()
     }
 
+    pub fn init_task_pgd(&mut self) {
+        self.pgd = Arc::new(SpinNoIrq::new(pgd_total_new()));
+    }
+
     pub fn root_paddr(&self) -> usize {
         self.pgd.lock().root_paddr().into()
     }
