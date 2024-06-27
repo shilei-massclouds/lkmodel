@@ -93,7 +93,6 @@ pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
     let rq = run_queue::task_rq(&task.sched_info);
     info!("sp_top:0x{:0x}" , max_addr + 19 * PAGE_SIZE );
     rq.lock().resched(false);
-    //sp = sp_top
     misc::terminate();
 }
 
@@ -255,9 +254,6 @@ fn init(_cpu_id:usize){
 
     info!("Initialize schedule system ...");
     task::init();
-    let all_devices = axdriver::init_drivers();
-    let root_dir = axmount::init(all_devices.block);
-    task::current().fs.lock().init(root_dir);
     axtrap::early_init();
     axtrap::final_init();
     paging::set_app_vm_page( task::current().mm().lock().root_paddr().into())
