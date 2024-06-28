@@ -19,7 +19,7 @@ members = [
     "helloworld/rt_helloworld", 
     "axstd", "loader/rt_loader", "elfloader/rt_elfloader", 
     "exec/rt_exec"
-]
+, "elfloader/elfloader"]
 
 [profile.release]
 lto = true

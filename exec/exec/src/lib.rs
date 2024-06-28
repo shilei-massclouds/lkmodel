@@ -8,7 +8,7 @@ use alloc::{vec, vec::Vec};
 use alloc::string::String;
 use core::str::from_utf8;
 use core::{mem::align_of, mem::size_of_val, ptr::null};
-
+use axtype::is_aligned;
 use axerrno::LinuxResult;
 use axfile::fops::File;
 use axfile::fops::OpenOptions;
@@ -30,7 +30,6 @@ use mutex::Mutex;
 use axtype::get_user_str_vec;
 use elf::abi::{PF_R, PF_W, PF_X};
 use mmap::{PROT_READ, PROT_WRITE, PROT_EXEC};
-use axtype::is_aligned;
 
 const ELF_HEAD_BUF_SIZE: usize = 256;
 
