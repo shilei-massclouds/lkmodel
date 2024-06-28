@@ -2,7 +2,7 @@
 #![feature(get_mut_unchecked)]
 
 #[macro_use]
-extern crate log;
+extern crate axlog2;
 extern crate alloc;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
@@ -15,7 +15,7 @@ use axhal::arch::TaskContext as ThreadStruct;
 use axhal::arch::TrapFrame;
 use axhal::mem::VirtAddr;
 use axhal::trap::{TRAPFRAME_SIZE, STACK_ALIGN};
-use memory_addr::{align_up_4k, align_down, PAGE_SIZE_4K};
+use memory_addr::{align_down, align_up, align_up_4k, PAGE_SIZE_4K};
 use spinbase::SpinNoIrq;
 use axhal::arch::write_page_table_root0;
 use page_table::paging::PageTable;
@@ -212,7 +212,8 @@ impl SchedInfo {
     }
 
     pub fn pt_regs_addr(&self) -> usize {
-        self.kstack.as_ref().unwrap().top() - align_down(TRAPFRAME_SIZE, STACK_ALIGN)
+        axlog2::info!("alsdasd:0x{:0x}" ,TRAPFRAME_SIZE);
+        self.kstack.as_ref().unwrap().top() - TRAPFRAME_SIZE
     }
 
     pub fn pt_regs(&self) -> &mut TrapFrame {
@@ -259,17 +260,20 @@ impl SchedInfo {
 
 /// The reference type of a task.
 pub type CtxRef = Arc<SchedInfo>;
-
+pub static mut CURRENT:usize = 0;
 /// A wrapper of [`TaskCtxRef`] as the current task contex.
 pub struct CurrentCtx(ManuallyDrop<CtxRef>);
-
 impl CurrentCtx {
     pub fn try_get() -> Option<Self> {
-        let ptr: *const SchedInfo = axhal::cpu::current_task_ptr();
-        if !ptr.is_null() {
-            Some(Self(unsafe { ManuallyDrop::new(CtxRef::from_raw(ptr)) }))
-        } else {
-            None
+        unsafe{
+            let ptr: *const SchedInfo = CURRENT as *const SchedInfo;
+            //let ptr: *const SchedInfo = axhal::cpu::current_task_ptr();
+            if !ptr.is_null() {
+                Some(Self(unsafe { ManuallyDrop::new(CtxRef::from_raw(ptr)) }))
+            } else {
+                debug!("ptr is NULL");
+                None
+            }
         }
     }
 
@@ -297,7 +301,8 @@ impl CurrentCtx {
         let Self(arc) = prev;
         ManuallyDrop::into_inner(arc); // `call Arc::drop()` to decrease prev task reference count.
         let ptr = Arc::into_raw(next.clone());
-        axhal::cpu::set_current_task_ptr(ptr);
+        CURRENT = ptr as *const usize as usize;
+        //axhal::cpu::set_current_task_ptr(ptr);
     }
 }
 

@@ -156,7 +156,6 @@ unsafe extern "C" fn context_switch(_current_task: &mut TaskContext, _next_task:
         LDR     s0, a1, 2
         LDR     sp, a1, 1
         LDR     ra, a1, 0
-
         ret",
         options(noreturn),
     )

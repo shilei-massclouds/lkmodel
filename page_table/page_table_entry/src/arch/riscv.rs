@@ -1,8 +1,9 @@
 //! RISC-V page table entries.
 
 use core::fmt;
+use aarch64_cpu::registers::MIDR_EL1::Implementer::Infineon;
+use axlog2::info;
 use memory_addr::PhysAddr;
-
 use crate::{GenericPTE, MappingFlags};
 
 bitflags::bitflags! {
@@ -106,6 +107,7 @@ impl GenericPTE for Rv64PTE {
     }
 
     fn is_unused(&self) -> bool {
+        //info!("self.0 : {:0x}---end" , self.0 );
         self.0 == 0
     }
     fn is_present(&self) -> bool {

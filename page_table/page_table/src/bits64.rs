@@ -39,6 +39,13 @@ pub struct PageTable64<M: PagingMetaData, PTE: GenericPTE, IF: PagingIf> {
 impl<M: PagingMetaData, PTE: GenericPTE, IF: PagingIf> Clone for PageTable64<M, PTE, IF> {
     fn clone(&self) -> Self {
         let root_paddr = Self::alloc_table().unwrap();
+        let dst_ptr =  IF::phys_to_virt(root_paddr).as_mut_ptr();
+        let src_ptr = IF::phys_to_virt(self.root_paddr).as_ptr();
+
+        unsafe {
+            core::ptr::copy_nonoverlapping(src_ptr.wrapping_add(PAGE_SIZE_4K/2)
+            , dst_ptr.wrapping_add(PAGE_SIZE_4K/2), PAGE_SIZE_4K/2);
+        }
         Self {
             root_paddr: root_paddr,
             intrm_tables: self.intrm_tables.clone(),
@@ -165,6 +172,7 @@ impl<M: PagingMetaData, PTE: GenericPTE, IF: PagingIf> PageTable64<M, PTE, IF> {
             || !paddr.is_aligned(PageSize::Size4K)
             || !memory_addr::is_aligned(size, PageSize::Size4K.into())
         {
+            panic!("map_region_error");
             return Err(PagingError::NotAligned);
         }
         trace!(
@@ -197,6 +205,7 @@ impl<M: PagingMetaData, PTE: GenericPTE, IF: PagingIf> PageTable64<M, PTE, IF> {
             } else {
                 PageSize::Size4K
             };
+            //info!("vaddr:0x{:0x} , paddr:0x{:0x} " , vaddr.as_usize() , paddr.as_usize());
             self.map(vaddr, paddr, page_size, flags).inspect_err(|e| {
                 error!(
                     "failed to map page: {:#x?}({:?}) -> {:#x?}, {:?}",
@@ -342,12 +351,13 @@ impl<M: PagingMetaData, PTE: GenericPTE, IF: PagingIf> PageTable64<M, PTE, IF> {
         } else {
             unreachable!()
         };
+
         let p3e = &mut p3[p3_index(vaddr)];
         if page_size == PageSize::Size1G {
             return Ok(p3e);
         }
 
-        let p2 = self.next_table_mut_or_create(p3e)?;
+        let p2 = self.next_table_mut_or_create(p3e)?; //this ssss 
         let p2e = &mut p2[p2_index(vaddr)];
         if page_size == PageSize::Size2M {
             return Ok(p2e);

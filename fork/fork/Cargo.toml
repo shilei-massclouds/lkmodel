@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-log = "0.4"
+axlog2 = {git = "ssh://git@github.com/shilei-massclouds/axlog2.git"}
 cfg-if = "1.0"
 bitflags = "2.2"
 task = { git = "ssh://git@github.com/shilei-massclouds/task.git" }
@@ -17,3 +17,4 @@ axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno.git" }
 axtype = { git = "ssh://git@github.com/shilei-massclouds/axtype.git" }
 spinbase = { git = "ssh://git@github.com/shilei-massclouds/spinbase.git" }
 axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal.git" }
+axalloc = { git = "ssh://git@github.com/shilei-massclouds/axalloc.git" }

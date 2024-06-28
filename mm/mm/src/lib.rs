@@ -9,7 +9,7 @@ use alloc::collections::BTreeMap;
 use alloc::sync::Arc;
 use core::cell::OnceCell;
 use axfile::fops::File;
-use page_table::paging::pgd_alloc;
+use page_table::paging::{ pgd_total_new , pgd_alloc };
 use page_table::paging::MappingFlags;
 use page_table::paging::PageTable;
 use page_table::paging::PagingResult;
@@ -80,7 +80,7 @@ impl MmStruct {
         Self {
             id: MM_UNIQUE_ID.fetch_add(1, Ordering::SeqCst),
             vmas: BTreeMap::new(),
-            pgd: Arc::new(SpinNoIrq::new(pgd_alloc())),
+            pgd: Arc::new(SpinNoIrq::new(pgd_total_new())),
             brk: 0,
 
             // Todo: temprarily record mapped (va, pa)
@@ -117,7 +117,7 @@ impl MmStruct {
             let pa = virt_to_phys(new_page.into());
 
             let flags = MappingFlags::READ | MappingFlags::WRITE |
-                MappingFlags::EXECUTE | MappingFlags::USER;
+                MappingFlags::EXECUTE;
             pgd.map_region(va.into(), pa.into(), PAGE_SIZE, flags, true).unwrap();
             mapped.insert(va, new_page);
         }
@@ -133,6 +133,10 @@ impl MmStruct {
 
     pub fn pgd(&self) -> Arc<SpinNoIrq<PageTable>> {
         self.pgd.clone()
+    }
+
+    pub fn init_task_pgd(&mut self) {
+        self.pgd = Arc::new(SpinNoIrq::new(pgd_total_new()));
     }
 
     pub fn root_paddr(&self) -> usize {
@@ -153,7 +157,7 @@ impl MmStruct {
 
     pub fn map_region(&self, va: usize, pa: usize, len: usize, _uflags: usize) -> PagingResult {
         let flags =
-            MappingFlags::READ | MappingFlags::WRITE | MappingFlags::EXECUTE | MappingFlags::USER;
+            MappingFlags::READ | MappingFlags::WRITE | MappingFlags::EXECUTE;
         self.pgd
             .lock()
             .map_region(va.into(), pa.into(), len, flags, true)

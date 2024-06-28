@@ -2,7 +2,7 @@
 #![feature(asm_const)]
 
 #[macro_use]
-extern crate log;
+extern crate axlog2;
 
 mod arch;
 pub mod irq;
@@ -23,7 +23,6 @@ pub fn final_init() {
 
 fn init_irq() {
     use axhal::time::TIMER_IRQ_NUM;
-
     // Setup timer interrupt handler
     const PERIODIC_INTERVAL_NANOS: u64 =
         axhal::time::NANOS_PER_SEC / axconfig::TICKS_PER_SEC as u64;

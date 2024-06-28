@@ -14,7 +14,8 @@ trap_vector_base:
     addi    sp, sp, -{trapframe_size}
     SAVE_REGS 0
     mv      a0, sp
-    li      a1, 0
+    auipc   a1, 0          # Load the upper 20 bits of the PC into a1
+    addi    a1, a1, 12
     call    riscv_trap_handler
     RESTORE_REGS 0
     sret

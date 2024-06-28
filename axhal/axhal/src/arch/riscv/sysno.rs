@@ -56,3 +56,5 @@ pub const LINUX_SYSCALL_SCHED_GETAFFINITY: usize = 0x7b;
 pub const LINUX_SYSCALL_KILL: usize = 0x81;
 pub const LINUX_SYSCALL_RT_SIGACTION: usize = 0x86;
 pub const LINUX_SYSCALL_RT_SIGPROCMASK: usize = 0x87;
+pub const LINUX_SYSCALL_GETUID: usize = 0xae;
+pub const LINUX_SYSCALL_FCNTL: usize = 0x19;

@@ -16,7 +16,10 @@ members = [
     "driver_block/rt_driver_block",
     "driver_virtio/rt_driver_virtio",
     "macrokernel/rt_macrokernel",
-]
+    "helloworld/rt_helloworld", 
+    "axstd", "loader/rt_loader", "elfloader/rt_elfloader", 
+    "exec/rt_exec"
+, "elfloader/elfloader"]
 
 [profile.release]
 lto = true

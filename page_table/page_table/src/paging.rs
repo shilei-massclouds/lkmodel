@@ -3,9 +3,9 @@
 use axalloc::global_allocator;
 use core::cell::OnceCell;
 use crate::PagingIf;
-
+use core::arch::asm;
 use axhal::arch::write_page_table_root;
-use axhal::mem::{phys_to_virt, virt_to_phys, PhysAddr, VirtAddr, PAGE_SIZE_4K};
+use axhal::mem::{phys_to_virt, virt_to_phys, PhysAddr, VirtAddr, PAGE_SIZE_4K,memory_regions,MemRegionFlags};
 
 #[doc(no_inline)]
 pub use crate::{MappingFlags, PageSize, PagingError, PagingResult};
@@ -86,4 +86,68 @@ pub fn pgd_alloc() -> PageTable {
     /* Copy kernel mappings */
     sync_kernel_mappings(kernel_pg_root_paddr(), pgtable.root_paddr());
     pgtable
+}
+
+static mut APP_PG_DIR : OnceCell<PageTable> = OnceCell::new();
+
+pub fn init_app_pg_dir() {
+    let sp_value: usize;
+
+    // 内联汇编读取 sp 寄存器
+    unsafe {
+        asm!(
+            "mv {0}, sp", // 将 sp 寄存器的值移动到 sp_value
+            out(reg) sp_value
+        );
+    }
+
+    // 打印 sp 寄存器的值
+    debug!("sp: {:#x}", sp_value);
+    unsafe{
+        if APP_PG_DIR.get().is_none() {
+            APP_PG_DIR = KERNEL_PAGE_TABLE.clone();
+            debug!("############ APP_PG_DIR clone {:?}" , APP_PG_DIR.get().unwrap().root_paddr() );
+            debug!("############ KERNEL_PAGE_TABLE clone {:?}" , KERNEL_PAGE_TABLE.get().unwrap().root_paddr() );
+        }
+    }
+}
+
+pub fn add_app_vm_page( vaddr : usize , paddr : usize , size : usize , flags: axhal::mem::MemRegionFlags, allow_huge: bool,){
+    unsafe{
+        APP_PG_DIR.get_mut().unwrap().map_region( vaddr.into() , paddr.into() , size, flags.into() , allow_huge );
+    }
+}
+
+pub fn set_app_vm_page( addr : PhysAddr ){
+    /*
+    unsafe{
+        assert!(APP_PG_DIR.get().is_some());
+        write_page_table_root(APP_PG_DIR.get().unwrap().root_paddr());
+    }    
+    */
+    unsafe{
+        write_page_table_root(addr);
+    }    
+}
+
+pub fn pgd_total_new() -> PageTable {
+    let mut app_page_table = PageTable::try_new().unwrap();
+    for r in memory_regions() {
+        app_page_table.map_region(
+            phys_to_virt(r.paddr),
+            r.paddr,
+            r.size,
+            r.flags.into(),
+            true,
+        ).unwrap();
+    }
+    app_page_table.map_region(
+        phys_to_virt( PhysAddr::from(0x22000000) ),
+        PhysAddr::from(0x22000000),
+        0x2000000,
+        (MemRegionFlags::READ | MemRegionFlags::WRITE | MemRegionFlags::EXECUTE).into(),
+        true,
+    ).unwrap();
+    info!("real_paddr:0x:{:0x}" , app_page_table.root_paddr());
+    app_page_table
 }

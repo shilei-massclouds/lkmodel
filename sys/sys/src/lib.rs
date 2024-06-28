@@ -263,7 +263,7 @@ pub fn exit_group(exit_code: u32) -> ! {
 }
 
 fn do_exit(exit_code: u32) -> ! {
-    exit_mm();
+    //exit_mm();
     exit_notify(exit_code);
     do_task_dead()
 }
@@ -302,11 +302,13 @@ fn do_task_dead() -> ! {
     // Causes final put_task_struct in finish_task_switch():
     task.set_state(TaskState::Dead);
 
-    if task.tid() == 1 {
-        info!("InitTask[1] exits normally ...");
+    //change from 1 to 0
+    if task.tid() == 0 {
+        info!("InitTask[0] exits normally ...");
         axhal::misc::terminate()
     } else {
         let rq = run_queue::task_rq(&task.sched_info);
+        debug!("task-tid:{}", task.tid());
         rq.lock().resched(false);
         unreachable!()
     }

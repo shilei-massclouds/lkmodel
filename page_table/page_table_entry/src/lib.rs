@@ -21,7 +21,8 @@ use memory_addr::PhysAddr;
 use axhal::mem::MemRegionFlags;
 
 pub use self::arch::*;
-
+#[macro_use]
+extern crate axlog2;
 bitflags::bitflags! {
     /// Generic page table entry flags that indicate the corresponding mapped
     /// memory region permissions and attributes.

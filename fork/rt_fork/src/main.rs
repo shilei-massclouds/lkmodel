@@ -28,8 +28,15 @@ pub fn init(cpu_id: usize, _dtb: usize) {
     info!("Initialize global memory allocator...");
     axalloc::init();
 
+    let xx = axalloc::global_allocator().alloc_pages(1, 4096);
+    info!("now:0x:{:0x}" , xx.unwrap() );
     info!("Initialize kernel page table...");
+
     page_table::init();
+
+    let xx = axalloc::global_allocator().alloc_pages(2, 4096);
+    info!("now:0x:{:0x}" , xx.unwrap() );
+    info!("Initialize kernel page table...");
 
     info!("Initialize schedule system ...");
     task::init();

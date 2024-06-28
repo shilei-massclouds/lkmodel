@@ -175,7 +175,6 @@ impl<'data, E: EndianParse> ElfBytes<'data, E> {
     pub fn minimal_parse(data: &'data [u8]) -> Result<Self, ParseError> {
         let ident_buf = data.get_bytes(0..abi::EI_NIDENT)?;
         let ident = parse_ident(ident_buf)?;
-
         let tail_start = abi::EI_NIDENT;
         let tail_end = match ident.1 {
             Class::ELF32 => tail_start + crate::file::ELF32_EHDR_TAILSIZE,

@@ -154,13 +154,15 @@ pub struct iovec {
 
 pub fn writev(fd: usize, iov_array: &[iovec]) -> usize {
     assert!(fd == 1 || fd == 2);
+    let mut total_bytes_written = 0;
     for iov in iov_array {
-        debug!("iov: {:#X} {:#X}", iov.iov_base, iov.iov_len);
+        //debug!("iov: {:#X} {:#X}", iov.iov_base, iov.iov_len);
         let bytes = unsafe { core::slice::from_raw_parts(iov.iov_base as *const _, iov.iov_len) };
         let s = String::from_utf8(bytes.into());
-        error!("{}", s.unwrap());
+        early_console::write_bytes(bytes);
+        total_bytes_written += iov.iov_len;
     }
-    iov_array.len()
+    total_bytes_written
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -275,6 +277,13 @@ struct Termios {
     c_cc: [u8; NCCS], /* control characters */
 }
 
+struct Winsize {
+    pub ws_row: u16,
+    pub ws_col: u16,
+    pub ws_xpixel: u16,
+    pub ws_ypixel: u16,
+}
+
 pub fn ioctl(fd: usize, request: usize, udata: usize) -> usize {
     info!(
         "linux_syscall_ioctl fd {}, request {:#X}, udata {:#X}",
@@ -282,24 +291,39 @@ pub fn ioctl(fd: usize, request: usize, udata: usize) -> usize {
     );
 
     assert!(fd == 1 || fd == 2);
-    assert_eq!(request, TCGETS);
+    //assert_eq!(request, TCGETS);
 
-    let cc: [u8; NCCS] = [
-        0x3, 0x1c, 0x7f, 0x15, 0x4, 0x0, 0x1, 0x0, 0x11, 0x13, 0x1a, 0x0, 0x12, 0xf, 0x17, 0x16,
-        0x0, 0x0, 0x0,
-    ];
-
-    let ubuf = udata as *mut Termios;
-    unsafe {
-        *ubuf = Termios {
-            c_iflag: 0x500,
-            c_oflag: 0x5,
-            c_cflag: 0xcbd,
-            c_lflag: 0x8a3b,
-            c_line: 0,
-            c_cc: cc,
-        };
+    info!("ioctl before write!!!!!!");
+    match request {
+        TCGETS => {
+            let cc: [u8; NCCS] = [
+                0x3, 0x1c, 0x7f, 0x15, 0x4, 0x0, 0x1, 0x0, 0x11, 0x13, 0x1a, 0x0, 0x12, 0xf, 0x17, 0x16,
+                0x0, 0x0, 0x0,
+            ];
+            let ubuf = udata as *mut Termios;
+            unsafe {
+                *ubuf = Termios {
+                    c_iflag: 0x500,
+                    c_oflag: 0x5,
+                    c_cflag: 0xcbd,
+                    c_lflag: 0x8a3b,
+                    c_line: 0,
+                    c_cc: cc,
+                };
+            }
+            return 0;
+        }
+        0x5413 => {
+            let ws: &mut Winsize = unsafe { &mut *(udata as *mut Winsize) };
+            ws.ws_row = 24; 
+            ws.ws_col = 80; 
+            ws.ws_xpixel = 640; 
+            ws.ws_ypixel = 480; 
+            return 0;
+        }
+        _ => panic!("Not a valid request")
     }
+    info!("ioctl done!!!!!!");
     0
 }
 

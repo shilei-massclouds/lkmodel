@@ -1,6 +1,6 @@
 //! Startup process for monolithic kernel.
-
-#![cfg_attr(not(test), no_std)]
+#![no_std]
+#![no_main]
 
 #[macro_use]
 extern crate axlog2;
@@ -9,6 +9,7 @@ extern crate alloc;
 use axerrno::{LinuxError, LinuxResult};
 use axhal::mem::{memory_regions, phys_to_virt};
 use axtype::DtbInfo;
+use task::get_task;
 use core::sync::atomic::{AtomicUsize, Ordering};
 use fork::{user_mode_thread, CloneFlags};
 use core::panic::PanicInfo;
@@ -42,7 +43,7 @@ pub extern "Rust" fn runtime_main(cpu_id: usize, dtb: usize) {
 }
 
 pub fn init(cpu_id: usize, dtb: usize) {
-    axlog2::init();
+    axlog2::init("debug");
     axlog2::set_max_level("debug");
 
     axhal::arch_init_early(cpu_id);
@@ -74,8 +75,12 @@ pub fn run(_cpu_id: usize, dtb: usize) {
         },
         CloneFlags::CLONE_FS,
     );
+    let task = task::current();
+    let rq = run_queue::task_rq(&task.sched_info);
+    rq.lock().resched(false);
 }
 
+#[panic_handler]
 pub fn panic(info: &PanicInfo) -> ! {
     error!("{}", info);
     arch_boot::panic(info)

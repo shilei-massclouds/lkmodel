@@ -12,7 +12,7 @@ sched_cfs = []
 preempt = []
 
 [dependencies]
-log = "0.4"
+axlog2 = { git = "ssh://git@github.com/shilei-massclouds/axlog2.git" }
 spinbase = { git = "ssh://git@github.com/shilei-massclouds/spinbase.git" }
 taskctx = { git = "ssh://git@github.com/shilei-massclouds/taskctx.git" }
 lazy_init = { git = "ssh://git@github.com/shilei-massclouds/lazy_init.git" }

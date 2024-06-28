@@ -29,7 +29,7 @@ pub use taskctx::Tid;
 pub use taskctx::current_ctx;
 pub use taskctx::{TaskStack, THREAD_SIZE};
 pub use tid::alloc_tid;
-
+use core::cell::Cell;
 mod tid;
 mod tid_map;
 
@@ -94,7 +94,6 @@ pub struct TaskStruct {
     pub sigpending: SpinLock<SigPending>,
     pub sighand: Arc<SpinLock<SigHand>>,
     pub sched_info: Arc<SchedInfo>,
-
     pub exit_state: AtomicUsize,
     pub exit_code: AtomicU32,
     pub vfork_done: Option<WaitQueue>,
@@ -106,13 +105,12 @@ unsafe impl Sync for TaskStruct {}
 impl TaskStruct {
     pub fn new() -> Self {
         Self {
-            mm: None,
+            mm: Some(Arc::new(SpinNoIrq::new(MmStruct::new()))),
             fs: fstree::init_fs(),
             filetable: filetable::init_files(),
             sigpending: SpinLock::new(SigPending::new()),
             sighand: Arc::new(SpinLock::new(SigHand::new())),
             sched_info: taskctx::init_sched_info(),
-
             exit_state: AtomicUsize::new(0),
             exit_code: AtomicU32::new(0),
             vfork_done: None,
@@ -198,6 +196,7 @@ pub fn as_task_mut(task: TaskRef) -> &'static mut TaskStruct {
 /// The reference type of a task.
 pub type TaskRef = Arc<TaskStruct>;
 
+pub use taskctx::CURRENT;
 /// A wrapper of [`TaskRef`] as the current task.
 pub struct CurrentTask(ManuallyDrop<TaskRef>);
 
@@ -234,7 +233,9 @@ impl CurrentTask {
     pub(crate) unsafe fn init_current(init_task: TaskRef) {
         info!("CurrentTask::init_current...");
         let ptr = Arc::into_raw(init_task.sched_info.clone());
-        axhal::cpu::set_current_task_ptr(ptr);
+        info!("set prt:0x{:0x}" , ptr as *const usize as usize );
+        CURRENT = ptr as *const usize as usize;
+        //axhal::cpu::set_current_task_ptr(ptr);
     }
 
     pub unsafe fn set_current(prev: Self, next: TaskRef) {
@@ -242,7 +243,8 @@ impl CurrentTask {
         let Self(arc) = prev;
         ManuallyDrop::into_inner(arc); // `call Arc::drop()` to decrease prev task reference count.
         let ptr = Arc::into_raw(next.sched_info.clone());
-        axhal::cpu::set_current_task_ptr(ptr);
+        CURRENT = ptr as *const usize as usize;
+        //axhal::cpu::set_current_task_ptr(ptr);
     }
 }
 
@@ -275,7 +277,15 @@ pub fn init() {
     let init_task = Arc::new(init_task);
     let tid = alloc_tid();
     assert_eq!(tid, 0);
-    register_task(init_task.clone());
+    register_task(init_task.clone());//<  tid,Arc<TaskStruct>  > map
     unsafe { CurrentTask::init_current(init_task.clone()) }
     run_queue::init(init_task.sched_info.clone());
+    match init_task.mm {
+        None => {
+            debug!("OOOOOOOOOOOOOOOO");
+        }
+        _ => {
+            debug!("HAVE MM");
+        }
+    }
 }

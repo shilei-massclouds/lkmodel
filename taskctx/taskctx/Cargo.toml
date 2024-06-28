@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-log = "0.4"
+axlog2 = { git = "ssh://git@github.com/shilei-massclouds/axlog2" }
 axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal" }
 spinbase = { git = "ssh://git@github.com/shilei-massclouds/spinbase" }
 memory_addr = { git = "ssh://git@github.com/shilei-massclouds/memory_addr" }

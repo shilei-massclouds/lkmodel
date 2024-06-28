@@ -117,7 +117,7 @@ impl ProgramHeader {
     /// i.e. (p_offset, p_offset + p_filesz)
     pub fn get_file_data_range(&self) -> Result<(usize, usize), ParseError> {
         let start: usize = self.p_offset.try_into()?;
-        let size: usize = self.p_filesz.try_into()?;
+        let size: usize = self.p_memsz.try_into()?;
         let end = start.checked_add(size).ok_or(ParseError::IntegerOverflow)?;
         Ok((start, end))
     }

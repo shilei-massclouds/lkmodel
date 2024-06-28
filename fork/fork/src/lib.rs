@@ -3,13 +3,15 @@
 mod arch;
 
 #[macro_use]
-extern crate log;
+extern crate axlog2;
 extern crate alloc;
 use alloc::boxed::Box;
 use alloc::string::String;
 use alloc::sync::Arc;
 
 use axerrno::{LinuxError, LinuxResult};
+use axhal::{arch::TrapFrame, trap::TRAPFRAME_SIZE};
+use mm::MmStruct;
 use task::{current, Tid, TaskRef, TaskStruct};
 use spinbase::SpinNoIrq;
 use task::SIGCHLD;
@@ -45,6 +47,8 @@ bitflags::bitflags! {
         const CLONE_UNTRACED        = 0x00800000;
         /// set the TID in the child
         const CLONE_CHILD_SETTID    = 0x01000000;
+        ///NOT CLONE
+        const NOT_CLONE_VM      = 0x00001200;
     }
 }
 
@@ -91,7 +95,6 @@ impl KernelCloneArgs {
     fn perform(&self) -> LinuxResult<Tid> {
         // Todo: handle ptrace in future.
         let trace = !self.flags.contains(CloneFlags::CLONE_UNTRACED);
-
         let task = self.copy_process(None, trace)?;
         debug!(
             "sched task fork: tid[{}] -> tid[{}].",
@@ -134,18 +137,26 @@ impl KernelCloneArgs {
         };
 
         let mut task = current().dup_task_struct();
-
         //copy_files();
         self.copy_fs(&mut task)?;
         self.copy_sighand(&mut task)?;
         //copy_signal();
+        
         self.copy_mm(&mut task)?;
+        
         self.copy_thread(&mut task, tid)?;
-
+        match task.sched_info.kstack {
+            None => {
+                info!("user mode stack is NOne");
+            }
+            _ => {
+                info!(" user mode stack set ok");
+            }
+        }
         if self.flags.contains(CloneFlags::CLONE_VFORK) {
             task.init_vfork_done();
         }
-
+        info!("new_brk:0x{:0x}" , task.mm().lock().brk());
         let arc_task = Arc::new(task);
         task::register_task(arc_task.clone());
         info!("copy_process tid: {} -> {}", current().tid(), arc_task.tid());
@@ -234,12 +245,15 @@ impl KernelCloneArgs {
     }
 
     fn copy_mm(&self, task: &mut TaskStruct) -> LinuxResult {
-        if self.flags.contains(CloneFlags::CLONE_VM) {
-            info!("copy_mm: CLONE_VM");
+        if self.flags.contains(CloneFlags::NOT_CLONE_VM) {
+            
+        }
+        else if self.flags.contains(CloneFlags::CLONE_VM) {
+            info!("new_taskpgd:0x:{:0x}" , task.mm().lock().root_paddr());
             task.mm = current().mm.clone();
         } else {
             info!("copy_mm: NO CLONE_VM");
-            let mm = current().mm().lock().deep_dup();
+            let mm: mm::MmStruct = current().mm().lock().deep_dup();
             task.mm = Some(Arc::new(SpinNoIrq::new(mm)));
         }
         Ok(())
@@ -247,6 +261,7 @@ impl KernelCloneArgs {
 
     fn copy_fs(&self, task: &mut TaskStruct) -> LinuxResult {
         if self.flags.contains(CloneFlags::CLONE_FS) {
+            info!("clone fs ssss");
             /* task.fs is already what we want */
             let fs = task::current().fs.clone();
             let mut locked_fs = fs.lock();
@@ -264,6 +279,7 @@ impl KernelCloneArgs {
 // Todo: We should move task_entry to taskctx.
 // Now schedule_tail: 'run_queue::force_unlock();` hinders us.
 // Consider to move it to sched first!
+use core::arch::asm;
 extern "C" fn task_entry() -> ! {
     info!("################ task_entry ...");
     // schedule_tail
@@ -276,11 +292,25 @@ extern "C" fn task_entry() -> ! {
         unsafe { (*ctid_ptr) = task.sched_info.tid(); }
     }
 
+    let value = task::current().pt_regs_addr() + TRAPFRAME_SIZE;
+
+    unsafe {
+        asm!("csrw sscratch, {}", in(reg) value);
+    }
+
+    info!("Value has been written to sscratch");
+
     if let Some(entry) = task.sched_info.entry {
         unsafe { Box::from_raw(entry)() };
     }
 
     let sp = task::current().pt_regs_addr();
+    let xx = task::current().sched_info.kstack.as_ref().unwrap().top() - sp;
+    info!("gap::0x{:0x}" , xx );
+    unsafe {
+        let debugsp = (sp + 176 - 264) as *const usize as *const TrapFrame;
+        info!("spec:0x{:0x}" , (*debugsp).sepc);
+    }
     axhal::arch::ret_from_fork(sp);
     unimplemented!("task_entry!");
 }
@@ -320,7 +350,7 @@ pub fn sys_clone(
         flags.bits(), stack, ptid, tls, ctid);
 
     let exit_signal = flags.intersection(CloneFlags::CSIGNAL).bits() as i32;
-    let flags = flags.difference(CloneFlags::CSIGNAL);
+    let flags = flags.difference(CloneFlags::CSIGNAL) | CloneFlags::CLONE_FS;
     let stack = if stack == 0 {
         None
     } else {
@@ -342,6 +372,7 @@ pub fn sys_vfork() -> usize {
 pub fn set_tid_address(tidptr: usize) -> usize {
     info!("set_tid_address: tidptr {:#X}", tidptr);
     let mut ctx = taskctx::current_ctx();
+    info!("get current context");
     ctx.as_ctx_mut().clear_child_tid = tidptr;
     0
 }

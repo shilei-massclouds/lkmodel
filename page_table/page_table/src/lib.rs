@@ -22,7 +22,7 @@
 #![feature(doc_auto_cfg)]
 
 #[macro_use]
-extern crate log;
+extern crate axlog2;
 
 mod arch;
 mod bits64;
@@ -32,7 +32,7 @@ use memory_addr::{PhysAddr, VirtAddr};
 
 pub use self::arch::*;
 pub use self::bits64::PageTable64;
-use axhal::mem::{memory_regions, phys_to_virt};
+use axhal::mem::{memory_regions, phys_to_virt, MemRegionFlags};
 
 #[doc(no_inline)]
 pub use page_table_entry::{GenericPTE, MappingFlags};
@@ -127,6 +127,8 @@ impl From<PageSize> for usize {
 pub fn init() {
     if axhal::cpu::_this_cpu_is_bsp() {
         let mut kernel_page_table = paging::PageTable::try_new().unwrap();
+        info!("KERNEL_PAGE_Phdr:0x{:0x}" , kernel_page_table.root_paddr() );
+        info!("start page init");
         for r in memory_regions() {
             kernel_page_table.map_region(
                 phys_to_virt(r.paddr),
@@ -135,8 +137,37 @@ pub fn init() {
                 r.flags.into(),
                 true,
             ).unwrap();
+            info!("vaddr:{:0x} , paddr:{:0x}  ,  size:{:0x}   ,  name:{}" , phys_to_virt(r.paddr).as_usize() , r.paddr , r.size , r.name );
         }
+        
+        
+        kernel_page_table.map_region(
+            phys_to_virt( PhysAddr::from(0x22000000) ),
+            PhysAddr::from(0x22000000),
+            0x2000000,
+            (MemRegionFlags::READ | MemRegionFlags::WRITE | MemRegionFlags::EXECUTE).into(),
+            true,
+        ).unwrap();
+        
+        //add fujunjie
+        /* 
+        kernel_page_table.map_region(
+            VirtAddr::from(0x40000000),
+            PhysAddr::from(0x80000000),
+             0x40000000,
+            (MemRegionFlags::READ | MemRegionFlags::WRITE | MemRegionFlags::EXECUTE).into(),
+            true,
+        ).unwrap();
+        kernel_page_table.map_region(
+            VirtAddr::from(0x0),
+            PhysAddr::from(0x0),
+            0x40000000,
+            (MemRegionFlags::READ | MemRegionFlags::WRITE | MemRegionFlags::EXECUTE).into(),
+            true,
+        ).unwrap();
+        */
         paging::setup_page_table_root(kernel_page_table);
+        info!("set up page_table!");
     } else {
         paging::reuse_page_table_root();
     }

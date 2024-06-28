@@ -14,5 +14,6 @@ axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal.git" }
 taskctx = { git = "ssh://git@github.com/shilei-massclouds/taskctx.git" }
 run_queue = { git = "ssh://git@github.com/shilei-massclouds/run_queue.git" }
 task = { git = "ssh://git@github.com/shilei-massclouds/task.git" }
-fork = { git = "ssh://git@github.com/shilei-massclouds/fork.git" }
+fork = { path = "../../fork/fork" }
 page_table = { git = "ssh://git@github.com/shilei-massclouds/page_table" }
+axtrap = { path = "../../axtrap/axtrap" }

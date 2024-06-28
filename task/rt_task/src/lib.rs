@@ -11,7 +11,7 @@ use core::panic::PanicInfo;
 pub extern "Rust" fn runtime_main(cpu_id: usize, _dtb_pa: usize) {
     assert_eq!(cpu_id, 0);
 
-    axlog2::init();
+    axlog2::init("debug");
     axlog2::set_max_level("debug");
     info!("[rt_task]: ... cpuid {}", cpu_id);
 

@@ -4,6 +4,7 @@ use scheduler::BaseScheduler;
 use taskctx::switch_mm;
 use taskctx::TaskState;
 use taskctx::SchedInfo;
+use core::arch::asm;
 /*
 use alloc::collections::VecDeque;
 
@@ -36,7 +37,7 @@ pub struct AxRunQueue {
 
 impl AxRunQueue {
     pub fn new(idle: Arc<SchedInfo>) -> SpinNoIrq<Self> {
-        let idle = Arc::new(SchedItem::new(idle));
+        let idle: Arc<scheduler::CFSTask<Arc<SchedInfo>>> = Arc::new(SchedItem::new(idle));
         let scheduler = Scheduler::new();
         SpinNoIrq::new(Self { scheduler, idle })
     }
@@ -196,7 +197,6 @@ impl AxRunQueue {
         if prev_task.ptr_eq(&next_task) {
             return;
         }
-
         // Switch mm from prev to next
         // kernel ->   user   switch + mmdrop_lazy_tlb() active
         //   user ->   user   switch
@@ -235,7 +235,6 @@ impl AxRunQueue {
             // but won't be dropped until `gc_entry()` is called.
             assert!(Arc::strong_count(&prev_task) > 1);
             assert!(Arc::strong_count(&next_task) >= 1);
-
             CurrentCtx::set_current(prev_task, next_task);
             (*prev_ctx_ptr).switch_to(&*next_ctx_ptr);
         }

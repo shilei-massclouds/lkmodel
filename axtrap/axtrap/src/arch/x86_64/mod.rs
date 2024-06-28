@@ -34,7 +34,7 @@ fn x86_trap_handler(tf: &mut TrapFrame) {
             // |   Reserved   | SGX |   Reserved   | SS | PK | I | R | U | W | P |
             // +---+--  --+---+-----+---+--  --+---+----+----+---+---+---+---+---+
             /*
-            log::debug!("error_code: {:?}", tf.error_code);
+            axlog2::debug!("error_code: {:?}", tf.error_code);
             if tf.error_code & (1 << 1) != 0 {
                 handle_page_fault(badaddr, 2);
             }

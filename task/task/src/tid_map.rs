@@ -10,7 +10,7 @@ pub fn get_task(tid: Tid) -> Option<TaskRef> {
 }
 
 pub fn register_task(task: TaskRef) {
-    let tid = task.tid();
+    let tid: usize = task.tid();
     TID_MAP.lock().insert(tid, task);
 }
 

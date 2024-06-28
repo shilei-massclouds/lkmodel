@@ -8,16 +8,16 @@
 #![no_std]
 
 #[macro_use]
-extern crate log;
+extern crate axlog2;
 extern crate alloc;
-
+use axstd::println;
 mod page;
 
 use allocator::{AllocResult, BaseAllocator, BitmapPageAllocator, ByteAllocator, PageAllocator};
 use core::alloc::{GlobalAlloc, Layout};
 use core::ptr::NonNull;
 use spinbase::SpinNoIrq;
-use axhal::mem::{MemRegionFlags, memory_regions, phys_to_virt};
+use axhal::mem::{memory_regions, phys_to_virt, virt_to_phys, MemRegionFlags};
 
 const PAGE_SIZE: usize = 0x1000;
 const MIN_HEAP_SIZE: usize = 0x8000; // 32 K
@@ -78,12 +78,14 @@ impl GlobalAllocator {
     /// a small region (32 KB) to initialize the byte allocator. Therefore,
     /// the given region must be larger than 32 KB.
     pub fn init(&self, start_vaddr: usize, size: usize) {
+        println!("111111111111111111111111111");
         assert!(size > MIN_HEAP_SIZE);
         let init_heap_size = MIN_HEAP_SIZE;
         self.palloc.lock().init(start_vaddr, size);
         let heap_ptr = self
             .alloc_pages(init_heap_size / PAGE_SIZE, PAGE_SIZE)
             .unwrap();
+        println!("heap_start:0x{:0x}    ,   ballocend:0x{:0x}" , heap_ptr , heap_ptr + init_heap_size );
         self.balloc.lock().init(heap_ptr, init_heap_size);
     }
 
@@ -240,6 +242,8 @@ pub fn init() {
     let mut max_region_paddr = 0.into();
     for r in memory_regions() {
         if r.flags.contains(MemRegionFlags::FREE) && r.size > max_region_size {
+            info!("have free region");
+            info!("paddr:0x{:0x} , size:0x{:0x} , name:{}" , r.paddr , r.size , r.name );
             max_region_size = r.size;
             max_region_paddr = r.paddr;
         }

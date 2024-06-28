@@ -1,0 +1,25 @@
+[package]
+name = "rt_loader"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axlog2 = { path = "../../axlog2/axlog2" }
+arch_boot = {  path = "../../arch_boot/arch_boot" } 
+axstd = {  path = "../../axstd" , features = ["print"]} 
+
+axalloc = { path = "../../axalloc/axalloc" }
+
+axhal = { path = "../../axhal/axhal" }
+
+axtrap = { path = "../../axtrap/axtrap" }
+
+axconfig = { git = "ssh://git@github.com/shilei-massclouds/axconfig.git" }
+axtype = { git = "ssh://git@github.com/shilei-massclouds/axtype.git" }
+taskctx = { git = "ssh://git@github.com/shilei-massclouds/taskctx.git" }
+run_queue = { git = "ssh://git@github.com/shilei-massclouds/run_queue.git" }
+task = { git = "ssh://git@github.com/shilei-massclouds/task.git" }
+fork = { git = "ssh://git@github.com/shilei-massclouds/fork.git" }
+page_table = { git = "ssh://git@github.com/shilei-massclouds/page_table" }
