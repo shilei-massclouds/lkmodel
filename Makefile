@@ -28,12 +28,12 @@
 ARCH ?= riscv64
 PLATFORM ?=
 SMP ?= 1
-MODE ?= release
-LOG ?= info
+MODE ?= debug
+LOG ?= debug
 V ?=
 
 # App options
-A ?= early_console/rt_early_console
+A ?=app_loader/rt_loader
 APP ?= $(A)
 FEATURES ?=
 APP_FEATURES ?=
@@ -174,7 +174,7 @@ debug: build
 	sleep 1
 	$(GDB) $(OUT_ELF) \
 	  -ex 'target remote localhost:1234' \
-	  -ex 'b rust_entry' \
+	  -ex 'b main' \
 	  -ex 'continue' \
 	  -ex 'disp /16i $$pc'
 

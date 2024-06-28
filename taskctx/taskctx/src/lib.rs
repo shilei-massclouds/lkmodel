@@ -262,14 +262,22 @@ pub type CtxRef = Arc<SchedInfo>;
 
 /// A wrapper of [`TaskCtxRef`] as the current task contex.
 pub struct CurrentCtx(ManuallyDrop<CtxRef>);
+pub static mut CURRENT_TASKCTX_PTR:Option<* const SchedInfo> = None;
 
 impl CurrentCtx {
     pub fn try_get() -> Option<Self> {
-        let ptr: *const SchedInfo = axhal::cpu::current_task_ptr();
-        if !ptr.is_null() {
-            Some(Self(unsafe { ManuallyDrop::new(CtxRef::from_raw(ptr)) }))
-        } else {
-            None
+        unsafe {
+            if let Some(ptr) = CURRENT_TASKCTX_PTR {
+                Some(Self(unsafe { ManuallyDrop::new(CtxRef::from_raw(ptr)) }))
+            }else{
+                None
+            }
+            // let ptr: *const SchedInfo = axhal::cpu::current_task_ptr();
+            // if !ptr.is_null() {
+            //     Some(Self(unsafe { ManuallyDrop::new(CtxRef::from_raw(ptr)) }))
+            // } else {
+            //     None
+            // }
         }
     }
 
@@ -297,7 +305,8 @@ impl CurrentCtx {
         let Self(arc) = prev;
         ManuallyDrop::into_inner(arc); // `call Arc::drop()` to decrease prev task reference count.
         let ptr = Arc::into_raw(next.clone());
-        axhal::cpu::set_current_task_ptr(ptr);
+        // axhal::cpu::set_current_task_ptr(ptr);
+        CURRENT_TASKCTX_PTR = Some(ptr);
     }
 }
 

@@ -16,3 +16,4 @@ wait_queue = { git = "ssh://git@github.com/shilei-massclouds/wait_queue.git" }
 run_queue = { git = "ssh://git@github.com/shilei-massclouds/run_queue.git" }
 spinbase = { git = "ssh://git@github.com/shilei-massclouds/spinbase.git" }
 spinpreempt = { git = "ssh://git@github.com/shilei-massclouds/spinpreempt.git" }
+riscv = "0.10"

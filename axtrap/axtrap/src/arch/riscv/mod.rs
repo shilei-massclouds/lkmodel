@@ -25,6 +25,10 @@ pub fn init_trap() {
 #[no_mangle]
 pub fn riscv_trap_handler(tf: &mut TrapFrame, _from_user: bool) {
     let scause = scause::read();
+    if scause.code() == 0x9 {
+        info!("scause.code() == 0x9");
+        return handle_linux_syscall(tf);
+    }
     match scause.cause() {
         Trap::Exception(E::Breakpoint) => handle_breakpoint(&mut tf.sepc),
         Trap::Exception(E::UserEnvCall) => handle_linux_syscall(tf),

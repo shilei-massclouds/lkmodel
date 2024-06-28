@@ -186,6 +186,66 @@ pub struct KernelStat {
     pub st_ctime_nsec: isize,
 }
 
+pub fn fstat(fd:usize, statbuf_ptr:usize) -> usize {
+    let statbuf = statbuf_ptr as *mut KernelStat;
+    if fd == 1 {
+        return fstat_stdio(fd,statbuf);
+    }
+    assert!(fd > 2); // 暂时不处理标准输入流、输出流和错误流的文件信息
+    let metadata = {
+        let current = task::current();
+        let filetable = current.filetable.lock();
+        let file = match filetable.get_file(fd) {
+            Some(f) => f,
+            None => {
+                return (-2isize) as usize;
+            }
+        };
+        let locked_file = file.lock();
+        locked_file.get_attr().unwrap()
+    };
+    let ty = metadata.file_type() as u8;
+    let perm = metadata.perm().bits() as u32;
+    let st_mode = ((ty as u32) << 12) | perm;
+    let st_size = metadata.size();
+    warn!("st_size: {}", st_size);
+
+    unsafe {
+        *statbuf = KernelStat {
+            st_ino: 1,
+            st_nlink: 1,
+            st_mode,
+            st_uid: 1000,
+            st_gid: 1000,
+            st_size: st_size,
+            st_blocks: metadata.blocks() as _,
+            st_blksize: 512,
+            ..Default::default()
+        };
+    }
+    0
+}
+
+fn fstat_stdio(fd:usize, statbuf: *mut KernelStat,) -> usize {
+    // Todo: Handle stdin(0), stdout(1) and stderr(2)
+    unsafe {
+        *statbuf = KernelStat {
+            st_mode: 0x2180,
+            st_nlink: 1,
+            st_blksize: 0x1000,
+            st_ino: 0x2a,
+            st_dev: 2,
+            st_rdev: 0x500001,
+            st_size: 0,
+            st_blocks: 0,
+            //st_uid: 1000,
+            //st_gid: 1000,
+            ..Default::default()
+        };
+    }
+    return 0;
+}
+
 pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usize {
     let statbuf = statbuf_ptr as *mut KernelStat;
 

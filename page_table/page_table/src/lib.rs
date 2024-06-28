@@ -128,6 +128,7 @@ pub fn init() {
     if axhal::cpu::_this_cpu_is_bsp() {
         let mut kernel_page_table = paging::PageTable::try_new().unwrap();
         for r in memory_regions() {
+            info!("kernel pagetable {:?} from {:?} size:{:#x}",phys_to_virt(r.paddr),r.paddr,r.size); //进行直接映射，将物理地址转换为虚拟地址
             kernel_page_table.map_region(
                 phys_to_virt(r.paddr),
                 r.paddr,

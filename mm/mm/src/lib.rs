@@ -153,7 +153,7 @@ impl MmStruct {
 
     pub fn map_region(&self, va: usize, pa: usize, len: usize, _uflags: usize) -> PagingResult {
         let flags =
-            MappingFlags::READ | MappingFlags::WRITE | MappingFlags::EXECUTE | MappingFlags::USER;
+            MappingFlags::READ | MappingFlags::WRITE | MappingFlags::EXECUTE ; 
         self.pgd
             .lock()
             .map_region(va.into(), pa.into(), len, flags, true)

@@ -1,0 +1,4 @@
+
+使用的是org_arceos的payload下的hello_c文件夹生成包含两个hello.c的应用.
+
+我强行写死了数据段的0x7e000映射

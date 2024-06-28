@@ -29,3 +29,17 @@ trap_vector_base:
     csrw    sscratch, t0
     RESTORE_REGS 1
     sret
+
+.section .text
+.balign 4
+.global start_app
+start_app:
+    addi    sp, sp, -{trapframe_size}
+
+    li      t2, 0x8000000200006100
+    STR     t2, sp, 32                  // tf.sstatus
+    STR     t0, sp, 31                  // tf.sepc
+    STR     t1, sp, 1                   // tf.regs.sp(app stack)
+    RESTORE_REGS 1
+    mv      a0, zero
+    sret

@@ -183,6 +183,29 @@ impl TaskStruct {
             None => panic!("vfork_done hasn't been inited yet!"),
         }
     }
+
+    pub fn map_region(&mut self,va: usize, pa: usize, len: usize, flags: usize) {
+        self.mm.as_mut().map(|mm| {
+            let locked_mm = mm.lock();
+            locked_mm.map_region(va, pa, len, flags);
+            // if va == 0x7e000 {
+            //     use mm::VmAreaStruct;
+            //     let vma = VmAreaStruct::new(va, va + len, 0, None, 0);
+            //     mm.lock().vmas.insert(va, vma);
+            // }
+            use mm::VmAreaStruct;
+            let vma = VmAreaStruct::new(va, va + len, 0, None, 0);
+            mm.lock().vmas.insert(va, vma);
+        });
+    }
+
+    pub fn brk(&mut self) -> usize {
+        self.mm.as_mut().map(|mm| mm.lock().brk()).unwrap()
+    }
+
+    pub fn set_brk(&mut self,brk:usize) {
+        self.mm.as_mut().map(|mm| mm.lock().set_brk(brk));
+    }
 }
 
 // Todo: It is unsafe extremely. We must remove it!!!
@@ -203,11 +226,14 @@ pub struct CurrentTask(ManuallyDrop<TaskRef>);
 
 impl CurrentTask {
     pub(crate) fn try_get() -> Option<Self> {
+        debug!("try get current Task");
         if let Some(ctx) = taskctx::try_current_ctx() {
+            debug!("try get current Task,result:get current ctx");
             let tid = ctx.tid();
             let task = get_task(tid).expect("try_get None");
             Some(Self(ManuallyDrop::new(task)))
         } else {
+            debug!("try get current Task,result: can not get current ctx");
             None
         }
     }
@@ -232,17 +258,21 @@ impl CurrentTask {
     }
 
     pub(crate) unsafe fn init_current(init_task: TaskRef) {
+        use taskctx::CURRENT_TASKCTX_PTR;
         info!("CurrentTask::init_current...");
         let ptr = Arc::into_raw(init_task.sched_info.clone());
-        axhal::cpu::set_current_task_ptr(ptr);
+        CURRENT_TASKCTX_PTR = Some(ptr);
+        // axhal::cpu::set_current_task_ptr(ptr);
     }
 
     pub unsafe fn set_current(prev: Self, next: TaskRef) {
+        use taskctx::CURRENT_TASKCTX_PTR;
         info!("CurrentTask::set_current...");
         let Self(arc) = prev;
         ManuallyDrop::into_inner(arc); // `call Arc::drop()` to decrease prev task reference count.
         let ptr = Arc::into_raw(next.sched_info.clone());
-        axhal::cpu::set_current_task_ptr(ptr);
+        // axhal::cpu::set_current_task_ptr(ptr);
+        CURRENT_TASKCTX_PTR = Some(ptr);
     }
 }
 

@@ -22,6 +22,7 @@ pub const LINUX_SYSCALL_WRITE: usize = 0x40;
 pub const LINUX_SYSCALL_WRITEV: usize = 0x42;
 pub const LINUX_SYSCALL_READLINKAT: usize = 0x4e;
 pub const LINUX_SYSCALL_FSTATAT: usize = 0x4f;
+pub const LINUX_SYSCALL_FSTAT: usize = 0x50;
 pub const LINUX_SYSCALL_CAPGET: usize = 0x5a;
 pub const LINUX_SYSCALL_EXIT: usize = 0x5d;
 pub const LINUX_SYSCALL_EXIT_GROUP: usize = 0x5e;

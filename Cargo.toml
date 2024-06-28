@@ -15,7 +15,8 @@ members = [
     "axmount/test_axmount",
     "driver_block/rt_driver_block",
     "driver_virtio/rt_driver_virtio",
-    "macrokernel/rt_macrokernel",
+    "macrokernel/rt_macrokernel", "axstd/axstd",
+    "app_helloworld/rt_helloworld", "axstd/axruntime", "app_memtest/rt_memtest", "app_loader/rt_loader", "app_bin_loader/rt_bin_loader",
 ]
 
 [profile.release]

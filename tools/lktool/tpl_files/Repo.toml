@@ -75,6 +75,9 @@ task = "task"
 # Root components list
 # Styles are just as [mod_list]
 [root_list]
+rt_helloworld = "app_helloworld" # 在此处添加，才可以被lk list打印，但是实际没有效果。
+rt_memtest = "app_memtest"
+rt_loader = "app_loader"
 rt_early_console = "early_console"
 #rt_earlycon = "earlycon"
 #rt_ramdisk = "ramdisk"

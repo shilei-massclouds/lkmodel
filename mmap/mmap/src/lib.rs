@@ -223,7 +223,8 @@ const fn in_range(start: usize, end: usize, r_start: usize, r_end: usize) -> boo
 }
 
 #[inline]
-const fn in_vma(start: usize, end: usize, vma: &VmAreaStruct) -> bool {
+fn in_vma(start: usize, end: usize, vma: &VmAreaStruct) -> bool {
+    info!("start: {:#x},end: {:#x},vma.vm_start:{:#x},vma.vm_end {:#x}",start,end,vma.vm_start, vma.vm_end);
     in_range(start, end, vma.vm_start, vma.vm_end)
 }
 
@@ -387,6 +388,12 @@ fn fill_cache(pa: usize, len: usize, file: &mut File, offset: usize) {
         pos += ret;
     }
     buf[pos..].fill(0);
+}
+
+pub fn get_brk() -> usize {
+    let mm = task::current().mm();
+    let brk = mm.lock().brk();
+    brk
 }
 
 pub fn set_brk(va: usize) -> usize {

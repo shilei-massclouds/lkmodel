@@ -1,0 +1,20 @@
+[package]
+name = "axstd"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = []
+alloc = ["axruntime/alloc"]
+paging = ["axruntime/paging"]
+
+[dependencies]
+axio = { git = "ssh://git@github.com/shilei-massclouds/axio.git" }
+axlog2 = { git = "ssh://git@github.com/shilei-massclouds/axlog2.git" }
+arch_boot = { git = "ssh://git@github.com/shilei-massclouds/arch_boot.git" }
+axalloc = { git = "ssh://git@github.com/shilei-massclouds/axalloc" }
+axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal.git" }
+task = { git = "ssh://git@github.com/shilei-massclouds/task.git" }
+page_table = { git = "ssh://git@github.com/shilei-massclouds/page_table" }
+mmap = { git = "ssh://git@github.com/shilei-massclouds/mmap.git" }
+axruntime = { path = "../axruntime"}

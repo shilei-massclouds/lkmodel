@@ -1,0 +1,14 @@
+[package]
+name = "arceos-helloworld"
+version = "0.1.0"
+edition = "2021"
+authors = ["waterm310n <wat3rmelon2000@gmail.com>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["axstd"]
+
+[dependencies]
+
+axstd = { path = "../../axstd/axstd",optional = true}
