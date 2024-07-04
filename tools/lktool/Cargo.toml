@@ -12,3 +12,8 @@ colored = "2.1.0"
 clap = { version = "4.5.4", features = ["derive"] }
 
 [workspace]
+
+
+[[bin]]
+name = "lktool"
+path = "src/main.rs"
