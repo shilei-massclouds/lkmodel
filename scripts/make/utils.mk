@@ -44,12 +44,16 @@ define riscv64_install_apps
   @sudo mkdir -p ./mnt/lib
   @sudo mkdir -p ./mnt/testcases
   @sudo mkdir -p ./mnt/opt
+  @sudo mkdir -p ./mnt/etc
+  @sudo mkdir -p ./mnt/usr/bin
   @sudo cp /usr/riscv64-linux-gnu/lib/ld-linux-riscv64-lp64d.so.1 ./mnt/lib/
   @sudo cp /usr/riscv64-linux-gnu/lib/libc.so.6 ./mnt/lib/
   @sudo cp /usr/riscv64-linux-gnu/lib/libm.so.6 ./mnt/lib/
   @sudo cp /usr/riscv64-linux-gnu/lib/libresolv.so.2 ./mnt/lib/
   @sudo cp -r ./btp/build/riscv64/sbin ./mnt/
+  @sudo cp -r ./btp/etc ./mnt/
   @sudo cp ./btp/syscalls ./mnt/opt/
+  @sudo cp ./btp/usr/bin/sh ./mnt/usr/bin/
   -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/mmap[[:digit:]]* ./mnt/testcases/
   ls -l ./mnt/lib
   ls -l ./mnt/sbin

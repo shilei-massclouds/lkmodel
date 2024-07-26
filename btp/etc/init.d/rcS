@@ -1,0 +1,3 @@
+mount -a
+procfs procfs
+/usr/bin/sh sh

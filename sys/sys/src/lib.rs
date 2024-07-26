@@ -159,9 +159,11 @@ pub fn wait4(pid: usize, wstatus: usize, options: usize, rusage: usize) -> usize
         //Err(e) => panic!("do_wait err: {:?}", e),
     };
 
-    let wstatus = wstatus as *mut u32;
-    unsafe {
-        (*wstatus) = status;
+    if wstatus != 0 {
+        let wstatus = wstatus as *mut u32;
+        unsafe {
+            (*wstatus) = status;
+        }
     }
     tid
 }
