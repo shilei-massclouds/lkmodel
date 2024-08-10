@@ -74,13 +74,7 @@ define riscv64_install_apps
 
   -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/mmap[[:digit:]]* ./mnt/testcases/
 
-  ls -l ./mnt/lib
-  ls -l ./mnt/sbin
-  ls -l ./mnt/bin
-  ls -l ./mnt/testcases
-  ls -l ./mnt/opt
-  ls -l ./mnt/btp/sbin
-  ls -l ./mnt/etc
+  tree ./mnt
   @sudo umount ./mnt
   @rm -rf mnt
 endef

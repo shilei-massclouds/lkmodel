@@ -504,6 +504,16 @@ pub fn dup(fd: usize) -> usize {
     new_fd
 }
 
+pub fn dup3(oldfd: usize, newfd: usize, flags: usize) -> usize {
+    assert_eq!(flags, 0);
+    info!("dup3 [{:#x}, {:#x}, {:#x}] ...", oldfd, newfd, flags);
+    let cur = task::current();
+    let mut locked_fdt = cur.filetable.lock();
+    let file = locked_fdt.get_file(oldfd).unwrap();
+    locked_fdt.fd_install(newfd, file.clone());
+    newfd
+}
+
 pub fn getdents64(fd: usize, dirp: usize, count: usize) -> usize {
     info!("getdents64 fd {}...", fd);
     let current = task::current();
