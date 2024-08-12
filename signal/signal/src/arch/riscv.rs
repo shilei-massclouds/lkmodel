@@ -5,6 +5,7 @@ use crate::{setup_sigcontext, restore_sigcontext};
 use task::{SIGKILL, SIGSTOP, SA_NODEFER};
 use crate::{sigmask, sigorsets, sigaddset, sigdelsetmask};
 use core::sync::atomic::Ordering;
+use taskctx::TIF_SIGPENDING;
 
 const ERESTARTSYS: isize = 512;
 
@@ -125,4 +126,10 @@ fn set_current_blocked(mut newset: u64) {
     // Todo: implement __set_current_blocked according to linux.
     //__set_current_blocked(newset);
     task::current().blocked.store(newset, Ordering::Relaxed);
+    recalc_sigpending();
+}
+
+fn recalc_sigpending() {
+    error!("recalc_sigpending clear_tsk_thread_flag");
+    taskctx::current_ctx().clear_tsk_thread_flag(TIF_SIGPENDING);
 }

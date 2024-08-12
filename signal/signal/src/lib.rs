@@ -2,16 +2,20 @@
 
 #[macro_use]
 extern crate log;
+extern crate alloc;
 
 mod arch;
 pub use arch::rt_sigreturn;
 
+use alloc::sync::Arc;
 use taskctx::Tid;
 use task::{SigInfo, SigAction, SA_RESTORER, SA_RESTART};
 use axerrno::LinuxResult;
-use task::{SIGKILL, SIGSTOP};
+use task::{SIGKILL, SIGSTOP, TaskStruct};
 use axhal::arch::TrapFrame;
 use core::sync::atomic::Ordering;
+use taskctx::TIF_SIGPENDING;
+use taskctx::{_TIF_SIGPENDING, _TIF_NOTIFY_SIGNAL};
 use axtype::ffz;
 
 /// si_code values
@@ -88,8 +92,13 @@ fn do_send_sig_info(sig: usize, info: SigInfo, tid: Tid) -> LinuxResult {
     let mut pending = task.sigpending.lock();
     pending.list.push(info);
     sigaddset(&mut pending.signal, sig);
-    debug!("do_send_sig_info tid {} sig {} ok!", tid, sig);
+    signal_wake_up(task.clone());
+    error!("do_send_sig_info tid {} sig {} ok!", tid, sig);
     Ok(())
+}
+
+fn signal_wake_up(task: Arc<TaskStruct>) {
+    task.sched_info.set_tsk_thread_flag(TIF_SIGPENDING)
 }
 
 #[inline]
@@ -140,6 +149,17 @@ pub fn rt_sigaction(sig: usize, act: usize, oact: usize, sigsetsize: usize) -> u
 
 pub fn do_signal(tf: &mut TrapFrame, cause: usize) {
     debug!("do_signal ...");
+
+    {
+        let thread_info_flags = taskctx::current_ctx().flags.load(Ordering::Relaxed);
+        if thread_info_flags != 0 {
+            error!("thread_info_flags {:#x}", thread_info_flags);
+        }
+        if (thread_info_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL)) == 0 {
+            return;
+        }
+    }
+
     if let Some(ksig) = get_signal() {
         /* Actually deliver the signal */
         arch::handle_signal(&ksig, tf, cause);
