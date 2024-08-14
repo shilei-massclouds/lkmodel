@@ -5,6 +5,9 @@ use riscv::register::scause::{self, Exception as E, Trap};
 use riscv::register::stval;
 use riscv::register::stvec;
 use preempt_guard::NoPreempt;
+use mmap::{VM_FAULT_SIGBUS, VM_FAULT_OOM, VM_FAULT_ERROR};
+use signal::force_sig_fault;
+use task::{SIGBUS, BUS_ADRERR};
 
 axhal::include_asm_marcos!();
 
@@ -54,8 +57,25 @@ pub fn riscv_trap_handler(tf: &mut TrapFrame, _from_user: bool) {
 /// Call page fault handler.
 fn handle_page_fault(badaddr: usize, cause: usize, tf: &mut TrapFrame) {
     debug!("handle_page_fault... cause {}", cause);
-    mmap::faultin_page(badaddr, cause);
+    if let Err(fault) = mmap::faultin_page(badaddr, cause) {
+        if fault != usize::MAX && (fault & VM_FAULT_ERROR) != 0 {
+            mm_fault_error(badaddr, fault);
+        }
+    }
     signal::do_signal(tf, cause);
+}
+
+#[inline]
+fn mm_fault_error(addr: usize, fault: usize) {
+    if (fault & VM_FAULT_OOM) != 0 {
+        unimplemented!("VM_FAULT_OOM");
+    } else if (fault & VM_FAULT_SIGBUS) != 0 {
+        error!("VM_FAULT_SIGBUS");
+        /* Kernel mode? Handle exceptions or die */
+        force_sig_fault(SIGBUS, BUS_ADRERR, addr);
+        return;
+    }
+    unimplemented!("mm_fault_error!");
 }
 
 /// Call the external IRQ handler.

@@ -19,8 +19,6 @@ use mm::{VM_READ, VM_WRITE, VM_EXEC, VM_SHARED, VM_MAYSHARE};
 #[cfg(target_arch = "riscv64")]
 use axhal::arch::{EXC_INST_PAGE_FAULT, EXC_LOAD_PAGE_FAULT, EXC_STORE_PAGE_FAULT};
 #[cfg(target_arch = "riscv64")]
-use task::SIGSEGV;
-#[cfg(target_arch = "riscv64")]
 use signal::force_sig_fault;
 
 pub const PROT_READ: usize = 0x1;
@@ -76,6 +74,17 @@ pub const MAP_FIXED_NOREPLACE: usize = 0x100000;
 /// For anonymous mmap, memory could be uninitialized
 const MAP_UNINITIALIZED: usize = 0x4000000;
 
+pub const VM_FAULT_OOM:     usize = 0x000001;
+pub const VM_FAULT_SIGBUS:  usize = 0x000002;
+pub const VM_FAULT_HWPOISON:usize = 0x000010;
+pub const VM_FAULT_HWPOISON_LARGE: usize = 0x000020;
+pub const VM_FAULT_SIGSEGV: usize = 0x000040;
+pub const VM_FAULT_FALLBACK:usize = 0x000800;
+
+pub const VM_FAULT_ERROR: usize =
+    VM_FAULT_OOM | VM_FAULT_SIGBUS | VM_FAULT_SIGSEGV | VM_FAULT_HWPOISON |
+    VM_FAULT_HWPOISON_LARGE | VM_FAULT_FALLBACK;
+
 const LEGACY_MAP_MASK: usize =
     MAP_SHARED | MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS | MAP_DENYWRITE |
     MAP_EXECUTABLE | MAP_UNINITIALIZED | MAP_GROWSDOWN | MAP_LOCKED | MAP_NORESERVE |
@@ -118,7 +127,7 @@ pub fn mmap(
         error!("MAP_POPULATE");
         let mut pos = 0;
         while pos < len {
-            faultin_page(va + pos, 0);
+            let _ = faultin_page(va + pos, 0);
             pos += PAGE_SIZE_4K;
         }
     }
@@ -283,14 +292,14 @@ pub fn get_unmapped_vma(_va: usize, len: usize) -> usize {
 #[cfg(target_arch = "riscv64")]
 const SEGV_ACCERR: usize = 2;
 
-pub fn faultin_page(va: usize, cause: usize) -> usize {
+pub fn faultin_page(va: usize, cause: usize) -> Result<usize, usize> {
     let va = align_down_4k(va);
     info!("--------- faultin_page... va {:#X} cause {}", va, cause);
     let mm = task::current().mm();
     let mut locked_mm = mm.lock();
     if locked_mm.mapped.get(&va).is_some() {
         warn!("============== find page {:#X} already exists!", va);
-        return 0;
+        return Ok(0);
     }
 
     let vma = locked_mm
@@ -309,13 +318,25 @@ pub fn faultin_page(va: usize, cause: usize) -> usize {
     #[cfg(target_arch = "riscv64")]
     {
         if access_error(cause, vma) {
-            bad_area(SEGV_ACCERR, va);
-            return usize::MAX;
+            error!("SEGV_ACCERR");
+            force_sig_fault(task::SIGSEGV, SEGV_ACCERR, va);
+            return Err(usize::MAX);
         }
     }
 
     let delta = va - vma.vm_start;
     let offset = (vma.vm_pgoff << PAGE_SHIFT) + delta;
+
+    if let Some(f) = vma.vm_file.get() {
+        let f = f.lock();
+        if f.get_attr().unwrap().is_file() {
+            let f_size = f.get_attr().unwrap().size() as usize;
+            if offset >= f_size {
+                error!("offset {} >= f_size {}", offset, f_size);
+                return Err(VM_FAULT_SIGBUS);
+            }
+        }
+    }
 
     if (vma.vm_flags & VM_SHARED) != 0 {
         assert!(vma.vm_file.get().is_some());
@@ -325,7 +346,7 @@ pub fn faultin_page(va: usize, cause: usize) -> usize {
             locked_mm.map_region(va, *pa, PAGE_SIZE_4K, 1)
                 .unwrap_or_else(|e| { panic!("{:?}", e) });
 
-            return phys_to_virt((*pa).into()).into();
+            return Ok(phys_to_virt((*pa).into()).into());
         }
     }
 
@@ -354,7 +375,7 @@ pub fn faultin_page(va: usize, cause: usize) -> usize {
         locked_mm.mapped.insert(va, direct_va);
     }
 
-    phys_to_virt(pa.into()).into()
+    Ok(phys_to_virt(pa.into()).into())
 }
 
 #[cfg(target_arch = "riscv64")]
@@ -381,24 +402,9 @@ fn access_error(cause: usize, vma: &VmAreaStruct) -> bool {
     }
 }
 
-#[cfg(target_arch = "riscv64")]
-fn bad_area(code: usize, addr: usize) {
-    // User mode accesses just cause a SIGSEGV
-    // Todo: makesure now we are in userland.
-    // #define user_mode(regs) (((regs)->status & SR_PP) == 0)
-    error!("code {} addr {:#X}", code, addr);
-    do_trap(SIGSEGV, code, addr);
-}
-
-#[cfg(target_arch = "riscv64")]
-fn do_trap(signo: usize, code: usize, addr: usize) {
-    force_sig_fault(signo, code, addr);
-}
-
 fn fill_cache(pa: usize, len: usize, file: &mut File, offset: usize) {
     let offset = align_down_4k(offset);
     let va = phys_to_virt(pa.into()).as_usize();
-
     let buf = unsafe { core::slice::from_raw_parts_mut(va as *mut u8, len) };
 
     debug!("fill_cache: offset {:#X} len {:#X}", offset, len);

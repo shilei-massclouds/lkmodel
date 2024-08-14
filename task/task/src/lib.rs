@@ -38,9 +38,16 @@ const NSIG: usize = 64;
 
 pub const SIGINT : usize = 2;
 pub const SIGKILL: usize = 9;
+pub const SIGBUS : usize = 7;
 pub const SIGSEGV: usize = 11;
 pub const SIGCHLD: usize = 17;
 pub const SIGSTOP: usize = 19;
+
+/*
+ * SIGBUS si_codes
+ */
+//#define BUS_ADRALN  1   /* invalid address alignment */
+pub const BUS_ADRERR : usize =  2;  // non-existent physical address
 
 #[derive(Clone)]
 pub struct SigInfo {
