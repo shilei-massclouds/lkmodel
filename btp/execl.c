@@ -10,7 +10,7 @@ int main()
     pid_t pid = vfork();
     if (pid == 0) {
         printf("Child is running ...\n");
-        execl("/sbin/init", "init", NULL);
+        execl("/btp/sbin/hello", "init", NULL);
         exit(0);
     } else {
         int ret = 0;

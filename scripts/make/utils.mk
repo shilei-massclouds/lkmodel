@@ -68,6 +68,9 @@ define riscv64_install_apps
   @sudo cp ./btp/btp_tests ./mnt/opt/
   @sudo cp ../dash/src/dash ./mnt/btp/sbin/
 
+  @sudo rm -f ./mnt/bin/sh
+  @sudo cp ../dash/src/dash ./mnt/bin/sh
+
   @sudo rm -f ./mnt/sbin/init
   @sudo cp ./mnt/btp/sbin/init ./mnt/sbin/init
 
@@ -79,15 +82,9 @@ define riscv64_install_apps
   # -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/mmap[[:digit:]]* ./mnt/testcases/
   -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/read[[:digit:]]* ./mnt/testcases/
 
-  ls -l ./mnt/lib
-  ls -l ./mnt/sbin
   ls -l ./mnt/bin
-  ls -l ./mnt/testcases
-  ls -l ./mnt/opt
-  ls -l ./mnt/btp/sbin
-  ls -l ./mnt/etc
   @sudo umount ./mnt
-  @rm -rf mnt
+  @rm -rf ./mnt
 endef
 
 define x86_64_install_apps

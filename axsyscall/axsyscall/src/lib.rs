@@ -24,6 +24,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_MKDIRAT => linux_syscall_mkdirat(args),
         LINUX_SYSCALL_UNLINKAT => linux_syscall_unlinkat(args),
         LINUX_SYSCALL_DUP => linux_syscall_dup(args),
+        LINUX_SYSCALL_DUP3 => linux_syscall_dup3(args),
         LINUX_SYSCALL_OPENAT => linux_syscall_openat(args),
         LINUX_SYSCALL_CLOSE => linux_syscall_close(args),
         LINUX_SYSCALL_LSEEK => linux_syscall_lseek(args),
@@ -166,6 +167,11 @@ fn linux_syscall_openat(args: SyscallArgs) -> usize {
 fn linux_syscall_dup(args: SyscallArgs) -> usize {
     let [fd, ..] = args;
     fileops::dup(fd)
+}
+
+fn linux_syscall_dup3(args: SyscallArgs) -> usize {
+    let [oldfd, newfd, flags, ..] = args;
+    fileops::dup3(oldfd, newfd, flags)
 }
 
 fn linux_syscall_close(args: SyscallArgs) -> usize {

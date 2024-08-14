@@ -14,6 +14,7 @@ pub const LINUX_SYSCALL_EXIT: usize = 0x3c;
 pub const LINUX_SYSCALL_UNAME: usize = 0x3f;
 pub const LINUX_SYSCALL_PREAD64: usize = 17;
 pub const LINUX_SYSCALL_DUP: usize = 32;
+pub const LINUX_SYSCALL_DUP3: usize = 292;
 
 pub const LINUX_SYSCALL_ARCH_PRCTL: usize = 0x9e;
 pub const LINUX_SYSCALL_SET_TID_ADDRESS: usize = 0xda;

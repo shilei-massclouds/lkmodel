@@ -22,6 +22,12 @@ use lazy_init::LazyInit;
 
 pub const THREAD_SIZE: usize = 32 * PAGE_SIZE_4K;
 
+pub const TIF_SIGPENDING: usize     = 2;    // signal pending
+pub const TIF_NOTIFY_SIGNAL: usize  = 9;    // signal notifications exist
+
+pub const _TIF_SIGPENDING: usize = 1 << TIF_SIGPENDING;
+pub const _TIF_NOTIFY_SIGNAL: usize = 1 << TIF_NOTIFY_SIGNAL;
+
 pub type Tid = usize;
 
 pub struct TaskStack {
@@ -76,6 +82,8 @@ pub struct SchedInfo {
     tid:    Tid,
     tgid:   Tid,
 
+    pub flags: AtomicUsize,
+
     pub real_parent:   Option<Arc<SchedInfo>>,
     pub group_leader:  Option<Arc<SchedInfo>>,
 
@@ -110,6 +118,7 @@ impl SchedInfo {
             tid: 0,
             tgid: 0,
 
+            flags: AtomicUsize::new(0),
             real_parent: None,
             group_leader: None,
 
@@ -148,6 +157,16 @@ impl SchedInfo {
 
     pub fn tgid(&self) -> usize {
         self.tgid
+    }
+
+    #[inline]
+    pub fn set_tsk_thread_flag(&self, flag: usize) {
+        self.flags.fetch_or(1<<flag, Ordering::Relaxed);
+    }
+
+    #[inline]
+    pub fn clear_tsk_thread_flag(&self, flag: usize) {
+        self.flags.fetch_and(!(1<<flag), Ordering::Relaxed);
     }
 
     #[inline]

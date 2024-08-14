@@ -5,7 +5,7 @@
 
 use core::ops::Deref;
 use core::mem::ManuallyDrop;
-use core::sync::atomic::{Ordering, AtomicUsize, AtomicU32};
+use core::sync::atomic::{Ordering, AtomicUsize, AtomicU32, AtomicU64};
 
 #[macro_use]
 extern crate log;
@@ -53,18 +53,19 @@ pub struct SigInfo {
 /// signal action flags
 pub const SA_RESTORER:  usize = 0x4000000;
 pub const SA_RESTART:   usize = 0x10000000;
+pub const SA_NODEFER:   usize = 0x40000000;
 
 // Note: No restorer in sigaction for riscv64.
 #[derive(Copy, Clone, Default)]
 pub struct SigAction {
     pub handler: usize,
     pub flags: usize,
-    pub mask: usize,
+    pub mask: u64,
 }
 
 pub struct SigPending {
     pub list: Vec<SigInfo>,
-    pub signal: usize,
+    pub signal: u64,
 }
 
 impl SigPending {
@@ -94,6 +95,7 @@ pub struct TaskStruct {
     pub filetable: Arc<SpinLock<FileTable>>,
     pub sigpending: SpinLock<SigPending>,
     pub sighand: Arc<SpinLock<SigHand>>,
+    pub blocked: AtomicU64,
     pub sched_info: Arc<SchedInfo>,
 
     pub exit_state: AtomicUsize,
@@ -112,6 +114,7 @@ impl TaskStruct {
             filetable: filetable::init_files(),
             sigpending: SpinLock::new(SigPending::new()),
             sighand: Arc::new(SpinLock::new(SigHand::new())),
+            blocked: AtomicU64::new(0),
             sched_info: taskctx::init_thread(),
 
             exit_state: AtomicUsize::new(0),

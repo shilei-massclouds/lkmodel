@@ -2,15 +2,21 @@
 
 #[macro_use]
 extern crate log;
+extern crate alloc;
 
 mod arch;
 pub use arch::rt_sigreturn;
 
+use alloc::sync::Arc;
 use taskctx::Tid;
 use task::{SigInfo, SigAction, SA_RESTORER, SA_RESTART};
 use axerrno::LinuxResult;
-use task::{SIGKILL, SIGSTOP};
+use task::{SIGKILL, SIGSTOP, TaskStruct};
 use axhal::arch::TrapFrame;
+use core::sync::atomic::Ordering;
+use taskctx::TIF_SIGPENDING;
+use taskctx::{_TIF_SIGPENDING, _TIF_NOTIFY_SIGNAL};
+use axtype::ffz;
 
 /// si_code values
 /// Digital reserves positive values for kernel-generated signals.
@@ -86,23 +92,33 @@ fn do_send_sig_info(sig: usize, info: SigInfo, tid: Tid) -> LinuxResult {
     let mut pending = task.sigpending.lock();
     pending.list.push(info);
     sigaddset(&mut pending.signal, sig);
-    debug!("do_send_sig_info tid {} sig {} ok!", tid, sig);
+    signal_wake_up(task.clone());
+    error!("do_send_sig_info tid {} sig {} ok!", tid, sig);
     Ok(())
 }
 
-#[inline]
-fn sigmask(sig: usize) -> usize {
-    1 << (sig - 1)
+fn signal_wake_up(task: Arc<TaskStruct>) {
+    task.sched_info.set_tsk_thread_flag(TIF_SIGPENDING)
 }
 
 #[inline]
-fn sigaddset(set: &mut usize, sig: usize) {
-    *set |= 1 << (sig - 1);
+fn sigmask(signo: usize) -> u64 {
+    1 << (signo - 1)
 }
 
 #[inline]
-fn sigdelsetmask(set: &mut usize, mask: usize) {
+fn sigaddset(set: &mut u64, signo: usize) {
+    *set |= 1 << (signo - 1);
+}
+
+#[inline]
+fn sigdelsetmask(set: &mut u64, mask: u64) {
     *set &= !mask;
+}
+
+#[inline]
+fn sigorsets(rset: &mut u64, set1: u64, set2: u64) {
+    *rset = set1 | set2;
 }
 
 pub fn rt_sigaction(sig: usize, act: usize, oact: usize, sigsetsize: usize) -> usize {
@@ -133,6 +149,17 @@ pub fn rt_sigaction(sig: usize, act: usize, oact: usize, sigsetsize: usize) -> u
 
 pub fn do_signal(tf: &mut TrapFrame, cause: usize) {
     debug!("do_signal ...");
+
+    {
+        let thread_info_flags = taskctx::current_ctx().flags.load(Ordering::Relaxed);
+        if thread_info_flags != 0 {
+            error!("thread_info_flags {:#x}", thread_info_flags);
+        }
+        if (thread_info_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL)) == 0 {
+            return;
+        }
+    }
+
     if let Some(ksig) = get_signal() {
         /* Actually deliver the signal */
         arch::handle_signal(&ksig, tf, cause);
@@ -144,13 +171,26 @@ pub fn do_signal(tf: &mut TrapFrame, cause: usize) {
 
 fn get_signal() -> Option<KSignal> {
     let task = task::current();
-    let _info = task.sigpending.lock().list.pop()?;
-    let signo = _info.signo as usize;
+    let blocked = task.blocked.load(Ordering::Relaxed);
+    let mut sigpending = task.sigpending.lock();
+    let signo = next_signal(sigpending.signal, blocked)?;
+    let (idx, _) = sigpending.list.iter().enumerate().find(|(_, &ref item)| {
+        item.signo == signo as i32
+    })?;
+    error!("next_signal: index {}, signo {}", idx, signo);
+
+    let _info = sigpending.list.remove(idx);
+    assert_eq!(signo, _info.signo as usize);
 
     let action = task.sighand.lock().action[signo - 1];
     assert!(action.handler != 0);
     debug!("get_signal signo {} handler {:#X}", signo, action.handler);
     Some(KSignal {action, _info, signo})
+}
+
+fn next_signal(mut sigset: u64, blocked: u64) -> Option<usize> {
+    sigdelsetmask(&mut sigset, blocked);
+    Some(ffz(sigset)? + 1)
 }
 
 fn restore_sigcontext(tf: &mut TrapFrame, frame: &RTSigFrame) {
