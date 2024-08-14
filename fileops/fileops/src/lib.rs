@@ -131,15 +131,6 @@ pub fn read(fd: usize, ubuf: &mut [u8]) -> usize {
         if let Ok(attr) = locked_file.get_attr() {
             if attr.is_dir() {
                 return linux_err!(EISDIR);
-            }else if attr.is_file(){
-                let pos = locked_file.read(&mut kbuf).unwrap();
-                info!(
-                    "linux_syscall_read: fd {}, count {}, ret {}",
-                    fd, count, pos
-                );
-            
-                ubuf.copy_from_slice(&kbuf);
-                return pos
             }else if attr.is_fifo() {
                 match locked_file.read(&mut kbuf) {
                     Ok(pos) => {
@@ -152,6 +143,15 @@ pub fn read(fd: usize, ubuf: &mut [u8]) -> usize {
                         }
                     }
                 }
+            }else { // for others files temporarily
+                let pos = locked_file.read(&mut kbuf).unwrap();
+                info!(
+                    "linux_syscall_read: fd {}, count {}, ret {}",
+                    fd, count, pos
+                );
+            
+                ubuf.copy_from_slice(&kbuf);
+                return pos
             }
         }
         unreachable!() // TODO?
