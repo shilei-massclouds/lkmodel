@@ -38,13 +38,13 @@ pub struct KernelFsid {
 #[derive(Debug, Clone, Copy)]
 pub struct VfsNodeAttr {
     /// File permission mode.
-    mode: VfsNodePerm,
+    pub mode: VfsNodePerm,
     /// File type.
     ty: VfsNodeType,
     /// Total size, in bytes.
-    size: u64,
+    pub size: u64,
     /// Number of 512B blocks allocated.
-    blocks: u64,
+    pub blocks: u64,
 }
 
 bitflags::bitflags! {
@@ -71,6 +71,9 @@ bitflags::bitflags! {
         const OTHER_WRITE = 0o2;
         /// Others have execute permission.
         const OTHER_EXEC = 0o1;
+
+        /// STICKY_BIT
+        const STICKY_BIT = 0o1000;
     }
 }
 

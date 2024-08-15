@@ -75,7 +75,7 @@ impl DirNode {
 
 impl VfsNodeOps for DirNode {
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
-        Ok(VfsNodeAttr::new_dir(4096, 0))
+        Ok(VfsNodeAttr::new(axfs_vfs::VfsNodePerm::from_bits_truncate(0o1755), VfsNodeType::Dir, 4096, 0))
     }
 
     fn parent(&self) -> Option<VfsNodeRef> {
