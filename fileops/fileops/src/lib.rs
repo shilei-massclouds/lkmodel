@@ -91,7 +91,7 @@ pub fn register_file(file: AxResult<File>) -> usize {
     };
     let current = task::current();
     let fd = current.filetable.lock().insert(Arc::new(Mutex::new(file)));
-    info!("openat fd {}", fd);
+    error!("openat fd {}", fd);
     fd
 }
 
@@ -521,10 +521,10 @@ pub fn fcntl(fd: usize, cmd: usize, udata: usize) -> usize {
     let cur = task::current();
     let mut locked_fdt = cur.filetable.lock();
     let new_fd = locked_fdt.alloc_fd(udata);
-    //let file = locked_fdt.get_file(fd).unwrap();
-    //locked_fdt.fd_install(new_fd, file.clone());
     //unimplemented!("fcntl: fd {}-{} cmd {} udata {}", fd, new_fd, cmd, udata);
-    info!("fcntl: fd {}-{} cmd {} udata {}", fd, new_fd, cmd, udata);
+    error!("fcntl: fd {}-{} cmd {} udata {}", fd, new_fd, cmd, udata);
+    let file = locked_fdt.get_file(fd).unwrap();
+    locked_fdt.fd_install(new_fd, file.clone());
     new_fd
 }
 
@@ -543,7 +543,7 @@ pub fn dup(fd: usize) -> usize {
 
 pub fn dup3(oldfd: usize, newfd: usize, flags: usize) -> usize {
     assert_eq!(flags, 0);
-    info!("dup3 [{:#x}, {:#x}, {:#x}] ...", oldfd, newfd, flags);
+    error!("dup3 [{:#x}, {:#x}, {:#x}] ...", oldfd, newfd, flags);
     let cur = task::current();
     let mut locked_fdt = cur.filetable.lock();
     let file = locked_fdt.get_file(oldfd).unwrap();

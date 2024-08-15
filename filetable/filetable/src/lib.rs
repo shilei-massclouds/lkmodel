@@ -152,7 +152,7 @@ impl<T: Clone> SlotVec<T> {
             start = self.slots.len();
         }
         let mut pos = self.slots.len();
-        while pos < start {
+        while pos <= start {
             self.slots.push(None);
             pos += 1;
         }
