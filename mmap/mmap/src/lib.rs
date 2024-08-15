@@ -474,9 +474,14 @@ pub fn msync(va: usize, len: usize, flags: usize) -> usize {
     0
 }
 
-fn sync_file(va: usize, len: usize, file: &mut File, offset: usize) {
+fn sync_file(va: usize, mut len: usize, file: &mut File, offset: usize) {
+    let f_size = file.get_attr().unwrap().size() as usize;
+    if len > f_size {
+        // msync: length of msync cannot overflow the original file size.
+        // LTP - mmap01
+        len = f_size;
+    }
     let buf = unsafe { core::slice::from_raw_parts(va as *const u8, len) };
-
     let _ = file.seek(SeekFrom::Start(offset as u64));
 
     let mut pos = 0;
