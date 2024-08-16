@@ -30,6 +30,7 @@ pub const O_RDWR:       i32 = 0o002;
 pub const O_CREAT:      i32 = 0o100;
 pub const O_TRUNC:      i32 = 0o001000;
 pub const O_APPEND:     i32 = 0o002000;
+pub const O_NONBLOCK:   i32 = 0o4000;
 pub const O_DIRECTORY:  i32 = 0o200000; /* must be a directory */
 
 static NEXT_INO: AtomicUsize = AtomicUsize::new(0);

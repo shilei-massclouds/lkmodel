@@ -58,6 +58,8 @@ pub enum AxError {
     InvalidInput,
     /// Input/output error.
     Io,
+    /// No such device or address
+    Enxio,
     /// The filesystem object is, unexpectedly, a directory.
     IsADirectory,
     /// Not enough space/cannot allocate memory.
@@ -212,6 +214,7 @@ impl AxError {
             InvalidData => "Invalid data",
             InvalidInput => "Invalid input parameter",
             Io => "I/O error",
+            Enxio => "No such device or address",
             IsADirectory => "Is a directory",
             NoMemory => "Out of memory",
             NotADirectory => "Not a directory",
@@ -274,6 +277,7 @@ impl From<AxError> for LinuxError {
             DirectoryNotEmpty => LinuxError::ENOTEMPTY,
             InvalidInput | InvalidData => LinuxError::EINVAL,
             Io => LinuxError::EIO,
+            Enxio => LinuxError::ENXIO,
             IsADirectory => LinuxError::EISDIR,
             NoMemory => LinuxError::ENOMEM,
             NotADirectory => LinuxError::ENOTDIR,

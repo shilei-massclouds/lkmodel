@@ -23,7 +23,7 @@ use axtype::get_user_str;
 use axio::SeekFrom;
 use axfs_vfs::VfsNodeType;
 use axfs_vfs::path::canonicalize;
-use axfile::fops::{O_CREAT, O_TRUNC, O_APPEND, O_WRONLY, O_RDWR};
+use axfile::fops::{O_CREAT, O_TRUNC, O_APPEND, O_WRONLY, O_RDWR, O_NONBLOCK};
 
 pub type FileRef = Arc<Mutex<File>>;
 
@@ -44,6 +44,10 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
         "openat '{}' at dfd {:#X} flags {:#X} mode {:#X}",
         filename, dfd, flags, mode
     );
+
+    if (flags as i32 & O_WRONLY != 0) && (flags as i32 & O_NONBLOCK != 0) {
+        return Err(axerrno::AxError::Enxio);
+    }
 
     let mut opts = OpenOptions::new();
     opts.set_flags(flags as i32);
