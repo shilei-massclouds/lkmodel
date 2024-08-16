@@ -90,6 +90,10 @@ pub fn register_file(file: AxResult<File>) -> usize {
         }
     };
     let current = task::current();
+    let len = current.filetable.lock().slots_len();
+    if len >= axconfig::OPEN_FILES_PER_TID {
+        return linux_err!(EMFILE);
+    }
     let fd = current.filetable.lock().insert(Arc::new(Mutex::new(file)));
     error!("openat fd {}", fd);
     fd

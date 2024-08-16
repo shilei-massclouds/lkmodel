@@ -48,3 +48,6 @@ pci-ranges = [
 
 # Timer interrupt frequency in Hz.
 timer-frequency = "10_000_000"      # 10MHz
+
+# Number of open files per tid.
+open-files-per-tid = "0x400"

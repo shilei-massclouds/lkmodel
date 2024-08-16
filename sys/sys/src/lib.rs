@@ -4,6 +4,7 @@ use core::sync::atomic::Ordering;
 use taskctx::Tid;
 use axtype::PAGE_SIZE;
 use axconfig::TASK_STACK_SIZE;
+use axconfig::OPEN_FILES_PER_TID;
 #[cfg(target_arch = "x86_64")]
 use axerrno::linux_err;
 use axerrno::{LinuxResult, LinuxError, linux_err_from};
@@ -25,6 +26,7 @@ const EXIT_TRACE: usize = EXIT_ZOMBIE | EXIT_DEAD;
 const ARCH_SET_FS: usize = 0x1002;
 
 const RLIMIT_STACK: usize = 3; /* max stack size */
+const RLIMIT_NOFILE: usize = 7; /* max number of open files */
 //const RLIM_NLIMITS: usize = 16;
 
 #[allow(dead_code)]
@@ -95,7 +97,13 @@ pub fn prlimit64(tid: Tid, resource: usize, new_rlim: usize, old_rlim: usize) ->
                 *old_rlim = RLimit64::new(stack_size, stack_size);
             }
             0
-        }
+        },
+        RLIMIT_NOFILE => {
+            unsafe {
+                *old_rlim = RLimit64::new(OPEN_FILES_PER_TID as u64, 0x1000);
+            }
+            0
+        },
         _ => {
             unimplemented!("Resource Type: {}", resource);
         }
