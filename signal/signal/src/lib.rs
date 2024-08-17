@@ -7,16 +7,21 @@ extern crate alloc;
 mod arch;
 pub use arch::rt_sigreturn;
 
+use core::mem;
 use alloc::sync::Arc;
 use taskctx::Tid;
 use task::{SigInfo, SigAction, SA_RESTORER, SA_RESTART};
-use axerrno::LinuxResult;
+use axerrno::{linux_err, LinuxError, LinuxResult};
 use task::{SIGKILL, SIGSTOP, TaskStruct};
 use axhal::arch::TrapFrame;
 use core::sync::atomic::Ordering;
 use taskctx::TIF_SIGPENDING;
 use taskctx::{_TIF_SIGPENDING, _TIF_NOTIFY_SIGNAL};
 use axtype::ffz;
+
+const SIG_BLOCK:    usize = 0; // for blocking signals
+const SIG_UNBLOCK:  usize = 1; // for unblocking signals
+const SIG_SETMASK:  usize = 2; // for setting the signal mask
 
 /// si_code values
 /// Digital reserves positive values for kernel-generated signals.
@@ -121,6 +126,11 @@ fn sigorsets(rset: &mut u64, set1: u64, set2: u64) {
     *rset = set1 | set2;
 }
 
+#[inline]
+fn sigandnsets(rset: &mut u64, set1: u64, set2: u64) {
+    *rset = set1 & set2;
+}
+
 pub fn rt_sigaction(sig: usize, act: usize, oact: usize, sigsetsize: usize) -> usize {
     assert_eq!(sigsetsize, 8);
     debug!("rt_sigaction: sig {} act {:#X} oact {:#X}", sig, act, oact);
@@ -136,7 +146,7 @@ pub fn rt_sigaction(sig: usize, act: usize, oact: usize, sigsetsize: usize) -> u
 
     if act != 0 {
         let act = unsafe { &(*(act as *const SigAction)) };
-        debug!("act: {:#X} {:#X} {:#X}", act.handler, act.flags, act.mask);
+        info!("act: {:#X} {:#X} {:#X}", act.handler, act.flags, act.mask);
         assert!((act.flags & SA_RESTORER) == 0);
 
         let mut kact = act.clone();
@@ -214,4 +224,67 @@ pub fn force_sig_fault(signo: usize, code: usize, _addr: usize) {
 
     debug!("force tid {} sig {}", tid, signo);
     do_send_sig_info(signo, info, tid).unwrap();
+}
+
+pub fn rt_sigprocmask(how: usize, nset: usize, oset: usize, sigsetsize: usize) -> usize {
+    info!(
+        "impl sigprocmask how {} nset {:#X} oset {:#X} size {} tid {}",
+        how, nset, oset, sigsetsize, task::current().tid(),
+    );
+
+    /* XXX: Don't preclude handling different sized sigset_t's.  */
+    if sigsetsize != mem::size_of::<u64>() {
+        return linux_err!(EINVAL);
+    }
+
+    let old_set = task::current().blocked.load(Ordering::Relaxed);
+    if nset != 0 {
+        let nset = nset as *const u64;
+        let mut new_set = unsafe { *nset };
+        sigdelsetmask(&mut new_set, sigmask(SIGKILL)|sigmask(SIGSTOP));
+        sigprocmask(how, new_set);
+    }
+    if oset != 0 {
+        let oset = oset as *mut u64;
+        unsafe { *oset = old_set };
+    }
+    0
+}
+
+//
+// This is also useful for kernel threads that want to temporarily
+// (or permanently) block certain signals.
+//
+// NOTE! Unlike the user-mode sys_sigprocmask(), the kernel
+// interface happily blocks "unblockable" signals like SIGKILL
+// and friends.
+//
+fn sigprocmask(how: usize, set: u64) {
+    let blocked = task::current().blocked.load(Ordering::Relaxed);
+
+    let mut newset = 0;
+    match how {
+        SIG_BLOCK => sigorsets(&mut newset, blocked, set),
+        SIG_UNBLOCK => sigandnsets(&mut newset, blocked, set),
+        SIG_SETMASK => { newset = set },
+        _ => panic!("invalid how"),
+    };
+
+    __set_current_blocked(newset);
+}
+
+fn __set_current_blocked(newset: u64) {
+    let blocked = task::current().blocked.load(Ordering::Relaxed);
+
+    /*
+     * In case the signal mask hasn't changed, there is nothing we need
+     * to do. The current->blocked shouldn't be modified by other task.
+     */
+    if blocked == newset {
+        return;
+    }
+
+    //spin_lock_irq(&tsk->sighand->siglock);
+    task::current().blocked.store(newset, Ordering::Relaxed);
+    //spin_unlock_irq(&tsk->sighand->siglock);
 }
