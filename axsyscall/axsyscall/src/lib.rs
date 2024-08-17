@@ -333,12 +333,8 @@ fn linux_syscall_clock_nanosleep(_args: SyscallArgs) -> usize {
 }
 
 fn linux_syscall_rt_sigprocmask(args: SyscallArgs) -> usize {
-    let [how, set, oldset, sigsetsize, ..] = args;
-    warn!(
-        "impl linux_syscall_rt_sigprocmask how {} set {:#X} oldset {:#X} size {} tid {}",
-        how, set, oldset, sigsetsize, task::current().tid(),
-    );
-    0
+    let [how, nset, oset, sigsetsize, ..] = args;
+    signal::rt_sigprocmask(how, nset, oset, sigsetsize)
 }
 
 fn linux_syscall_rt_sigaction(args: SyscallArgs) -> usize {
