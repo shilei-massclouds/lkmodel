@@ -98,3 +98,24 @@ pub fn init_root() -> Arc<RootDirectory> {
 }
 
 static INIT_ROOT: LazyInit<Arc<RootDirectory>> = LazyInit::new();
+
+pub fn sys_statfs64(path: &str, buf: usize) -> usize {
+    let statfs_buf = buf as *mut axfs_vfs::FileSystemInfo;
+
+    if path.is_empty() {
+        return usize::MAX; // -1 here is right ,why return value need be usize?
+    }
+
+    unsafe {
+        match INIT_ROOT.try_get().map(|root_dir| root_dir.statfs(path)) {
+            Some(Ok(fs_info)) => {
+                *statfs_buf = fs_info;
+                0
+            },
+            Some(Err(_err)) => {
+                usize::MAX
+            },
+            None => usize::MAX,
+        }
+    }
+}

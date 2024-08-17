@@ -81,6 +81,11 @@ pub fn remove_file(path: &str, fs: &FsStruct) -> io::Result<()> {
     fs.remove_file(None, path)
 }
 
+/// Removes a named pipe (FIFO).
+pub fn remove_fifo(path: &str, fs: &FsStruct) -> io::Result<()> {
+    fs.remove_fifo(None, path)
+}
+
 /// Rename a file or directory to a new name.
 /// Delete the original file if `old` already exists.
 ///

@@ -104,6 +104,10 @@ pub trait VfsNodeOps: Send + Sync {
         ax_err!(Unsupported)
     }
 
+    fn set_attr(&self) -> VfsResult {
+        ax_err!(Unsupported)
+    }
+
     // file operations:
 
     /// Read data from the file at the given offset.
@@ -276,6 +280,31 @@ impl RootDirectory {
 
     pub fn contains(&self, path: &str) -> bool {
         self.mounts.iter().any(|mp| mp.path == path)
+    }
+
+    pub fn statfs(&self, path:&str) -> AxResult<FileSystemInfo>{
+        let path = path.trim_matches('/');
+        if let Some(rest) = path.strip_prefix("./") {
+            return self.statfs(rest);
+        }
+        let mut idx = 0;
+        let mut max_len = 0;
+
+        // Find the filesystem that has the longest mounted path match
+        // TODO: more efficient, e.g. trie
+        for (i, mp) in self.mounts.iter().enumerate() {
+            // skip the first '/'
+            if path.starts_with(&mp.path[1..]) && mp.path.len() - 1 > max_len {
+                max_len = mp.path.len() - 1;
+                idx = i;
+            }
+        }
+
+        if max_len == 0 {
+            return Err(AxError::NotFound);
+        }else{
+            return self.mounts[idx].fs.statfs();
+        }
     }
 
     fn lookup_mounted_fs<F, T>(&self, path: &str, f: F) -> AxResult<T>

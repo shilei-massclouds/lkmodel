@@ -404,6 +404,11 @@ impl Directory {
         fs.create_file(self.access_at(path)?, path)
     }
 
+    /// Creates a FIFO node at the path relative to this directory.
+    pub fn create_fifo(&self, path: &str, fs: &FsStruct) -> AxResult<VfsNodeRef> {
+        fs.create_fifo(self.access_at(path)?, path)
+    }
+
     /// Creates an empty directory at the path relative to this directory.
     pub fn create_dir(&self, path: &str, fs: &FsStruct) -> AxResult {
         fs.create_dir(self.access_at(path)?, path)

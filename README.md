@@ -97,13 +97,14 @@ lktool dep-graph
 1. 下载并编译ltp
 
 ```sh
-git clone git@github.com:shilei-massclouds/ltp.git
+git clone git@github.com:shilei-massclouds/ltp.git && cd ltp
 git checkout lkmodel
-cd ltp
+```
+修改mk_*.sh中的prefix改为本地ltp的实际路径。
+```sh
 make autotools
 ./mk_riscv64.sh
 ```
-
 注: 对x86_64平台，执行./mk_x86_64.sh
 
 2. 在lkmodel目录下配置lk.toml

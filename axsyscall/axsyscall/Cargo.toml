@@ -17,3 +17,5 @@ mmap = { git = "ssh://git@github.com/shilei-massclouds/mmap.git" }
 fileops = { git = "ssh://git@github.com/shilei-massclouds/fileops.git" }
 axtype = { git = "ssh://git@github.com/shilei-massclouds/axtype.git" }
 axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno.git" }
+axmount = { git = "ssh://git@github.com/shilei-massclouds/axmount.git" }
+mm = { git = "ssh://git@github.com/shilei-massclouds/mm.git"}

@@ -1,15 +1,15 @@
-use core::mem;
-use core::mem::transmute;
-use core::ptr::copy_nonoverlapping;
 use alloc::collections::BTreeMap;
 use alloc::sync::{Arc, Weak};
 use alloc::{string::String, vec::Vec};
+use core::mem;
+use core::mem::transmute;
+use core::ptr::copy_nonoverlapping;
 
+use axfs_vfs::{LinuxDirent64, VfsError, VfsResult, DT_};
 use axfs_vfs::{VfsDirEntry, VfsNodeAttr, VfsNodeOps, VfsNodeRef, VfsNodeType};
-use axfs_vfs::{VfsError, VfsResult, DT_, LinuxDirent64};
 use spin::RwLock;
 
-use crate::file::FileNode;
+use crate::file::{FifoNode, FileNode};
 
 /// The directory node in the RAM filesystem.
 ///
@@ -52,6 +52,7 @@ impl DirNode {
         let node: VfsNodeRef = match ty {
             VfsNodeType::File => Arc::new(FileNode::new()),
             VfsNodeType::Dir => Self::new(Some(self.this.clone())),
+            VfsNodeType::Fifo => Arc::new(FifoNode::new()),
             _ => return Err(VfsError::Unsupported),
         };
         self.children.write().insert(name.into(), node);
@@ -74,7 +75,7 @@ impl DirNode {
 
 impl VfsNodeOps for DirNode {
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
-        Ok(VfsNodeAttr::new_dir(4096, 0))
+        Ok(VfsNodeAttr::new(axfs_vfs::VfsNodePerm::from_bits_truncate(0o1755), VfsNodeType::Dir, 4096, 0))
     }
 
     fn parent(&self) -> Option<VfsNodeRef> {

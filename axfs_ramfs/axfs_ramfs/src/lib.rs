@@ -16,13 +16,17 @@ pub use self::dir::DirNode;
 pub use self::file::FileNode;
 
 use alloc::sync::Arc;
+use axfs_vfs::FileSystemInfo;
 use axfs_vfs::{VfsNodeRef, VfsOps, VfsResult};
 use spin::once::Once;
+
+const RAMFS_MAGIC: u64 = 0x858458f6;
 
 /// A RAM filesystem that implements [`axfs_vfs::VfsOps`].
 pub struct RamFileSystem {
     parent: Once<VfsNodeRef>,
     root: Arc<DirNode>,
+    filesystem_info: FileSystemInfo,
 }
 
 impl RamFileSystem {
@@ -31,6 +35,12 @@ impl RamFileSystem {
         Self {
             parent: Once::new(),
             root: DirNode::new(None),
+            // TODO: implement left field
+            filesystem_info: FileSystemInfo {
+                f_type: RAMFS_MAGIC,
+                f_bsize: 4096,
+                ..Default::default()
+            },
         }
     }
 
@@ -52,6 +62,10 @@ impl VfsOps for RamFileSystem {
 
     fn root_dir(&self) -> VfsNodeRef {
         self.root.clone()
+    }
+
+    fn statfs(&self) -> VfsResult<FileSystemInfo> {
+        Ok(self.filesystem_info.clone())
     }
 }
 

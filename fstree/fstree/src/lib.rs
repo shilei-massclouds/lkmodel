@@ -77,6 +77,17 @@ impl FsStruct {
         parent.lookup(path)
     }
 
+    pub fn create_fifo(&self, dir: Option<&VfsNodeRef>, path: &str) -> AxResult<VfsNodeRef> {
+        if path.is_empty() {
+            return ax_err!(NotFound);
+        } else if path.ends_with('/') {
+            return ax_err!(NotADirectory);
+        }
+        let parent = self.parent_node_of(dir, path);
+        parent.create(path, VfsNodeType::Fifo)?;
+        parent.lookup(path)
+    }
+
     pub fn create_dir(&self, dir: Option<&VfsNodeRef>, path: &str) -> AxResult {
         match self.lookup(dir, path) {
             Ok(_) => ax_err!(AlreadyExists),
@@ -132,6 +143,19 @@ impl FsStruct {
             self.parent_node_of(dir, path).remove(path)
         }
     }
+
+    pub fn remove_fifo(&self, dir: Option<&VfsNodeRef>, path: &str) -> AxResult {
+        let node = self.lookup(dir, path)?;
+        let attr = node.get_attr()?;
+        if attr.is_dir() {
+            ax_err!(IsADirectory)
+        } else if !attr.perm().owner_writable() {
+            ax_err!(PermissionDenied)
+        } else {
+            self.parent_node_of(dir, path).remove(path)
+        }
+    }
+
     pub fn remove_dir(&self, dir: Option<&VfsNodeRef>, path: &str) -> AxResult {
         if path.is_empty() {
             return ax_err!(NotFound);

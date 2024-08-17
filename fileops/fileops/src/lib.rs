@@ -14,9 +14,10 @@ mod proc_ops;
 use axerrno::AxResult;
 use axerrno::{LinuxError, LinuxResult, linux_err, linux_err_from};
 use axerrno::AxError::NotFound;
-use axfile::api::{create_dir, remove_dir, remove_file};
+use axfile::api::{create_dir, remove_dir, remove_file, remove_fifo};
 use axfile::fops::File;
 use axfile::fops::OpenOptions;
+use axfs_vfs::VfsError;
 use mutex::Mutex;
 use axtype::get_user_str;
 use axio::SeekFrom;
@@ -89,6 +90,10 @@ pub fn register_file(file: AxResult<File>) -> usize {
         }
     };
     let current = task::current();
+    let len = current.filetable.lock().slots_len();
+    if len >= axconfig::OPEN_FILES_PER_TID {
+        return linux_err!(EMFILE);
+    }
     let fd = current.filetable.lock().insert(Arc::new(Mutex::new(file)));
     error!("openat fd {}", fd);
     fd
@@ -122,28 +127,43 @@ pub fn read(fd: usize, ubuf: &mut [u8]) -> usize {
 
     let count = ubuf.len();
     let current = task::current();
-    let file = current.filetable.lock().get_file(fd).unwrap();
 
-    let mut kbuf = vec![0u8; count];
-    /*
-    let mut pos = 0;
-    while pos < count {
-        let ret = file.lock().read(&mut kbuf[pos..]).unwrap();
-        if ret == 0 {
-            break;
+    let res = if let Some(file) = current.filetable.lock().get_file(fd) {
+        let mut kbuf = vec![0u8; count];
+        let mut locked_file = file.lock();
+
+        if let Ok(attr) = locked_file.get_attr() {
+            if attr.is_dir() {
+                return linux_err!(EISDIR);
+            }else if attr.is_fifo() {
+                match locked_file.read(&mut kbuf) {
+                    Ok(pos) => {
+                        ubuf.copy_from_slice(&kbuf);
+                        return pos
+                    },
+                    Err(e) => {
+                        if let VfsError::WouldBlock = e {
+                            return linux_err!(EAGAIN);
+                        }
+                    }
+                }
+            }else { // for others files temporarily
+                let pos = locked_file.read(&mut kbuf).unwrap();
+                info!(
+                    "linux_syscall_read: fd {}, count {}, ret {}",
+                    fd, count, pos
+                );
+            
+                ubuf.copy_from_slice(&kbuf);
+                return pos
+            }
         }
-        pos += ret;
-    }
-    */
-    let pos = file.lock().read(&mut kbuf).unwrap();
+        unreachable!() // TODO?
+    }else{
+        linux_err!(EBADF)
+    };
 
-    info!(
-        "linux_syscall_read: fd {}, count {}, ret {}",
-        fd, count, pos
-    );
-
-    ubuf.copy_from_slice(&kbuf);
-    pos
+    res
 }
 
 pub fn pread64(fd: usize, ubuf: &mut [u8], offset: usize) -> usize {
@@ -357,6 +377,22 @@ pub fn ioctl(fd: usize, request: usize, udata: usize) -> usize {
     0
 }
 
+pub fn mknodat(dfd: usize, pathname: &str, mode: usize, dev: usize) -> usize {
+    info!(
+        "mknodat: dfd {:#X}, pathname {}, mode {:#X}, dev {:#X}",
+        dfd, pathname, mode, dev
+    );
+    // TODO: implement dfd
+    assert_eq!(dfd, AT_FDCWD);
+    let current = task::current();
+    let fs = current.fs.lock();
+    assert_eq!(mode >> 12 , 0o1);
+    match fs.create_fifo(None, pathname) {
+        Ok(_) => 0,
+        Err(e) => linux_err_from!(e),
+    }
+}
+
 pub fn mkdirat(dfd: usize, pathname: &str, mode: usize) -> usize {
     info!(
         "mkdirat: dfd {:#X}, pathname {}, mode {:#X}",
@@ -382,6 +418,11 @@ pub fn unlinkat(dfd: usize, path: &str, flags: usize) -> usize {
     let ty = filetype(path).unwrap();
     if ty.is_dir() {
         match remove_dir(path, &fs) {
+            Ok(()) => 0,
+            Err(e) => linux_err_from!(e),
+        }
+    } else if ty.is_fifo() {
+        match remove_fifo(path, &fs) {
             Ok(()) => 0,
             Err(e) => linux_err_from!(e),
         }

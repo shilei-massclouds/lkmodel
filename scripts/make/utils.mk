@@ -58,6 +58,10 @@ define riscv64_install_apps
   @sudo mkdir -p ./mnt/opt
   @sudo mkdir -p ./mnt/btp
 
+  # for init
+  @sudo mkdir -p ./mnt/etc
+  @echo "proc /proc proc 0 0" | sudo tee -a ./mnt/etc/fstab &> /dev/null
+
   @sudo cp -r ./btp/etc ./mnt/
   @sudo cp -r ./btp/build/riscv64/sbin/ ./mnt/btp/
   @sudo cp ./btp/syscalls ./mnt/opt/
@@ -75,7 +79,8 @@ define riscv64_install_apps
   @sudo cp /usr/riscv64-linux-gnu/lib/libm.so.6 ./mnt/lib/
   @sudo cp /usr/riscv64-linux-gnu/lib/libresolv.so.2 ./mnt/lib/
 
-  -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/mmap[[:digit:]]* ./mnt/testcases/
+  # -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/mmap[[:digit:]]* ./mnt/testcases/
+  -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/read[[:digit:]]* ./mnt/testcases/
 
   ls -l ./mnt/bin
   @sudo umount ./mnt

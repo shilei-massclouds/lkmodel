@@ -1,21 +1,50 @@
 /// Filesystem attributes.
-///
-/// Currently not used.
-#[non_exhaustive]
-pub struct FileSystemInfo;
+#[derive(Default, Clone, Copy)]
+#[repr(C)]
+pub struct FileSystemInfo {
+    /// Type of filesystem
+    pub f_type: u64,
+    /// Optimal transfer block size
+    pub f_bsize: u64,
+    /// Total data blocks in filesystem
+    pub f_blocks: u64,
+    /// Free blocks in filesystem
+    pub f_bfree: u64,
+    /// Free blocks available to unprivileged user
+    pub f_bavail: u64,
+    /// Total inodes in filesystem
+    pub f_files: u64,
+    /// Free inodes in filesystem
+    pub f_ffree: u64,
+    /// Filesystem ID
+    pub f_fsid: KernelFsid,
+    /// Maximum length of filenames
+    pub f_namelen: u64,
+    /// Fragment size (since Linux 2.6)
+    pub f_frsize: u64,
+    /// Mount flags of filesystem (since Linux 2.6.36)
+    pub f_flags: u64,
+    /// Padding bytes reserved for future use
+    pub f_spare: [u64; 4],
+}
+
+#[derive(Default, Debug, Clone, Copy)]
+pub struct KernelFsid {
+    _val: [i32; 2],
+}
 
 /// Node (file/directory) attributes.
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
 pub struct VfsNodeAttr {
     /// File permission mode.
-    mode: VfsNodePerm,
+    pub mode: VfsNodePerm,
     /// File type.
     ty: VfsNodeType,
     /// Total size, in bytes.
-    size: u64,
+    pub size: u64,
     /// Number of 512B blocks allocated.
-    blocks: u64,
+    pub blocks: u64,
 }
 
 bitflags::bitflags! {
@@ -42,6 +71,9 @@ bitflags::bitflags! {
         const OTHER_WRITE = 0o2;
         /// Others have execute permission.
         const OTHER_EXEC = 0o1;
+
+        /// STICKY_BIT
+        const STICKY_BIT = 0o1000;
     }
 }
 
@@ -99,6 +131,13 @@ impl VfsNodePerm {
     /// group/others can read and execute).
     pub const fn default_dir() -> Self {
         Self::from_bits_truncate(0o755)
+    }
+
+    /// Returns the default permission for a fifo.
+    ///
+    /// The default permission is `0o777` (owner/group/others can read and write).
+    pub const fn default_fifo() -> Self {
+        Self::from_bits_truncate(0o777)
     }
 
     /// Returns the underlying raw `st_mode` bits that contain the standard
@@ -243,6 +282,17 @@ impl VfsNodeAttr {
         }
     }
 
+    /// Creates a new `VfsNodeAttr` for a fifo, with the default directory
+    /// permission.
+    pub const fn new_fifo(size: u64, blocks: u64) -> Self {
+        Self {
+            mode: VfsNodePerm::default_fifo(),
+            ty: VfsNodeType::Fifo,
+            size,
+            blocks,
+        }
+    }
+
     /// Returns the size of the node.
     pub const fn size(&self) -> u64 {
         self.size
@@ -276,6 +326,11 @@ impl VfsNodeAttr {
     /// Whether the node is a directory.
     pub const fn is_dir(&self) -> bool {
         self.ty.is_dir()
+    }
+
+    /// Whether the node is a fifo.
+    pub const fn is_fifo(&self) -> bool {
+        self.ty.is_fifo()
     }
 }
 
@@ -320,9 +375,9 @@ impl VfsDirEntry {
 
 #[repr(C, packed)]
 pub struct LinuxDirent64 {
-    pub d_ino:      u64,    // 64-bit inode number
-    pub d_off:      i64,    // 64-bit offset to next structure
-    pub d_reclen:   u16,    // Size of this dirent
-    pub d_type:     u8,     // File type
-    pub d_name:     [u8; 0],// Filename (null-terminated)
+    pub d_ino: u64,      // 64-bit inode number
+    pub d_off: i64,      // 64-bit offset to next structure
+    pub d_reclen: u16,   // Size of this dirent
+    pub d_type: u8,      // File type
+    pub d_name: [u8; 0], // Filename (null-terminated)
 }
