@@ -176,6 +176,18 @@ pub trait VfsNodeOps: Send + Sync {
     fn as_any(&self) -> &dyn core::any::Any {
         unimplemented!()
     }
+
+    fn i_readcount_inc(&self) ->  VfsResult {
+        ax_err!(Unsupported)
+    }
+
+    fn i_readcount_dec(&self) ->  VfsResult {
+        ax_err!(Unsupported)
+    }
+
+    fn i_readcount(&self) ->  VfsResult<usize> {
+        ax_err!(Unsupported)
+    }
 }
 
 #[doc(hidden)]

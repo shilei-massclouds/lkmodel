@@ -45,10 +45,6 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
         filename, dfd, flags, mode
     );
 
-    if (flags as i32 & O_WRONLY != 0) && (flags as i32 & O_NONBLOCK != 0) {
-        return Err(axerrno::AxError::Enxio);
-    }
-
     let mut opts = OpenOptions::new();
     opts.set_flags(flags as i32);
     opts.read(true);
@@ -63,7 +59,9 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
     if (flags as i32 & O_TRUNC) != 0 {
         opts.truncate(true);
     }
-
+    if (flags as i32 & O_NONBLOCK) == O_NONBLOCK {
+        opts.nonblock(true);
+    }
     let current = task::current();
     let fs = current.fs.lock();
 

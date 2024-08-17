@@ -28,6 +28,8 @@ pub const O_RDONLY:     i32 = 0o000;
 pub const O_WRONLY:     i32 = 0o001;
 pub const O_RDWR:       i32 = 0o002;
 pub const O_CREAT:      i32 = 0o100;
+pub const O_EXCL:       i32 = 0o200;
+pub const O_NOCTTY:     i32 = 0o400;
 pub const O_TRUNC:      i32 = 0o001000;
 pub const O_APPEND:     i32 = 0o002000;
 pub const O_NONBLOCK:   i32 = 0o4000;
@@ -65,6 +67,7 @@ pub struct OpenOptions {
     truncate: bool,
     create: bool,
     create_new: bool,
+    nonblock: bool,
     // system-specific
     _custom_flags: i32,
     _mode: u32,
@@ -81,11 +84,17 @@ impl OpenOptions {
             truncate: false,
             create: false,
             create_new: false,
+            nonblock: false,
             // system-specific
             _custom_flags: 0,
             _mode: 0o666,
         }
     }
+
+    pub fn set_mode(&mut self, mode: u32) {
+        self._mode = mode;
+    }
+
     pub fn set_flags(&mut self, flags: i32) {
         self._custom_flags = flags;
     }
@@ -105,6 +114,12 @@ impl OpenOptions {
     pub fn truncate(&mut self, truncate: bool) {
         self.truncate = truncate;
     }
+
+    /// Sets the option to open the file in nonblocking mode.
+    pub fn nonblock(&mut self, nonblock: bool) {
+        self.nonblock = nonblock;
+    }
+
     /// Sets the option to create a new file, or open it if it already exists.
     pub fn create(&mut self, create: bool) {
         self.create = create;
@@ -250,7 +265,17 @@ impl File {
         if !perm_to_cap(attr.perm()).contains(access_cap) {
             return ax_err!(PermissionDenied);
         }
-
+        
+        if attr.is_fifo()
+        {
+            if (opts.write || opts.nonblock)
+            && node.i_readcount()? == 0 {
+                return ax_err!(Enxio);
+            }else if opts.read {
+                node.i_readcount_inc()?;
+            }
+        }
+        
         node.open()?;
         if opts.truncate {
             node.truncate(0)?;

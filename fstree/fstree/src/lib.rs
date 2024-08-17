@@ -14,6 +14,7 @@ use lazy_init::LazyInit;
 pub struct FsStruct {
     pub users: i32,
     pub in_exec: bool,
+    mask: u32,
     curr_path: String,
     curr_dir: Option<VfsNodeRef>,
     root_dir: Option<Arc<RootDirectory>>,
@@ -22,6 +23,7 @@ pub struct FsStruct {
 impl FsStruct {
     pub fn new() -> Self {
         Self {
+            mask: 0o022,
             users: 1,
             in_exec: false,
             curr_path: String::from("/"),
@@ -190,6 +192,12 @@ impl FsStruct {
             self.remove_file(None, new)?;
         }
         self.parent_node_of(None, old).rename(old, new)
+    }
+
+    pub fn umask(&mut self, mask: u32) -> AxResult<u32> {
+        let old_mask = self.mask;
+        self.mask = mask;
+        Ok(old_mask)
     }
 }
 

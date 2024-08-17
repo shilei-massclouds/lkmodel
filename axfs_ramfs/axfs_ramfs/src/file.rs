@@ -4,6 +4,7 @@ use spin::RwLock;
 
 pub struct NodeInner {
     content: Vec<u8>,
+    i_readcount: usize,
     node_attr: VfsNodeAttr,
 }
 
@@ -19,6 +20,7 @@ impl FileNode {
         Self {
             inner: RwLock::new(NodeInner {
                 content: Vec::new(),
+                i_readcount: 0,
                 node_attr: VfsNodeAttr::new(axfs_vfs::VfsNodePerm::from_bits_truncate(0o1644),axfs_vfs::VfsNodeType::File,0, 0),
             }),
         }
@@ -77,6 +79,7 @@ impl FifoNode {
         Self {
             inner: RwLock::new(NodeInner {
                 content: Vec::new(),
+                i_readcount: 0,
                 node_attr: VfsNodeAttr::new(axfs_vfs::VfsNodePerm::from_bits_truncate(0o1644),axfs_vfs::VfsNodeType::Fifo,0, 0),
             }),
         }
@@ -107,5 +110,21 @@ impl VfsNodeOps for FifoNode {
         Ok(buf.len())
     }
 
+    fn i_readcount(&self) ->  VfsResult<usize> {
+        let inner = self.inner.read();
+        Ok(inner.i_readcount)
+    }
+
+    fn i_readcount_inc(&self) ->  VfsResult {
+        let mut inner = self.inner.write();
+        inner.i_readcount += 1;
+        Ok(())
+    }
+
+    fn i_readcount_dec(&self) ->  VfsResult {
+        let mut inner = self.inner.write();
+        inner.i_readcount -= 1;
+        Ok(())
+    }
     impl_vfs_non_dir_default! {}
 }
