@@ -146,7 +146,7 @@ pub fn rt_sigaction(sig: usize, act: usize, oact: usize, sigsetsize: usize) -> u
 
     if act != 0 {
         let act = unsafe { &(*(act as *const SigAction)) };
-        debug!("act: {:#X} {:#X} {:#X}", act.handler, act.flags, act.mask);
+        info!("act: {:#X} {:#X} {:#X}", act.handler, act.flags, act.mask);
         assert!((act.flags & SA_RESTORER) == 0);
 
         let mut kact = act.clone();

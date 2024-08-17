@@ -167,8 +167,8 @@ impl TaskStruct {
 
     pub fn dup_task_struct(&self) -> Self {
         info!("dup_task_struct ...");
-        let mut task = Self::new();
-        task.fs = self.fs.clone();
+        let task = Self::new();
+        task.blocked.store(self.blocked.load(Ordering::Relaxed), Ordering::Relaxed);
         task
     }
 
