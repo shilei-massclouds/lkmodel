@@ -79,10 +79,14 @@ define riscv64_install_apps
   @sudo cp /usr/riscv64-linux-gnu/lib/libm.so.6 ./mnt/lib/
   @sudo cp /usr/riscv64-linux-gnu/lib/libresolv.so.2 ./mnt/lib/
 
-  # -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/mmap[[:digit:]]* ./mnt/testcases/
-  -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/read[[:digit:]]* ./mnt/testcases/
+  #-@sudo cp -f $(LTP)/build_riscv64/testcases/bin/mmap[[:digit:]]* ./mnt/testcases/
+  @sudo cp -f $(LTP)/build_riscv64/testcases/bin/read[[:digit:]]* ./mnt/testcases/
+  @sudo cp -f $(LTP)/build_riscv64/testcases/bin/open[[:digit:]]* ./mnt/testcases/
+  @sudo cp -f $(LTP)/build_riscv64/testcases/bin/write[[:digit:]]* ./mnt/testcases/
 
-  ls -l ./mnt/bin
+  ls -l ./mnt/testcases
+
+  # ls -l ./mnt/bin
   @sudo umount ./mnt
   @rm -rf ./mnt
 endef

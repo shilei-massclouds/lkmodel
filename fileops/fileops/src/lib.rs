@@ -193,7 +193,15 @@ pub fn write(fd: usize, ubuf: &[u8]) -> usize {
         pos += ret;
     }
     */
-    let pos = file.lock().write(&kbuf).unwrap();
+    let pos = match file.lock().write(&kbuf) {
+        Ok(pos) => pos,
+        Err(e) => {
+            if let VfsError::WouldBlock = e {
+                return linux_err!(EAGAIN);
+            }
+            unreachable!() // TODO?
+        }
+    };
     info!("write: fd {}, count {}, ret {}", fd, count, pos);
     pos
 }

@@ -268,7 +268,7 @@ impl File {
         
         if attr.is_fifo()
         {
-            if (opts.write || opts.nonblock)
+            if (opts.write && opts.nonblock)
             && node.i_readcount()? == 0 {
                 return ax_err!(Enxio);
             }else if opts.read {

@@ -106,6 +106,9 @@ impl VfsNodeOps for FifoNode {
 
     fn write_at(&self, _offset: u64, buf: &[u8]) -> VfsResult<usize> {
         let mut inner = self.inner.write();
+        if inner.content.len() != 0  {
+            return Err(axfs_vfs::VfsError::WouldBlock);
+        }
         inner.content.extend_from_slice(buf);
         Ok(buf.len())
     }

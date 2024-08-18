@@ -1,5 +1,6 @@
 TARGETS := init hello vfork execl run signal mmap procfs mount \
-	mkdir runbtp devfs cmd_system fileops_read_test fileops_open_test
+	mkdir runbtp devfs cmd_system fileops_read_test fileops_open_test \
+	fileops_write_test
 
 CC := $(ARCH)-linux-gnu-gcc
 STRIP := $(ARCH)-linux-gnu-strip

@@ -217,7 +217,14 @@ fn linux_syscall_getdents64(args: SyscallArgs) -> usize {
 fn linux_syscall_write(args: SyscallArgs) -> usize {
     let [fd, buf, size, ..] = args;
     info!("write: {:#x}, {:#x}, {:#x}", fd, buf, size);
-
+    let mm = task::current().mm();
+    let locked_mm = mm.lock();
+    let ret = locked_mm.vmas.iter().any(|(_,vma)| {
+        vma.vm_start <= buf && buf <= vma.vm_end && vma.vm_flags & mm::VM_READ != 0
+    });
+    if !ret && size != 0 {
+        return linux_err!(EFAULT);
+    }
     let ubuf = unsafe { core::slice::from_raw_parts(buf as *const u8, size) };
     fileops::write(fd, ubuf)
 }
