@@ -1,5 +1,8 @@
 #![cfg_attr(not(test), no_std)]
 
+mod path;
+pub use path::Path;
+
 extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;

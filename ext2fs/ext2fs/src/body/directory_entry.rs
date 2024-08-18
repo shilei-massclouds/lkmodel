@@ -5,7 +5,7 @@ use core::ffi::c_char;
 use core::mem::size_of;
 use crate::Disk;
 use axerrno::{LinuxResult, LinuxError};
-use crate::fs::ext2fs::{Ext2Disk, TypePerm, SFlag};
+use crate::{Ext2Disk, TypePerm, SFlag};
 
 // Directories are inodes which contain some number of "entries" as their contents.
 // These entries are nothing more than a name/inode pair. For instance the inode

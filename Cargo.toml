@@ -23,7 +23,7 @@ members = [
     "fileops/rt_fileops",
     "mmap/rt_mmap",
     "fstree/rt_fstree",
-    "macrokernel/rt_macrokernel",
+    "macrokernel/rt_macrokernel", "ext2fs/ext2fs",
 ]
 
 [profile.release]
@@ -145,6 +145,9 @@ path = "./axfs_ramfs/axfs_ramfs"
 
 [patch."ssh://git@github.com/shilei-massclouds/rust_fatfs".rust_fatfs]
 path = "./rust_fatfs/rust_fatfs"
+
+[patch."ssh://git@github.com/shilei-massclouds/ext2fs".ext2fs]
+path = "./ext2fs/ext2fs"
 
 [patch."ssh://git@github.com/shilei-massclouds/axfs_vfs".axfs_vfs]
 path = "./axfs_vfs/axfs_vfs"
