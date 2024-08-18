@@ -50,7 +50,7 @@ pub struct VfsNodeAttr {
 bitflags::bitflags! {
     /// Node (file/directory) permission mode.
     #[derive(Debug, Clone, Copy)]
-    pub struct VfsNodePerm: u16 {
+    pub struct VfsNodePerm: u32 {
         /// Owner has read permission.
         const OWNER_READ = 0o400;
         /// Owner has write permission.
@@ -74,6 +74,26 @@ bitflags::bitflags! {
 
         /// STICKY_BIT
         const STICKY_BIT = 0o1000;
+
+        const SET_GROUP_ID = 0o2000;
+
+        const SET_USER_ID = 0o4000;
+
+        const FIFO = 0o10000;
+
+        const CHARACTER_DEVICE = 0o20000;
+
+        const DIRECTORY = 0o40000;
+
+        const BLOCK_DEVICE = 0o60000;
+
+        const REGULAR_FILE = 0o100000;
+
+        const SYMBOLIC_LINK = 0o120000;
+
+        const UNIX_SOCKET = 0o140000;
+
+        const S_IFMT = 0o170000;
     }
 }
 

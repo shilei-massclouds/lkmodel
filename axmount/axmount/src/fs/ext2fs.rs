@@ -1680,7 +1680,7 @@ impl VfsNodeOps for Ext2Inode {
         info!("get_attr ino: {}", self.entry.directory.get_inode());
         let inode = self.entry.inode;
         let perm = inode.type_and_perm.0 as u32 & !SFlag::S_IFMT.bits();
-        let perm = VfsNodePerm::from_bits_truncate(perm as u16);
+        let perm = VfsNodePerm::from_bits_truncate(perm as u32);
         let node_type = match inode.type_and_perm.extract_type() {
             SFlag::S_IFREG => VfsNodeType::File,
             SFlag::S_IFDIR => VfsNodeType::Dir,
