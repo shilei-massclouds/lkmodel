@@ -6,16 +6,24 @@ use alloc::vec::Vec;
 use axfile::fops::File;
 use mutex::Mutex;
 use spinpreempt::SpinLock;
+use axfile::fops::O_CLOEXEC;
+use axtype::{set_bit, clr_bit};
 
 pub struct FileTable {
     table: SlotVec<FileTableEntry>,
+    close_on_exec: usize,
 }
 
 impl FileTable {
     pub const fn new() -> Self {
         Self {
             table: SlotVec::new(),
+            close_on_exec: 0,
         }
+    }
+
+    pub fn close_on_exec(&self) -> usize {
+        self.close_on_exec
     }
 
     pub fn get_file(&self, fd: usize) -> Option<Arc<Mutex<File>>> {
@@ -24,12 +32,19 @@ impl FileTable {
             .map(|entry| entry.file.clone())
     }
 
-    pub fn insert(&mut self, item: Arc<Mutex<File>>) -> usize {
+    pub fn insert(&mut self, item: Arc<Mutex<File>>, flags: usize) -> usize {
         let entry = FileTableEntry::new(item);
-        self.table.put(entry)
+        let fd = self.table.put(entry);
+        if (flags & O_CLOEXEC as usize) != 0 {
+            set_bit(fd, &mut self.close_on_exec);
+        } else {
+            clr_bit(fd, &mut self.close_on_exec);
+        }
+        fd
     }
 
     pub fn remove(&mut self, fd: usize) {
+        clr_bit(fd, &mut self.close_on_exec);
         self.table.remove(fd);
     }
 
@@ -47,6 +62,7 @@ impl FileTable {
     }
 
     pub fn copy_from(&mut self, src: &Self) {
+        self.close_on_exec = src.close_on_exec;
         self.table.copy_from(&src.table)
     }
 

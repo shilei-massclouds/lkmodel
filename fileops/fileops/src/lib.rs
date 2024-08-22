@@ -81,7 +81,7 @@ pub fn special_open(path: &str, opts: &OpenOptions) -> AxResult<File> {
     Err(NotFound)
 }
 
-pub fn register_file(file: AxResult<File>) -> usize {
+pub fn register_file(file: AxResult<File>, flags: usize) -> usize {
     let file = match file {
         Ok(f) => f,
         Err(e) => {
@@ -89,7 +89,8 @@ pub fn register_file(file: AxResult<File>) -> usize {
         }
     };
     let current = task::current();
-    let fd = current.filetable.lock().insert(Arc::new(Mutex::new(file)));
+    let fd = current.filetable
+        .lock().insert(Arc::new(Mutex::new(file)), flags);
     error!("openat fd {}", fd);
     fd
 }
@@ -543,11 +544,11 @@ pub fn console_on_rootfs() -> LinuxResult {
         .expect("bad /dev/console");
     let console = Arc::new(Mutex::new(console));
 
-    let stdin = current.filetable.lock().insert(console.clone());
+    let stdin = current.filetable.lock().insert(console.clone(), 0);
     info!("Register stdin: fd[{}]", stdin);
-    let stdout = current.filetable.lock().insert(console.clone());
+    let stdout = current.filetable.lock().insert(console.clone(), 0);
     info!("Register stdout: fd[{}]", stdout);
-    let stderr = current.filetable.lock().insert(console.clone());
+    let stderr = current.filetable.lock().insert(console.clone(), 0);
     info!("Register stderr: fd[{}]", stderr);
     Ok(())
 }

@@ -15,10 +15,27 @@ pub fn kernel_execve(filename: &str, argv: Vec<String>, envp: Vec<String>) -> Li
 
     task::alloc_mm();
 
+    do_close_on_exec()?;
+
     let (entry, sp) = bprm_loader::execve(filename, 0, argv, envp)?;
 
     info!("start thread... usp {:#x}", sp);
     start_thread(task::current().pt_regs_addr(), entry, sp);
+    Ok(())
+}
+
+fn do_close_on_exec() -> LinuxResult {
+    let current = task::current();
+    let mut locked_ft = current.filetable.lock();
+    let mut set = locked_ft.close_on_exec();
+    let mut fd = 0;
+    while set != 0 {
+        if (set & 1) == 1 {
+            locked_ft.remove(fd);
+        }
+        set >>= 1;
+        fd += 1;
+    }
     Ok(())
 }
 

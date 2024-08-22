@@ -157,8 +157,10 @@ fn linux_syscall_openat(args: SyscallArgs) -> usize {
     let [dfd, filename, flags, mode, ..] = args;
 
     let filename = get_user_str(filename);
-    info!("filename: {}\n", filename);
-    fileops::register_file(fileops::openat(dfd, &filename, flags, mode))
+    info!("filename: {} flags {:#o}\n", filename, flags);
+    fileops::register_file(
+        fileops::openat(dfd, &filename, flags, mode), flags
+    )
 }
 
 fn linux_syscall_dup(args: SyscallArgs) -> usize {

@@ -184,3 +184,11 @@ pub fn ffz(mut word: u64) -> Option<usize> {
     }
     return Some(num);
 }
+
+pub fn set_bit(nr: usize, bitword: &mut usize) {
+    *bitword |= 1 << nr;
+}
+
+pub fn clr_bit(nr: usize, bitword: &mut usize) {
+    *bitword &= !(1 << nr);
+}
