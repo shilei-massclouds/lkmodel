@@ -27,6 +27,7 @@ axfs_ramfs = { git = "ssh://git@github.com/shilei-massclouds/axfs_ramfs.git" }
 axfs_vfs = { git = "ssh://git@github.com/shilei-massclouds/axfs_vfs.git" }
 lazy_init = { git = "ssh://git@github.com/shilei-massclouds/lazy_init.git" }
 rust_fatfs = { git = "ssh://git@github.com/shilei-massclouds/rust_fatfs.git" }
+ext2fs = { git = "ssh://git@github.com/shilei-massclouds/ext2fs.git" }
 axconfig = { git = "ssh://git@github.com/shilei-massclouds/axconfig" }
 axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno" }
 axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal" }

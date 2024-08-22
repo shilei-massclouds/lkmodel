@@ -1,3 +1,7 @@
+#![no_std]
+#![feature(maybe_uninit_uninit_array)]
+#![feature(maybe_uninit_array_assume_init)]
+
 mod header;
 mod tools;
 mod body;
@@ -16,13 +20,13 @@ use header::{BlockGroupDescriptor, SuperBlock};
 use axerrno::{LinuxResult, LinuxError};
 use axfs_vfs::{VfsResult, VfsOps, VfsNodeRef, VfsNodeOps, VfsNodeType, VfsError};
 use lazy_init::LazyInit;
-use crate::dev::Disk;
-use crate::fs::path::Path;
+use axdriver::Disk;
+use axtype::Path;
 use bit_field::{BitArray, BitField};
-use crate::fs::ext2fs::body::Mode;
-use crate::fs::ext2fs::body::{uid_t, gid_t};
+use crate::body::Mode;
+use crate::body::{uid_t, gid_t};
 use mutex::Mutex;
-use crate::fs::ext2fs::body::SFlag;
+use crate::body::SFlag;
 use axfs_vfs::VfsNodeAttr;
 use axfs_vfs::VfsNodePerm;
 use core::sync::atomic::AtomicU64;
@@ -40,6 +44,10 @@ use axfs_vfs::{DT_, LinuxDirent64};
 pub use body::{DirectoryEntry, DirectoryEntryType, Entry, Inode, TypePerm};
 
 pub use tools::div_rounded_up;
+
+#[macro_use]
+extern crate log;
+extern crate alloc;
 
 /// Used to help confirm the presence of Ext2 on a volume
 const EXT2_SIGNATURE_MAGIC: u16 = 0xef53;

@@ -1,5 +1,5 @@
 //! This file describe all the Inode model
-use crate::fs::ext2fs::Block;
+use crate::Block;
 
 use super::TypePerm;
 

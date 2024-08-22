@@ -71,6 +71,8 @@ mod bus;
 mod drivers;
 mod dummy;
 mod structs;
+mod disk;
+pub use disk::Disk;
 
 #[cfg(feature = "virtio")]
 mod virtio;

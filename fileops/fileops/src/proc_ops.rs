@@ -40,7 +40,7 @@ impl VfsNodeOps for ProcNode {
             "/proc/self/status" => {
                 let mm = task::current().mm();
                 let locked_mm = mm.lock();
-                let src = format!("VmLck:         {} kB\n\0",
+                let src = format!("VmLck:\t       {} kB\n\0",
                     locked_mm.locked_vm << 2);
                 let src = src.as_bytes();
                 let src = &src[offset..];

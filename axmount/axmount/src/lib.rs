@@ -6,7 +6,6 @@
 extern crate log;
 extern crate alloc;
 
-mod dev;
 mod fs;
 mod mounts;
 
@@ -23,8 +22,7 @@ cfg_if::cfg_if! {
         use crate::fs::fatfs::FatFileSystem;
         type FsType = Arc<FatFileSystem>;
     } else {
-        use crate::fs::ext2fs::Ext2Fs;
-        use crate::dev::Disk;
+        use ext2fs::Ext2Fs;
         type FsType = Arc<Ext2Fs>;
     }
 }
@@ -35,7 +33,7 @@ pub fn init_filesystems(mut blk_devs: AxDeviceContainer<AxBlockDevice>, _need_fm
 
     let dev = blk_devs.take_one().expect("No block device found!");
     info!("  use block device 0: {:?}", dev.device_name());
-    let disk = self::dev::Disk::new(dev);
+    let disk = axdriver::Disk::new(dev);
 
     cfg_if::cfg_if! {
         if #[cfg(feature = "myfs")] { // override the default filesystem

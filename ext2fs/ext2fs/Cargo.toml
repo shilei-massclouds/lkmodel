@@ -1,0 +1,18 @@
+[package]
+name = "ext2fs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log = "0.4"
+bitflags = "2.3.2"
+bit_field = "0.10.2"
+axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno" }
+mutex = { git = "ssh://git@github.com/shilei-massclouds/mutex.git" }
+lazy_init = { git = "ssh://git@github.com/shilei-massclouds/lazy_init.git" }
+axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal" }
+axfs_vfs = { git = "ssh://git@github.com/shilei-massclouds/axfs_vfs.git" }
+axtype = { git = "ssh://git@github.com/shilei-massclouds/axtype.git" }
+axdriver = { git = "ssh://git@github.com/shilei-massclouds/axdriver.git" }

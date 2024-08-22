@@ -14,3 +14,6 @@ axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal" }
 axalloc = { git = "ssh://git@github.com/shilei-massclouds/axalloc" }
 mmap = { git = "ssh://git@github.com/shilei-massclouds/mmap" }
 mm = { git = "ssh://git@github.com/shilei-massclouds/mm" }
+fileops = { git = "ssh://git@github.com/shilei-massclouds/fileops" }
+task = { git = "ssh://git@github.com/shilei-massclouds/task" }
+axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno" }
