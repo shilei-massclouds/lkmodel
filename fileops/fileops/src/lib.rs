@@ -28,8 +28,12 @@ pub type FileRef = Arc<Mutex<File>>;
 
 // Special value used to indicate openat should use
 // the current working directory.
-pub const AT_FDCWD: usize = -100isize as usize;
-pub const AT_EMPTY_PATH: usize = 0x1000;
+pub const AT_FDCWD: usize       = -100isize as usize;
+// Remove directory instead of unlinking file.
+pub const AT_REMOVEDIR: usize   = 0x200;
+pub const AT_EMPTY_PATH: usize  = 0x1000;
+
+const BLOCK_SIZE: u32 = 4096;
 
 const SEEK_SET: usize = 0;
 const SEEK_CUR: usize = 1;
@@ -278,7 +282,8 @@ pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usi
             st_gid: 1000,
             st_size: st_size,
             st_blocks: metadata.blocks() as _,
-            st_blksize: 512,
+            // Todo: get real block_size from dev
+            st_blksize: BLOCK_SIZE,
             ..Default::default()
         };
     }
@@ -376,18 +381,26 @@ pub fn mkdirat(dfd: usize, pathname: &str, mode: usize) -> usize {
 pub fn unlinkat(dfd: usize, path: &str, flags: usize) -> usize {
     info!("unlinkat: dfd {:#X}, path {}, flags {:#x}", dfd, path, flags);
     assert_eq!(dfd, AT_FDCWD);
+    if (flags & !AT_REMOVEDIR) != 0 {
+        return linux_err!(EINVAL);
+    }
 
     let current = task::current();
     let fs = current.fs.lock();
     // Todo: distinguish dir&file
     let ty = filetype(path).unwrap();
-    if ty.is_dir() {
+    if (flags & AT_REMOVEDIR) != 0 {
+        if !ty.is_dir() {
+            return linux_err!(ENOTDIR);
+        }
         match remove_dir(path, &fs) {
             Ok(()) => 0,
             Err(e) => linux_err_from!(e),
         }
     } else {
-        assert!(ty.is_file());
+        if !ty.is_file() {
+            return linux_err!(EISDIR);
+        }
         match remove_file(path, &fs) {
             Ok(()) => 0,
             Err(e) => linux_err_from!(e),

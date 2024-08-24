@@ -82,7 +82,7 @@ fn do_openat(info: &Vec<&str>, fd_map: &mut FdMap) {
         info!("openat: {} error! Ignore it!", fname);
         return;
     }
-    let fd = fileops::register_file(fileops::openat(AT_FDCWD, &fname, flags, mode));
+    let fd = fileops::register_file(fileops::openat(AT_FDCWD, &fname, flags, mode), flags);
     let ofd = parse_usize(result);
     fd_map.try_insert(ofd, fd).unwrap();
     info!("do_openat: ... {}, {}, {}, {}, ofd {:#x} => fd {:#x}", dfd, fname, flags, mode, ofd, fd);
