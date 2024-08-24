@@ -42,4 +42,9 @@ int main(){
         execl("/testcases/write05", "write05", NULL);
     }
     waitpid(pid, NULL, 0);
+    pid = vfork();
+    if (pid == 0) {
+        execl("/testcases/write06", "write06", NULL);
+    }
+    waitpid(pid, NULL, 0);
 }
