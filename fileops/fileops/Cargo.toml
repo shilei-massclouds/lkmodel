@@ -24,6 +24,8 @@ axlog2 = { git = "ssh://git@github.com/shilei-massclouds/axlog2" }
 axfs_vfs = { git = "ssh://git@github.com/shilei-massclouds/axfs_vfs" }
 capability = { git = "ssh://git@github.com/shilei-massclouds/capability" }
 mm = { git = "ssh://git@github.com/shilei-massclouds/mm" }
+axfs_pipefs = { path = "../../axfs_pipefs/axfs_pipefs" }
+signal = { git = "ssh://git@github.com/shilei-massclouds/signal" }
 
 [target.'cfg(any(target_arch = "riscv32", target_arch = "riscv64"))'.dependencies]
 riscv = "0.10"

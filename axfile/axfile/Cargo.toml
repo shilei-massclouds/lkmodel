@@ -12,3 +12,4 @@ axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno.git" }
 axfs_vfs = { git = "ssh://git@github.com/shilei-massclouds/axfs_vfs.git" }
 capability = { git = "ssh://git@github.com/shilei-massclouds/capability.git" }
 fstree = { git = "ssh://git@github.com/shilei-massclouds/fstree.git" }
+axfs_pipefs = { path = "../../axfs_pipefs/axfs_pipefs"}

@@ -10,3 +10,4 @@ log = "0.4"
 axfile = { git = "ssh://git@github.com/shilei-massclouds/axfile.git" }
 mutex = { git = "ssh://git@github.com/shilei-massclouds/mutex.git" }
 spinpreempt  = { git = "ssh://git@github.com/shilei-massclouds/spinpreempt.git" }
+capability = { git = "ssh://git@github.com/shilei-massclouds/capability" }

@@ -85,9 +85,10 @@ pub fn init_rootfs(main_fs: Arc<dyn VfsOps>) -> Arc<RootDirectory> {
 
 pub fn init(_cpu_id: usize, _dtb_pa: usize) {
     axconfig::init_once!();
-
+    
     let all_devices = axdriver::init_drivers2();
     let main_fs = init_filesystems(all_devices.block, false);
+    axfs_pipefs::init();
     INIT_ROOT.init_by(init_rootfs(main_fs));
 }
 

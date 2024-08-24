@@ -74,6 +74,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_CAPGET => linux_syscall_capget(args),
         LINUX_SYSCALL_SETITIMER => linux_syscall_setitimer(args),
         LINUX_SYSCALL_MOUNT => linux_syscall_mount(args),
+        LINUX_SYSCALL_PIPE2 => linux_syscall_pipe2(args),
         #[cfg(target_arch = "riscv64")]
         LINUX_SYSCALL_GETDENTS64 => linux_syscall_getdents64(args),
         #[cfg(target_arch = "riscv64")]
@@ -517,6 +518,14 @@ fn linux_syscall_mknodat(args: SyscallArgs) -> usize {
     let pathname = get_user_str(pathname);
 
     mknodat(dfd, &pathname, mode, dev)
+}
+
+fn linux_syscall_pipe2(args: SyscallArgs) -> usize {
+    let [pipefd ,flags ,..] = args;
+
+    let pipefd = unsafe { core::slice::from_raw_parts_mut(pipefd as *mut i32, 2) };
+    fileops::pipe2(pipefd , flags);
+    0
 }
 pub fn init() {
     info!("Initialize systemcalls ...");

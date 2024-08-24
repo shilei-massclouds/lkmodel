@@ -23,7 +23,9 @@ members = [
     "fileops/rt_fileops",
     "mmap/rt_mmap",
     "fstree/rt_fstree",
-    "macrokernel/rt_macrokernel", "ext2fs/ext2fs",
+    "macrokernel/rt_macrokernel", 
+    "ext2fs/ext2fs", 
+    "axfs_pipefs/axfs_pipefs",
 ]
 
 [profile.release]

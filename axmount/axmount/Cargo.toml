@@ -31,6 +31,7 @@ ext2fs = { git = "ssh://git@github.com/shilei-massclouds/ext2fs.git" }
 axconfig = { git = "ssh://git@github.com/shilei-massclouds/axconfig" }
 axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno" }
 axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal" }
+axfs_pipefs = { path = "../../axfs_pipefs/axfs_pipefs"}
 
 bitflags = "2.3.2"
 bit_field = "0.10.2"

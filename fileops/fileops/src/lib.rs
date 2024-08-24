@@ -23,7 +23,10 @@ use axtype::get_user_str;
 use axio::SeekFrom;
 use axfs_vfs::VfsNodeType;
 use axfs_vfs::path::canonicalize;
-use axfile::fops::{O_CREAT, O_TRUNC, O_APPEND, O_WRONLY, O_RDWR, O_NONBLOCK};
+use axfs_pipefs::get_pipe_inode;
+use axfile::fops::{O_CREAT, O_TRUNC, O_APPEND, O_WRONLY, O_RDWR, O_NONBLOCK, O_CLOEXEC, O_DIRECT, O_NOTIFICATION_PIPE};
+use task::SIGPIPE;
+use signal::kill;
 
 pub type FileRef = Arc<Mutex<File>>;
 
@@ -97,7 +100,6 @@ pub fn register_file(file: AxResult<File>) -> usize {
         return linux_err!(EMFILE);
     }
     let fd = current.filetable.lock().insert(Arc::new(Mutex::new(file)));
-    error!("openat fd {}", fd);
     fd
 }
 
@@ -178,6 +180,11 @@ pub fn pread64(fd: usize, ubuf: &mut [u8], offset: usize) -> usize {
 pub fn write(fd: usize, ubuf: &[u8]) -> usize {
     let count = ubuf.len();
     let current = task::current();
+
+    // check fd
+    if (fd as isize) < 0 {
+        return linux_err!(EBADF);
+    }
     let file = current.filetable.lock().get_file(fd).unwrap();
 
     let mut kbuf = vec![0u8; count];
@@ -196,10 +203,14 @@ pub fn write(fd: usize, ubuf: &[u8]) -> usize {
     let pos = match file.lock().write(&kbuf) {
         Ok(pos) => pos,
         Err(e) => {
-            if let VfsError::WouldBlock = e {
-                return linux_err!(EAGAIN);
+            match e {
+                VfsError::WouldBlock => return linux_err!(EAGAIN),
+                VfsError::Epipe => {
+                    kill(current.tid(),SIGPIPE);
+                    return linux_err!(EPIPE)
+                },
+                _ => {unimplemented!()}
             }
-            unreachable!() // TODO?
         }
     };
     info!("write: fd {}, count {}, ret {}", fd, count, pos);
@@ -580,6 +591,40 @@ pub fn getdents64(fd: usize, dirp: usize, count: usize) -> usize {
     ubuf.copy_from_slice(&kbuf);
     info!("getdents64 ret {}...", ret);
     ret
+}
+pub fn pipe2(pipefd: &mut [i32],flags: usize) -> usize {
+
+    // check flags
+    if (flags & !(O_CLOEXEC | O_NONBLOCK | O_DIRECT | O_NOTIFICATION_PIPE) as usize) != 0 {
+        return linux_err!(EINVAL)
+    }
+	
+    let current = task::current();
+    
+    let pipe_node = get_pipe_inode();
+
+    let mut opts = OpenOptions::new();
+    opts.write(true);
+
+    if flags & O_NONBLOCK as usize != 0 {
+        opts.nonblock(true);
+    }
+
+    let pipe_w = File::new(pipe_node.clone(), (&opts).into());
+    
+    opts.write(false);
+    opts.read(true);
+    let _ = pipe_node.i_readcount_inc();
+    let pipe_r = File::new(pipe_node, (&opts).into());
+
+    let rfd =current.filetable.lock().insert(Arc::new(Mutex::new(pipe_r)));
+    let wfd = current.filetable.lock().insert(Arc::new(Mutex::new(pipe_w)));
+
+    pipefd[0] = rfd as i32;
+    pipefd[1] = wfd as i32;
+
+    error!("pipe2 rfd {} wfd {} {} {}",rfd,wfd,pipefd[0],pipefd[1]);
+    0
 }
 
 // Open /dev/console, for stdin/stdout/stderr, this should never fail

@@ -188,6 +188,11 @@ pub trait VfsNodeOps: Send + Sync {
     fn i_readcount(&self) ->  VfsResult<usize> {
         ax_err!(Unsupported)
     }
+
+    fn get_ino(&self) -> VfsResult<usize> {
+        ax_err!(Unsupported)
+    }
+
 }
 
 #[doc(hidden)]

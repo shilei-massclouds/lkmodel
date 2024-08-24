@@ -8,6 +8,7 @@ use core::fmt;
 use fstree::FsStruct;
 use alloc::collections::BTreeMap;
 use core::sync::atomic::{AtomicUsize, Ordering};
+use axfs_pipefs::is_pipe;
 
 #[cfg(feature = "myfs")]
 pub use crate::dev::Disk;
@@ -33,7 +34,10 @@ pub const O_NOCTTY:     i32 = 0o400;
 pub const O_TRUNC:      i32 = 0o001000;
 pub const O_APPEND:     i32 = 0o002000;
 pub const O_NONBLOCK:   i32 = 0o4000;
+pub const O_DIRECT:     i32 = 0o40000;
 pub const O_DIRECTORY:  i32 = 0o200000; /* must be a directory */
+pub const O_CLOEXEC:    i32 = 0o2000000;
+pub const O_NOTIFICATION_PIPE: i32 = O_EXCL;
 
 static NEXT_INO: AtomicUsize = AtomicUsize::new(0);
 
@@ -43,7 +47,7 @@ pub fn alloc_ino() -> usize {
 
 /// An opened file object, with open permissions and a cursor.
 pub struct File {
-    node: WithCap<VfsNodeRef>,
+    pub node: WithCap<VfsNodeRef>,
     is_append: bool,
     offset: u64,
     pub ino: usize,
@@ -328,6 +332,18 @@ impl File {
     /// written.
     pub fn write(&mut self, buf: &[u8]) -> AxResult<usize> {
         let node = self.node.access(Cap::WRITE)?;
+        if node.get_attr()?.is_fifo() {
+            if let Ok(ino) = node.get_ino() {
+                if is_pipe(ino) {
+                    if node.i_readcount()? == 0 {
+                        return ax_err!(Epipe);
+                    }
+                    let write_len = node.write_at(self.offset, buf)?;
+                    self.offset += write_len as u64;
+                    return Ok(write_len)
+                }
+            }
+        }
         if self.is_append {
             self.offset = self.get_attr()?.size();
         };

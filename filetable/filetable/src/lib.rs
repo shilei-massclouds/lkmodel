@@ -30,7 +30,11 @@ impl FileTable {
     }
 
     pub fn remove(&mut self, fd: usize) {
-        self.table.remove(fd);
+        if let Some(table_entry) = self.table.remove(fd) {
+            if let Ok(inode) = table_entry.file.lock().node.access(capability::Cap::READ) {
+                let _ = inode.i_readcount_dec();
+            }
+        }
     }
 
     pub fn alloc_fd(&mut self, start: usize) -> usize {
