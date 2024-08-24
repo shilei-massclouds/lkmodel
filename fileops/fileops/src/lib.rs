@@ -8,6 +8,7 @@ use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec;
 use alloc::format;
+use core::cmp::min;
 
 mod proc_ops;
 
@@ -95,7 +96,7 @@ pub fn register_file(file: AxResult<File>, flags: usize) -> usize {
     let current = task::current();
     let fd = current.filetable
         .lock().insert(Arc::new(Mutex::new(file)), flags);
-    error!("openat fd {}", fd);
+    info!("openat fd {}", fd);
     fd
 }
 
@@ -130,16 +131,6 @@ pub fn read(fd: usize, ubuf: &mut [u8]) -> usize {
     let file = current.filetable.lock().get_file(fd).unwrap();
 
     let mut kbuf = vec![0u8; count];
-    /*
-    let mut pos = 0;
-    while pos < count {
-        let ret = file.lock().read(&mut kbuf[pos..]).unwrap();
-        if ret == 0 {
-            break;
-        }
-        pos += ret;
-    }
-    */
     let pos = file.lock().read(&mut kbuf).unwrap();
 
     info!(
@@ -166,16 +157,6 @@ pub fn write(fd: usize, ubuf: &[u8]) -> usize {
     let mut kbuf = vec![0u8; count];
     kbuf.copy_from_slice(ubuf);
 
-    /*
-    let mut pos = 0;
-    while pos < count {
-        let ret = file.lock().write(&kbuf[pos..]).unwrap();
-        if ret == 0 {
-            break;
-        }
-        pos += ret;
-    }
-    */
     let pos = file.lock().write(&kbuf).unwrap();
     info!("write: fd {}, count {}, ret {}", fd, count, pos);
     pos
@@ -543,6 +524,38 @@ pub fn getdents64(fd: usize, dirp: usize, count: usize) -> usize {
     ubuf.copy_from_slice(&kbuf);
     info!("getdents64 ret {}...", ret);
     ret
+}
+
+pub fn sendfile(out_fd: usize, in_fd: usize, offset: usize, count: usize) -> usize {
+    info!("sendfile outfd {} infd {} offset {} count {:#x}",
+        out_fd, in_fd, offset, count);
+
+    let current = task::current();
+    let out_file = current.filetable.lock().get_file(out_fd).unwrap();
+    let in_file = current.filetable.lock().get_file(in_fd).unwrap();
+    let count = min(file_size(in_file.clone()).unwrap(), count);
+
+    let mut pos = 0;
+    while pos < count {
+        let size = min(count, 4096);
+        let mut kbuf = vec![0u8; size];
+        let ret = in_file.lock().read(&mut kbuf).unwrap();
+        if ret == 0 {
+            return 0;
+        }
+        assert_eq!(ret, size);
+
+        let ret = out_file.lock().write(&mut kbuf).unwrap();
+        assert_eq!(ret, size);
+
+        pos += size;
+    }
+    pos
+}
+
+fn file_size(file: FileRef) -> LinuxResult<usize> {
+    let metadata = file.lock().get_attr()?;
+    Ok(metadata.size() as usize)
 }
 
 // Open /dev/console, for stdin/stdout/stderr, this should never fail

@@ -56,6 +56,7 @@ pub const LINUX_SYSCALL_READLINKAT: usize = 267;
 pub const LINUX_SYSCALL_MUNMAP: usize = 11;
 pub const LINUX_SYSCALL_MSYNC: usize = 26;
 pub const LINUX_SYSCALL_MADVISE: usize = 28;
+pub const LINUX_SYSCALL_SENDFILE: usize = 40;
 
 pub const LINUX_SYSCALL_RT_SIGACTION: usize = 13;
 pub const LINUX_SYSCALL_RT_SIGPROCMASK: usize = 14;
