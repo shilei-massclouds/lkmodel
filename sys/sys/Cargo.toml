@@ -15,3 +15,5 @@ axtype = { git = "ssh://git@github.com/shilei-massclouds/axtype.git" }
 axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno.git" }
 axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal.git" }
 task = { git = "ssh://git@github.com/shilei-massclouds/task.git" }
+mutex = { git = "ssh://git@github.com/shilei-massclouds/mutex.git" }
+wait_queue = { git = "ssh://git@github.com/shilei-massclouds/wait_queue.git" }

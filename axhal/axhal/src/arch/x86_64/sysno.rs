@@ -71,3 +71,4 @@ pub const LINUX_SYSCALL_SETPGID: usize = 109;
 pub const LINUX_SYSCALL_VFORK: usize = 58;
 pub const LINUX_SYSCALL_CLOCK_NANOSLEEP: usize = 230;
 pub const LINUX_SYSCALL_MOUNT: usize = 165;
+pub const LINUX_SYSCALL_FUTEX: usize = 202;

@@ -16,6 +16,8 @@ use mm::VmAreaStruct;
 use axerrno::LinuxError;
 use axhal::arch::TASK_SIZE;
 use mm::{VM_READ, VM_WRITE, VM_EXEC, VM_SHARED, VM_MAYSHARE};
+use mm::{VM_MAYREAD, VM_MAYWRITE, VM_MAYEXEC};
+use mm::{VM_GROWSDOWN, VM_LOCKED, VM_SYNC};
 #[cfg(target_arch = "riscv64")]
 use axhal::arch::{EXC_INST_PAGE_FAULT, EXC_LOAD_PAGE_FAULT, EXC_STORE_PAGE_FAULT};
 #[cfg(target_arch = "riscv64")]
@@ -51,6 +53,8 @@ const MAP_EXECUTABLE: usize= 0x1000;
 const MAP_LOCKED: usize    = 0x2000;
 /// don't check for reservations */
 const MAP_NORESERVE: usize = 0x4000;
+/// perform synchronous page faults for the mapping
+const MAP_SYNC: usize = 0x080000;
 
 const MAP_32BIT: usize = 0;
 const MAP_HUGE_2MB: usize = 0;
@@ -144,7 +148,7 @@ pub fn _mmap(
 ) -> LinuxResult<usize> {
     assert!(is_aligned_4k(va));
     len = align_up_4k(len);
-    info!("mmap va {:#X} offset {:#X} flags {:#X} prot {:#X}", va, offset, flags, prot);
+    error!("mmap va {:#X} offset {:#X} flags {:#X} prot {:#X}", va, offset, flags, prot);
 
     /* force arch specific MAP_FIXED handling in get_unmapped_area */
     if (flags & MAP_FIXED_NOREPLACE) != 0 {
@@ -189,11 +193,13 @@ pub fn _mmap(
         }
     }
 
-    let mut vm_flags = calc_vm_prot_bits(prot);
+    let mut vm_flags = calc_vm_prot_bits(prot) | calc_vm_flag_bits(flags)
+        | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
+
     if (flags & MAP_SHARED) != 0 {
         vm_flags |= VM_SHARED | VM_MAYSHARE;
     }
-    info!(
+    error!(
         "mmap region: {:#X} - {:#X}, vm_flags: {:#X}, prot {:#X}",
         va,
         va + len,
@@ -225,6 +231,23 @@ fn calc_vm_prot_bits(prot: usize) -> usize {
         flags |= VM_EXEC;
     }
     flags
+}
+
+/*
+ * Combine the mmap "flags" argument into "vm_flags" used internally.
+ */
+fn calc_vm_flag_bits(flags: usize) -> usize {
+    let mut vm_flags = 0;
+    if (flags & MAP_GROWSDOWN) != 0 {
+        vm_flags |= VM_GROWSDOWN;
+    }
+    if (flags & MAP_LOCKED) != 0 {
+        vm_flags |= VM_LOCKED;
+    }
+    if (flags & MAP_SYNC) != 0 {
+        vm_flags |= VM_SYNC;
+    }
+    vm_flags
 }
 
 fn find_overlap(va: usize, len: usize) -> Option<VmAreaStruct> {
@@ -302,11 +325,22 @@ pub fn faultin_page(va: usize, cause: usize) -> Result<usize, usize> {
         return Ok(0);
     }
 
-    let vma = locked_mm
-        .vmas
-        .upper_bound(Bound::Included(&va))
-        .value()
-        .unwrap();
+    let cursor = locked_mm.vmas.upper_bound(Bound::Included(&va));
+    let mut vma = cursor.value().unwrap();
+    if va < vma.vm_start || va >= vma.vm_end {
+        let (_, next_vma) = cursor.peek_next().unwrap();
+        error!("{:#X} - {:#X}; {:#x} pgoff {:#x}",
+            next_vma.vm_start, next_vma.vm_end, next_vma.vm_flags, next_vma.vm_pgoff);
+
+        if (next_vma.vm_flags & VM_GROWSDOWN) != 0 {
+            // Todo: wrap these into a function 'expand_stack'
+            assert!(next_vma.vm_file.get().is_none());
+            assert_eq!(next_vma.vm_pgoff, 0);
+            let stack = VmAreaStruct::new(va, next_vma.vm_start, 0, None, next_vma.vm_flags);
+            locked_mm.vmas.insert(va, stack);
+            vma = locked_mm.vmas.get(&va).unwrap();
+        }
+    }
     assert!(
         va >= vma.vm_start && va < vma.vm_end,
         "va {:#X} in {:#X} - {:#X}",

@@ -68,6 +68,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_TGKILL => linux_syscall_tgkill(args),
         LINUX_SYSCALL_EXIT => linux_syscall_exit(args),
         LINUX_SYSCALL_EXIT_GROUP => linux_syscall_exit_group(args),
+        LINUX_SYSCALL_FUTEX => linux_syscall_futex(args),
         LINUX_SYSCALL_FCHMOD => linux_syscall_fchmod(args),
         LINUX_SYSCALL_FCHMODAT => linux_syscall_fchmodat(args),
         LINUX_SYSCALL_FCHOWNAT => linux_syscall_fchownat(args),
@@ -471,6 +472,11 @@ fn linux_syscall_exit(args: SyscallArgs) -> usize {
 fn linux_syscall_exit_group(args: SyscallArgs) -> usize {
     let [exit_code, ..] = args;
     sys::exit_group(exit_code as u32)
+}
+
+fn linux_syscall_futex(args: SyscallArgs) -> usize {
+    let [uaddr, op, val, timeout_or_val2, uaddr2, val3, ..] = args;
+    sys::do_futex(uaddr, op, val, timeout_or_val2, uaddr2, val3)
 }
 
 #[cfg(target_arch = "x86_64")]

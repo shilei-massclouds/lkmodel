@@ -8,9 +8,13 @@ use axconfig::TASK_STACK_SIZE;
 use axerrno::linux_err;
 use axerrno::{LinuxResult, LinuxError, linux_err_from};
 use taskctx::TaskState;
+pub use futex::{do_futex, FUTEX_WAKE};
+
+mod futex;
 
 #[macro_use]
 extern crate log;
+extern crate alloc;
 
 const WNOHANG: usize = 0x00000001;
 const WEXITED: usize = 0x00000004;
@@ -277,9 +281,37 @@ fn do_exit(exit_code: u32) -> ! {
     do_task_dead()
 }
 
+fn exit_mm_release() {
+    // futex_exit_release(tsk);
+    mm_release();
+}
+
+fn mm_release() {
+    let mut ctx = task::current_ctx();
+    // Todo: temporary solution.
+    // If I'm the main-thread, I don't need to notify parent by futex.
+    if ctx.group_leader.is_none() {
+        return;
+    }
+    if ctx.clear_child_tid != 0 {
+        put_user_u32(0, ctx.clear_child_tid);
+        do_futex(ctx.clear_child_tid, FUTEX_WAKE, 1, 0, 0, 0);
+        ctx.as_ctx_mut().clear_child_tid = 0;
+    }
+}
+
+fn put_user_u32(val: u32, pos: usize) -> usize {
+    let ptr = pos as *mut u32;
+    unsafe { *ptr = val; }
+    pos + 4
+}
+
 // Todo: implement it in mm.drop
 fn exit_mm() {
     let task = task::current();
+
+    exit_mm_release();
+
     if task.sched_info.group_leader.is_some() {
         // Todo: dont release mm for threads.
         // It's just a temp solution. Implement page refcount.
