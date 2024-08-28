@@ -345,6 +345,11 @@ impl File {
     pub fn get_attr(&self) -> AxResult<FileAttr> {
         self.node.access(Cap::empty())?.get_attr()
     }
+
+    /// Gets the file cap.
+    pub fn get_cap(&self) -> Cap {
+        self.node.cap()
+    }
 }
 
 impl Directory {

@@ -1,4 +1,4 @@
 mount -a
 #dash
 #mdev -s
-/testcases/mmap18
+/testcases/mmap06

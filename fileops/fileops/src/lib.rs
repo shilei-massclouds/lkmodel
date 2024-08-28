@@ -63,6 +63,9 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
     if (flags as i32 & O_TRUNC) != 0 {
         opts.truncate(true);
     }
+    if (flags as i32 & O_WRONLY) != 0 {
+        opts.read(false);
+    }
 
     let current = task::current();
     let fs = current.fs.lock();

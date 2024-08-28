@@ -22,6 +22,7 @@ use mm::{VM_GROWSDOWN, VM_LOCKED, VM_SYNC};
 use axhal::arch::{EXC_INST_PAGE_FAULT, EXC_LOAD_PAGE_FAULT, EXC_STORE_PAGE_FAULT};
 #[cfg(target_arch = "riscv64")]
 use signal::force_sig_fault;
+use capability::Cap;
 
 /// enforced gap between the expanding stack and other mappings.
 const STACK_GUARD_GAP: usize = 256 << PAGE_SHIFT;
@@ -34,6 +35,8 @@ pub const PROT_NONE: usize = 0x0;
 pub const PROT_GROWSDOWN: usize = 0x01000000;
 pub const PROT_GROWSUP: usize = 0x02000000;
 
+/// Mask for type of mapping
+const MAP_TYPE: usize = 0x0f;
 /// Share changes
 pub const MAP_SHARED: usize = 0x01;
 /// Changes are private
@@ -106,14 +109,19 @@ pub fn mmap(
     fd: usize,
     offset: usize,
 ) -> LinuxResult<usize> {
+    if (flags & MAP_ANONYMOUS) == 0 {
+        if fd == usize::MAX {
+            return Err(LinuxError::EBADF);
+        }
+    }
+    if len == 0 {
+        return Err(LinuxError::EINVAL);
+    }
     let current = task::current();
     let filetable = current.filetable.lock();
     let file = if (flags & MAP_ANONYMOUS) != 0 {
         None
     } else {
-        if fd == usize::MAX {
-            return Err(LinuxError::EBADF);
-        }
         if (flags & MAP_SHARED_VALIDATE) == MAP_SHARED_VALIDATE {
             // Todo: flags_mask also includes file->f_op->mmap_supported_flags
             let flags_mask = LEGACY_MAP_MASK;
@@ -121,11 +129,10 @@ pub fn mmap(
                 return Err(LinuxError::EOPNOTSUPP);
             }
         }
-        filetable.get_file(fd)
+        let f = filetable.get_file(fd);
+        check_file_mode(flags, prot, f.clone())?;
+        f
     };
-    if len == 0 {
-        return Err(LinuxError::EINVAL);
-    }
     let va = _mmap(va, len, prot, flags, file, offset)?;
 
     if (flags & MAP_POPULATE) != 0 {
@@ -139,6 +146,36 @@ pub fn mmap(
         }
     }
     Ok(va)
+}
+
+fn check_file_mode(flags: usize, prot: usize, file: Option<FileRef>) -> LinuxResult {
+    let cap = file.unwrap().lock().get_cap();
+    let mut flags = flags & MAP_TYPE;
+    if flags == MAP_SHARED {
+        /*
+         * Force use of MAP_SHARED_VALIDATE with non-legacy
+         * flags. E.g. MAP_SYNC is dangerous to use with
+         * MAP_SHARED as you don't know which consistency model
+         * you will get. We silently ignore unsupported flags
+         * with MAP_SHARED to preserve backward compatibility.
+         */
+        flags &= LEGACY_MAP_MASK;
+    }
+    if flags == MAP_SHARED_VALIDATE {
+        if (prot & PROT_WRITE) != 0 {
+            if !cap.contains(Cap::WRITE) {
+                return Err(LinuxError::EACCES);
+            }
+        }
+    }
+    if flags == MAP_PRIVATE || flags == MAP_SHARED || flags == MAP_SHARED_VALIDATE {
+        if !cap.contains(Cap::READ) {
+            return Err(LinuxError::EACCES);
+        }
+    } else {
+        return Err(LinuxError::EINVAL);
+    }
+    Ok(())
 }
 
 pub fn _mmap(

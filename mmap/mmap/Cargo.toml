@@ -16,3 +16,4 @@ axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno.git" }
 axio = { git = "ssh://git@github.com/shilei-massclouds/axio.git" }
 memory_addr = { git = "ssh://git@github.com/shilei-massclouds/memory_addr.git" }
 axalloc = { git = "ssh://git@github.com/shilei-massclouds/axalloc.git" }
+capability = { git = "ssh://git@github.com/shilei-massclouds/capability.git" }
