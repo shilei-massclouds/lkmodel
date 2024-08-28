@@ -28,7 +28,8 @@ const EXIT_TRACE: usize = EXIT_ZOMBIE | EXIT_DEAD;
 #[cfg(target_arch = "x86_64")]
 const ARCH_SET_FS: usize = 0x1002;
 
-const RLIMIT_STACK: usize = 3; /* max stack size */
+const RLIMIT_DATA: usize = 2;  /* max data size */
+const RLIMIT_STACK:usize = 3;  /* max stack size */
 const RLIMIT_CORE: usize = 4;  /* max core size */
 //const RLIM_NLIMITS: usize = 16;
 
@@ -83,26 +84,35 @@ pub fn setpgid() -> usize {
     0
 }
 
+// Refer to "include/asm-generic/resource.h"
 pub fn prlimit64(tid: Tid, resource: usize, new_rlim: usize, old_rlim: usize) -> usize {
     warn!(
         "linux_syscall_prlimit64: tid {}, resource: {}, {:?} {:?}",
         tid, resource, new_rlim, old_rlim
     );
-
     assert!(tid == 0);
 
-    let old_rlim = old_rlim as *mut RLimit64;
-
     match resource {
+        RLIMIT_DATA => {
+            if old_rlim != 0 {
+                let old_rlim = old_rlim as *mut RLimit64;
+                unsafe { *old_rlim = RLimit64::new(u64::MAX, u64::MAX); }
+            }
+            0
+        },
         RLIMIT_STACK => {
-            let stack_size = TASK_STACK_SIZE as u64;
-            unsafe {
-                *old_rlim = RLimit64::new(stack_size, stack_size);
+            if old_rlim != 0 {
+                let old_rlim = old_rlim as *mut RLimit64;
+                let stack_size = TASK_STACK_SIZE as u64;
+                unsafe { *old_rlim = RLimit64::new(stack_size, u64::MAX); }
             }
             0
         },
         RLIMIT_CORE => {
-            error!("unimplemented for RLIMIT_CORE!");
+            if old_rlim != 0 {
+                let old_rlim = old_rlim as *mut RLimit64;
+                unsafe { *old_rlim = RLimit64::new(u64::MAX, u64::MAX); }
+            }
             0
         },
         _ => {

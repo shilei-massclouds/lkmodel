@@ -37,25 +37,10 @@ int main()
     return 0;
 }
 
-/*
- * Analysize result based on ltp tst_res_flags
- */
-/*
-enum tst_res_flags {
-    TPASS = 0,
-    TFAIL = 1,
-    TBROK = 2,
-    TWARN = 4,
-    TDEBUG = 8,
-    TINFO = 16,
-    TCONF = 32,
-    TERRNO = 0x100,
-    TTERRNO = 0x200,
-    TRERRNO = 0x400,
-};
-*/
-
 void test(const char *name, struct results *r) {
+    if (name == NULL || strlen(name) == 0)
+        return;
+
     printf("[%s] ...\n", name);
 
     char buf[128];

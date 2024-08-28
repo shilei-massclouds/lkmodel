@@ -1,4 +1,4 @@
-TARGETS := init hello vfork execl run signal mmap procfs mount \
+TARGETS := init hello vfork execl runltp signal mmap procfs mount \
 	mkdir runbtp devfs cmd_system pthread
 
 CC := $(ARCH)-linux-gnu-gcc

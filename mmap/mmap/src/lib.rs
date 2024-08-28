@@ -4,7 +4,7 @@
 #[macro_use]
 extern crate log;
 extern crate alloc;
-use axerrno::LinuxResult;
+use axerrno::{LinuxResult, LinuxError, linux_err};
 use axfile::fops::File;
 use axhal::arch::STACK_TOP;
 use axhal::mem::{phys_to_virt, virt_to_phys};
@@ -13,7 +13,6 @@ use core::ops::Bound;
 use memory_addr::{align_up_4k, align_down_4k, is_aligned_4k, PAGE_SHIFT, PAGE_SIZE_4K};
 pub use mm::FileRef;
 use mm::VmAreaStruct;
-use axerrno::LinuxError;
 use axhal::arch::TASK_SIZE;
 use mm::{VM_READ, VM_WRITE, VM_EXEC, VM_SHARED, VM_MAYSHARE};
 use mm::{VM_MAYREAD, VM_MAYWRITE, VM_MAYEXEC};
@@ -581,8 +580,16 @@ fn sync_file(va: usize, mut len: usize, file: &mut File, offset: usize) {
 }
 
 pub fn munmap(va: usize, mut len: usize) -> usize {
+    if !is_aligned_4k(va) || va > TASK_SIZE || len > TASK_SIZE-va {
+        return linux_err!(EINVAL);
+    }
+
     assert!(is_aligned_4k(va));
     len = align_up_4k(len);
+    if len == 0 {
+        return linux_err!(EINVAL);
+    }
+
     info!("munmap {:#X} - {:#X}", va, va + len);
 
     while let Some(mut overlap) = find_overlap(va, len) {
