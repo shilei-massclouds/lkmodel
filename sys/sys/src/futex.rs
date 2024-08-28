@@ -79,7 +79,7 @@ pub fn do_futex(
 fn futex_wait(
     uaddr: usize, _flags: usize, val: usize, abs_time: usize, bitset: usize
 ) -> usize {
-    error!("futex_wait ...");
+    debug!("futex_wait ...");
     assert_eq!(abs_time, 0);
     assert_eq!(bitset, FUTEX_BITSET_MATCH_ANY);
     if bitset == 0 {
@@ -102,7 +102,7 @@ fn futex_wait(
         }
     };
     wq.wait();
-    error!("futex_wait ok!");
+    debug!("futex_wait ok!");
     return 0;
 }
 
@@ -115,9 +115,12 @@ fn futex_wake(
         return linux_err!(EINVAL);
     }
 
-    let futex_map = FUTEX_MAP.lock();
+    let mut futex_map = FUTEX_MAP.lock();
     if let Some(wq) = futex_map.get(&uaddr) {
         wq.notify_one(true);
+        if wq.count() == 0 {
+            futex_map.remove(&uaddr);
+        }
     } else {
         error!("futex_wake no wq uaddr {:#x}", uaddr);
     }

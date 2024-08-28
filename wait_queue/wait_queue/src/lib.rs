@@ -48,6 +48,10 @@ impl WaitQueue {
         }
     }
 
+    pub fn count(&self) -> usize {
+        self.queue.lock().len()
+    }
+
     /*
     fn cancel_events(&self, curr: CurrentTask) {
         // A task can be wake up only one events (timer or `notify()`), remove

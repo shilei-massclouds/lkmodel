@@ -281,7 +281,7 @@ pub fn exit_group(exit_code: u32) -> ! {
 }
 
 pub fn do_group_exit(exit_code: u32) -> ! {
-    error!("do_exit_group ... [{}]", exit_code);
+    debug!("do_exit_group ... [{}]", exit_code);
     do_exit(exit_code)
 }
 
@@ -348,7 +348,7 @@ fn exit_mm() {
 
 fn exit_notify(exit_code: u32) {
     let task = task::current();
-    error!("exit_notify: tid {} code {}", task.tid(), exit_code);
+    debug!("exit_notify: tid {} code {}", task.tid(), exit_code);
     task.exit_code.store(exit_code, Ordering::Relaxed);
     task.exit_state.store(EXIT_ZOMBIE, Ordering::Relaxed);
     // Todo: wakeup parent

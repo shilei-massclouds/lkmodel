@@ -226,7 +226,7 @@ impl<M: PagingMetaData, PTE: GenericPTE, IF: PagingIf> PageTable64<M, PTE, IF> {
         while size > 0 {
             let (_, page_size) = self
                 .unmap(vaddr)
-                .inspect_err(|e| error!("failed to unmap page: {:#x?}, {:?}", vaddr, e))?;
+                .inspect_err(|e| warn!("failed to unmap page: {:#x?}, {:?}", vaddr, e))?;
             assert!(vaddr.is_aligned(page_size));
             assert!(page_size as usize <= size);
             vaddr += page_size as usize;

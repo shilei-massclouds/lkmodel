@@ -23,7 +23,7 @@ pub fn rt_sigreturn() -> usize {
     assert_eq!(frame.sigreturn_code, 0x7308B00893);
 
     let set = frame.uc._sigmask as u64;
-    error!("sigreturn_ :  set {:#x}", set);
+    debug!("sigreturn_ :  set {:#x}", set);
     set_current_blocked(set);
 
     restore_sigcontext(tf, frame);
@@ -130,6 +130,6 @@ fn set_current_blocked(mut newset: u64) {
 }
 
 fn recalc_sigpending() {
-    error!("recalc_sigpending clear_tsk_thread_flag");
+    debug!("recalc_sigpending clear_tsk_thread_flag");
     taskctx::current_ctx().clear_tsk_thread_flag(TIF_SIGPENDING);
 }

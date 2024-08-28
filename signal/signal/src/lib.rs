@@ -97,7 +97,7 @@ fn kill_proc_info(sig: usize, info: SigInfo, tid: Tid) -> LinuxResult {
 }
 
 fn do_send_sig_info(sig: usize, info: SigInfo, tid: Tid) -> LinuxResult {
-    error!("do_send_sig_info tid {:#x} sig {} ...", tid, sig);
+    debug!("do_send_sig_info tid {:#x} sig {} ...", tid, sig);
     let task = if let Some(tsk) = task::get_task(tid) {
         tsk
     } else {
@@ -108,7 +108,7 @@ fn do_send_sig_info(sig: usize, info: SigInfo, tid: Tid) -> LinuxResult {
     pending.list.push(info);
     sigaddset(&mut pending.signal, sig);
     signal_wake_up(task.clone());
-    error!("do_send_sig_info tid {:#x} sig {} ok!", tid, sig);
+    debug!("do_send_sig_info tid {:#x} sig {} ok!", tid, sig);
     Ok(())
 }
 
@@ -172,9 +172,6 @@ pub fn do_signal(tf: &mut TrapFrame, cause: usize) {
 
     {
         let thread_info_flags = taskctx::current_ctx().flags.load(Ordering::Relaxed);
-        if thread_info_flags != 0 {
-            error!("thread_info_flags {:#x}", thread_info_flags);
-        }
         if (thread_info_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL)) == 0 {
             return;
         }
@@ -197,7 +194,7 @@ fn get_signal() -> Option<KSignal> {
     let (idx, _) = sigpending.list.iter().enumerate().find(|(_, &ref item)| {
         item.signo == signo as i32
     })?;
-    error!("next_signal: index {}, signo {}", idx, signo);
+    debug!("next_signal: index {}, signo {}", idx, signo);
 
     let _info = sigpending.list.remove(idx);
     assert_eq!(signo, _info.signo as usize);
@@ -219,7 +216,6 @@ fn get_signal() -> Option<KSignal> {
         if *tid == task.tid() {
             continue;
         }
-        error!("siblings {}", tid);
         force_sig_fault(*tid, signo, 0, 0);
     }
 

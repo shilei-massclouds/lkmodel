@@ -151,7 +151,7 @@ pub fn _mmap(
 ) -> LinuxResult<usize> {
     assert!(is_aligned_4k(va));
     len = align_up_4k(len);
-    error!("mmap va {:#X} offset {:#X} flags {:#X} prot {:#X}", va, offset, flags, prot);
+    debug!("mmap va {:#X} offset {:#X} flags {:#X} prot {:#X}", va, offset, flags, prot);
 
     /* force arch specific MAP_FIXED handling in get_unmapped_area */
     if (flags & MAP_FIXED_NOREPLACE) != 0 {
@@ -202,7 +202,7 @@ pub fn _mmap(
     if (flags & MAP_SHARED) != 0 {
         vm_flags |= VM_SHARED | VM_MAYSHARE;
     }
-    error!(
+    debug!(
         "mmap region: {:#X} - {:#X}, vm_flags: {:#X}, prot {:#X}",
         va,
         va + len,
@@ -381,7 +381,7 @@ pub fn faultin_page(va: usize, cause: usize) -> Result<usize, usize> {
         if f.get_attr().unwrap().is_file() {
             let f_size = f.get_attr().unwrap().size() as usize;
             if offset >= f_size {
-                error!("offset {} >= f_size {}", offset, f_size);
+                debug!("offset {} >= f_size {}", offset, f_size);
                 return Err(VM_FAULT_SIGBUS);
             }
         }
