@@ -29,6 +29,7 @@ const EXIT_TRACE: usize = EXIT_ZOMBIE | EXIT_DEAD;
 const ARCH_SET_FS: usize = 0x1002;
 
 const RLIMIT_STACK: usize = 3; /* max stack size */
+const RLIMIT_CORE: usize = 4;  /* max core size */
 //const RLIM_NLIMITS: usize = 16;
 
 #[allow(dead_code)]
@@ -99,7 +100,11 @@ pub fn prlimit64(tid: Tid, resource: usize, new_rlim: usize, old_rlim: usize) ->
                 *old_rlim = RLimit64::new(stack_size, stack_size);
             }
             0
-        }
+        },
+        RLIMIT_CORE => {
+            error!("unimplemented for RLIMIT_CORE!");
+            0
+        },
         _ => {
             unimplemented!("Resource Type: {}", resource);
         }
@@ -272,6 +277,11 @@ pub fn exit(exit_code: u32) -> ! {
 /// Exits the current task group.
 pub fn exit_group(exit_code: u32) -> ! {
     info!("exit_group ... [{}]", exit_code);
+    do_group_exit(exit_code)
+}
+
+pub fn do_group_exit(exit_code: u32) -> ! {
+    error!("do_exit_group ... [{}]", exit_code);
     do_exit(exit_code)
 }
 
@@ -338,6 +348,7 @@ fn exit_mm() {
 
 fn exit_notify(exit_code: u32) {
     let task = task::current();
+    error!("exit_notify: tid {} code {}", task.tid(), exit_code);
     task.exit_code.store(exit_code, Ordering::Relaxed);
     task.exit_state.store(EXIT_ZOMBIE, Ordering::Relaxed);
     // Todo: wakeup parent

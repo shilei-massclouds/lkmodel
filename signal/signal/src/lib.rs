@@ -19,6 +19,10 @@ use taskctx::TIF_SIGPENDING;
 use taskctx::{_TIF_SIGPENDING, _TIF_NOTIFY_SIGNAL};
 use axtype::ffz;
 
+const SIG_DFL: usize = 0;   // default signal handling
+//const SIG_IGN: usize = 1;   // ignore signal
+//const SIG_ERR: usize = -1;  // error return from signal
+
 const SIG_BLOCK:    usize = 0; // for blocking signals
 const SIG_UNBLOCK:  usize = 1; // for unblocking signals
 const SIG_SETMASK:  usize = 2; // for setting the signal mask
@@ -93,12 +97,18 @@ fn kill_proc_info(sig: usize, info: SigInfo, tid: Tid) -> LinuxResult {
 }
 
 fn do_send_sig_info(sig: usize, info: SigInfo, tid: Tid) -> LinuxResult {
-    let task = task::get_task(tid).unwrap();
+    error!("do_send_sig_info tid {:#x} sig {} ...", tid, sig);
+    let task = if let Some(tsk) = task::get_task(tid) {
+        tsk
+    } else {
+        warn!("No task [{:#x}].", tid);
+        return Ok(());
+    };
     let mut pending = task.sigpending.lock();
     pending.list.push(info);
     sigaddset(&mut pending.signal, sig);
     signal_wake_up(task.clone());
-    error!("do_send_sig_info tid {} sig {} ok!", tid, sig);
+    error!("do_send_sig_info tid {:#x} sig {} ok!", tid, sig);
     Ok(())
 }
 
@@ -193,9 +203,27 @@ fn get_signal() -> Option<KSignal> {
     assert_eq!(signo, _info.signo as usize);
 
     let action = task.sighand.lock().action[signo - 1];
-    assert!(action.handler != 0);
-    debug!("get_signal signo {} handler {:#X}", signo, action.handler);
-    Some(KSignal {action, _info, signo})
+    if action.handler != SIG_DFL {
+        debug!("get_signal signo {} handler {:#X}", signo, action.handler);
+        return Some(KSignal {action, _info, signo});
+    }
+
+    let leader = if let Some(leader) = &task.sched_info.group_leader {
+        force_sig_fault(leader.tid(), signo, 0, 0);
+        leader
+    } else {
+        &task.sched_info
+    };
+
+    for tid in leader.siblings.lock().iter() {
+        if *tid == task.tid() {
+            continue;
+        }
+        error!("siblings {}", tid);
+        force_sig_fault(*tid, signo, 0, 0);
+    }
+
+    sys::do_group_exit(signo as u32)
 }
 
 fn next_signal(mut sigset: u64, blocked: u64) -> Option<usize> {
@@ -213,8 +241,8 @@ fn setup_sigcontext(frame: &mut RTSigFrame, tf: &TrapFrame) {
     // Todo: Save the floating-point state.
 }
 
-pub fn force_sig_fault(signo: usize, code: usize, _addr: usize) {
-    let tid = taskctx::current_ctx().tid();
+pub fn force_sig_fault(tid: usize, signo: usize, code: usize, _addr: usize) {
+    //let tid = taskctx::current_ctx().tid();
     let info = SigInfo {
         signo: signo as i32,
         errno: 0,

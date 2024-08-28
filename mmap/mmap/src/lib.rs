@@ -23,6 +23,9 @@ use axhal::arch::{EXC_INST_PAGE_FAULT, EXC_LOAD_PAGE_FAULT, EXC_STORE_PAGE_FAULT
 #[cfg(target_arch = "riscv64")]
 use signal::force_sig_fault;
 
+/// enforced gap between the expanding stack and other mappings.
+const STACK_GUARD_GAP: usize = 256 << PAGE_SHIFT;
+
 pub const PROT_READ: usize = 0x1;
 pub const PROT_WRITE: usize = 0x2;
 pub const PROT_EXEC: usize = 0x4;
@@ -329,13 +332,24 @@ pub fn faultin_page(va: usize, cause: usize) -> Result<usize, usize> {
     let mut vma = cursor.value().unwrap();
     if va < vma.vm_start || va >= vma.vm_end {
         let (_, next_vma) = cursor.peek_next().unwrap();
-        error!("{:#X} - {:#X}; {:#x} pgoff {:#x}",
+        debug!("{:#X} - {:#X}; {:#x} pgoff {:#x}",
             next_vma.vm_start, next_vma.vm_end, next_vma.vm_flags, next_vma.vm_pgoff);
 
         if (next_vma.vm_flags & VM_GROWSDOWN) != 0 {
             // Todo: wrap these into a function 'expand_stack'
             assert!(next_vma.vm_file.get().is_none());
             assert_eq!(next_vma.vm_pgoff, 0);
+
+            // Check that both stack segments have the same anon_vma?
+            if (vma.vm_flags & VM_GROWSDOWN) == 0 {
+                if va - vma.vm_end < STACK_GUARD_GAP {
+                    error!("SEGV_ACCERR");
+                    let tid = task::current().tid();
+                    force_sig_fault(tid, task::SIGSEGV, SEGV_ACCERR, va);
+                    return Err(usize::MAX);
+                }
+            }
+
             let stack = VmAreaStruct::new(va, next_vma.vm_start, 0, None, next_vma.vm_flags);
             locked_mm.vmas.insert(va, stack);
             vma = locked_mm.vmas.get(&va).unwrap();
@@ -353,7 +367,8 @@ pub fn faultin_page(va: usize, cause: usize) -> Result<usize, usize> {
     {
         if access_error(cause, vma) {
             error!("SEGV_ACCERR");
-            force_sig_fault(task::SIGSEGV, SEGV_ACCERR, va);
+            let tid = task::current().tid();
+            force_sig_fault(tid, task::SIGSEGV, SEGV_ACCERR, va);
             return Err(usize::MAX);
         }
     }

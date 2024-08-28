@@ -58,6 +58,7 @@ pub fn riscv_trap_handler(tf: &mut TrapFrame, _from_user: bool) {
 fn handle_page_fault(badaddr: usize, cause: usize, tf: &mut TrapFrame) {
     debug!("handle_page_fault... cause {}", cause);
     if let Err(fault) = mmap::faultin_page(badaddr, cause) {
+        debug!("fault: {:#x}", fault);
         if fault != usize::MAX && (fault & VM_FAULT_ERROR) != 0 {
             mm_fault_error(badaddr, fault);
         }
@@ -70,9 +71,10 @@ fn mm_fault_error(addr: usize, fault: usize) {
     if (fault & VM_FAULT_OOM) != 0 {
         unimplemented!("VM_FAULT_OOM");
     } else if (fault & VM_FAULT_SIGBUS) != 0 {
+        let tid = task::current().tid();
         error!("VM_FAULT_SIGBUS");
         /* Kernel mode? Handle exceptions or die */
-        force_sig_fault(SIGBUS, BUS_ADRERR, addr);
+        force_sig_fault(tid, SIGBUS, BUS_ADRERR, addr);
         return;
     }
     unimplemented!("mm_fault_error!");

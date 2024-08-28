@@ -13,3 +13,4 @@ task = { git = "ssh://git@github.com/shilei-massclouds/task.git" }
 axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal.git" }
 axtype = { git = "ssh://git@github.com/shilei-massclouds/axtype.git" }
 axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno.git" }
+sys = { git = "ssh://git@github.com/shilei-massclouds/sys.git" }
