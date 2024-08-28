@@ -77,8 +77,10 @@ define riscv64_install_apps
   @sudo cp /usr/riscv64-linux-gnu/lib/libresolv.so.2 ./mnt/lib/
 
   -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/mmap[[:digit:]]* ./mnt/testcases/
+  -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/munmap[[:digit:]]* ./mnt/testcases/
 
   ls -l ./mnt/bin
+  ls -l ./mnt/testcases
   @sudo umount ./mnt
   @rm -rf ./mnt
 endef

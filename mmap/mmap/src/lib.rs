@@ -188,7 +188,7 @@ pub fn _mmap(
 ) -> LinuxResult<usize> {
     assert!(is_aligned_4k(va));
     len = align_up_4k(len);
-    debug!("mmap va {:#X} offset {:#X} flags {:#X} prot {:#X}", va, offset, flags, prot);
+    info!("mmap va {:#X} offset {:#X} flags {:#X} prot {:#X}", va, offset, flags, prot);
 
     /* force arch specific MAP_FIXED handling in get_unmapped_area */
     if (flags & MAP_FIXED_NOREPLACE) != 0 {
@@ -239,7 +239,7 @@ pub fn _mmap(
     if (flags & MAP_SHARED) != 0 {
         vm_flags |= VM_SHARED | VM_MAYSHARE;
     }
-    debug!(
+    info!(
         "mmap region: {:#X} - {:#X}, vm_flags: {:#X}, prot {:#X}",
         va,
         va + len,
@@ -369,7 +369,7 @@ pub fn faultin_page(va: usize, cause: usize) -> Result<usize, usize> {
     let mut vma = cursor.value().unwrap();
     if va < vma.vm_start || va >= vma.vm_end {
         let (_, next_vma) = cursor.peek_next().unwrap();
-        debug!("{:#X} - {:#X}; {:#x} pgoff {:#x}",
+        info!("{:#X} - {:#X}; {:#x} pgoff {:#x}",
             next_vma.vm_start, next_vma.vm_end, next_vma.vm_flags, next_vma.vm_pgoff);
 
         if (next_vma.vm_flags & VM_GROWSDOWN) != 0 {
@@ -392,13 +392,12 @@ pub fn faultin_page(va: usize, cause: usize) -> Result<usize, usize> {
             vma = locked_mm.vmas.get(&va).unwrap();
         }
     }
-    assert!(
-        va >= vma.vm_start && va < vma.vm_end,
-        "va {:#X} in {:#X} - {:#X}",
-        va,
-        vma.vm_start,
-        vma.vm_end
-    );
+    if va < vma.vm_start || va >= vma.vm_end {
+        error!("va {:#X} in {:#X} - {:#X}", va, vma.vm_start, vma.vm_end);
+        let tid = task::current().tid();
+        force_sig_fault(tid, task::SIGSEGV, SEGV_ACCERR, va);
+        return Err(usize::MAX);
+    }
 
     #[cfg(target_arch = "riscv64")]
     {
@@ -584,7 +583,7 @@ fn sync_file(va: usize, mut len: usize, file: &mut File, offset: usize) {
 pub fn munmap(va: usize, mut len: usize) -> usize {
     assert!(is_aligned_4k(va));
     len = align_up_4k(len);
-    debug!("munmap {:#X} - {:#X}", va, va + len);
+    info!("munmap {:#X} - {:#X}", va, va + len);
 
     while let Some(mut overlap) = find_overlap(va, len) {
         debug!("find overlap {:#X}-{:#X}", overlap.vm_start, overlap.vm_end);
