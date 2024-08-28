@@ -149,7 +149,7 @@ pub fn mmap(
 }
 
 fn check_file_mode(flags: usize, prot: usize, file: Option<FileRef>) -> LinuxResult {
-    let cap = file.unwrap().lock().get_cap();
+    let cap = file.ok_or(LinuxError::ENOENT)?.lock().get_cap();
     let mut flags = flags & MAP_TYPE;
     if flags == MAP_SHARED {
         /*
