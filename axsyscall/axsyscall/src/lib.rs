@@ -75,6 +75,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_SETITIMER => linux_syscall_setitimer(args),
         LINUX_SYSCALL_MOUNT => linux_syscall_mount(args),
         LINUX_SYSCALL_PIPE2 => linux_syscall_pipe2(args),
+        LINUX_SYSCALL_UMASK => linux_syscall_umask(args),
         #[cfg(target_arch = "riscv64")]
         LINUX_SYSCALL_GETDENTS64 => linux_syscall_getdents64(args),
         #[cfg(target_arch = "riscv64")]
@@ -527,6 +528,15 @@ fn linux_syscall_pipe2(args: SyscallArgs) -> usize {
     fileops::pipe2(pipefd , flags);
     0
 }
+
+fn linux_syscall_umask(args: SyscallArgs) -> usize {
+    let [mask, ..] = args;
+
+    let current = task::current();
+    let mut fs = current.fs.lock();
+    fs.umask(mask as u32).unwrap() as usize
+}
+
 pub fn init() {
     info!("Initialize systemcalls ...");
 }

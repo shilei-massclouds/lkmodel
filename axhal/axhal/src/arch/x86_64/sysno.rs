@@ -33,6 +33,7 @@ pub const LINUX_SYSCALL_FCNTL: usize = 72;
 pub const LINUX_SYSCALL_FTRUNCATE: usize = 77;
 pub const LINUX_SYSCALL_GETCWD: usize = 79;
 pub const LINUX_SYSCALL_CHDIR: usize = 80;
+pub const LINUX_SYSCALL_UMASK: usize = 95;
 pub const LINUX_SYSCALL_FACCESSAT: usize = 269;
 pub const LINUX_SYSCALL_TGKILL: usize = 234;
 pub const LINUX_SYSCALL_GETPID: usize = 39;

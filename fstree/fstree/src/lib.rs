@@ -196,7 +196,7 @@ impl FsStruct {
 
     pub fn umask(&mut self, mask: u32) -> AxResult<u32> {
         let old_mask = self.mask;
-        self.mask = mask;
+        self.mask = mask & 0o777;
         Ok(old_mask)
     }
 }
