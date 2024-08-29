@@ -18,13 +18,18 @@ int main(){
     mount_fs();
     printf("fs mount done\n");
     pid_t pid = vfork();
+    // if (pid == 0) {
+    //     execl("/testcases/open06", "open06", NULL);
+    // }
+    // waitpid(pid, NULL, 0);
+    // pid = vfork();
+    // if (pid == 0) {
+    //     execl("/testcases/open07", "open07", NULL);
+    // }
+    // waitpid(pid, NULL, 0);
+    // pid = vfork();
     if (pid == 0) {
-        execl("/testcases/open06", "open06", NULL);
-    }
-    waitpid(pid, NULL, 0);
-    pid = vfork();
-    if (pid == 0) {
-        execl("/testcases/open07", "open07", NULL);
+        execl("/testcases/open09", "open09", NULL);
     }
     waitpid(pid, NULL, 0);
 }

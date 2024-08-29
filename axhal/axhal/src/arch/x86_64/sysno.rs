@@ -53,6 +53,7 @@ pub const LINUX_SYSCALL_CAPGET: usize = 125;
 //pub const LINUX_SYSCALL_GETDENTS64: usize = 0x3d;
 pub const LINUX_SYSCALL_MKDIRAT: usize = 258;
 pub const LINUX_SYSCALL_UNLINKAT: usize = 263;
+pub const LINUX_SYSCALL_SYMLINKAT: usize = 266;
 pub const LINUX_SYSCALL_WRITEV: usize = 20;
 pub const LINUX_SYSCALL_READLINKAT: usize = 267;
 pub const LINUX_SYSCALL_MUNMAP: usize = 11;
@@ -72,3 +73,7 @@ pub const LINUX_SYSCALL_SETPGID: usize = 109;
 pub const LINUX_SYSCALL_VFORK: usize = 58;
 pub const LINUX_SYSCALL_CLOCK_NANOSLEEP: usize = 230;
 pub const LINUX_SYSCALL_MOUNT: usize = 165;
+
+pub const LINUX_SYSCALL_SOCKET: usize = 41;
+pub const LINUX_SYSCALL_CONNECT: usize = 42;
+pub const LINUX_SYSCALL_SENDTO: usize = 44;

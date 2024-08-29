@@ -48,26 +48,8 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
         filename, dfd, flags, mode
     );
 
-    let mut opts = OpenOptions::new();
+    let mut opts = OpenOptions::from_flags(flags as i32);
     opts.set_flags(flags as i32);
-    opts.read(true);
-    if (flags as i32 & O_CREAT) != 0 {
-        opts.write(true);
-        opts.create(true);
-        opts.truncate(true);
-    }
-    if (flags as i32 & (O_WRONLY|O_RDWR|O_TRUNC|O_APPEND)) != 0 {
-        opts.write(true);
-    }
-    if (flags as i32 & (O_APPEND)) != 0 {
-        opts.append(true)
-    }
-    if (flags as i32 & O_TRUNC) != 0 {
-        opts.truncate(true);
-    }
-    if (flags as i32 & O_NONBLOCK) == O_NONBLOCK {
-        opts.nonblock(true);
-    }
     let current = task::current();
     let fs = current.fs.lock();
 
@@ -155,14 +137,16 @@ pub fn read(fd: usize, ubuf: &mut [u8]) -> usize {
                     }
                 }
             }else { // for others files temporarily
-                let pos = locked_file.read(&mut kbuf).unwrap();
-                info!(
-                    "linux_syscall_read: fd {}, count {}, ret {}",
-                    fd, count, pos
-                );
-            
-                ubuf.copy_from_slice(&kbuf);
-                return pos
+                if let Ok(pos) = locked_file.read(&mut kbuf) {
+                    info!(
+                        "linux_syscall_read: fd {}, count {}, ret {}",
+                        fd, count, pos
+                    );
+                    ubuf.copy_from_slice(&kbuf);
+                    return pos
+                }else{
+                    return linux_err!(EBADF);
+                }                
             }
         }
         unreachable!() // TODO?
@@ -212,7 +196,9 @@ pub fn write(fd: usize, ubuf: &[u8]) -> usize {
                     kill(current.tid(),SIGPIPE);
                     return linux_err!(EPIPE)
                 },
-                _ => {unimplemented!()}
+                CapError => {
+                    return linux_err!(EBADF)
+                },
             }
         }
     };
@@ -628,6 +614,10 @@ pub fn pipe2(pipefd: &mut [i32],flags: usize) -> usize {
 
     error!("pipe2 rfd {} wfd {} {} {}",rfd,wfd,pipefd[0],pipefd[1]);
     0
+}
+
+pub fn symlinkat(_oldname: String, _newfd: usize, _linkpath: String) -> usize {
+    unimplemented!()
 }
 
 // Open /dev/console, for stdin/stdout/stderr, this should never fail

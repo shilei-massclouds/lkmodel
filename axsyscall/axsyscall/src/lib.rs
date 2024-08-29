@@ -2,11 +2,11 @@
 
 extern crate alloc;
 
-use axtype::get_user_str;
-use fileops::{iovec, mknodat};
-use axtype::{align_up_4k, is_aligned_4k};
-use axhal::arch::sysno::*;
 use axerrno::{linux_err, linux_err_from, LinuxError};
+use axhal::arch::sysno::*;
+use axtype::get_user_str;
+use axtype::{align_up_4k, is_aligned_4k};
+use fileops::{iovec, mknodat};
 
 #[macro_use]
 extern crate log;
@@ -76,6 +76,10 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_MOUNT => linux_syscall_mount(args),
         LINUX_SYSCALL_PIPE2 => linux_syscall_pipe2(args),
         LINUX_SYSCALL_UMASK => linux_syscall_umask(args),
+        LINUX_SYSCALL_SYMLINKAT => linux_syscall_symlinkat(args),
+        LINUX_SYSCALL_SOCKET => linux_syscall_socket(args),
+        LINUX_SYSCALL_CONNECT => linux_syscall_connect(args),
+        LINUX_SYSCALL_SENDTO => linux_syscall_sendto(args),
         #[cfg(target_arch = "riscv64")]
         LINUX_SYSCALL_GETDENTS64 => linux_syscall_getdents64(args),
         #[cfg(target_arch = "riscv64")]
@@ -103,8 +107,10 @@ fn linux_syscall_faccessat(args: SyscallArgs) -> usize {
 
 fn linux_syscall_sched_getaffinity(args: SyscallArgs) -> usize {
     let [pid, cpu_set_size, mask, ..] = args;
-    warn!("impl sched_getaffinity pid {} cpu_set_size {} mask {:#X}",
-          pid, cpu_set_size, mask);
+    warn!(
+        "impl sched_getaffinity pid {} cpu_set_size {} mask {:#X}",
+        pid, cpu_set_size, mask
+    );
     0
 }
 
@@ -116,7 +122,10 @@ fn linux_syscall_capget(args: SyscallArgs) -> usize {
 
 fn linux_syscall_setitimer(args: SyscallArgs) -> usize {
     let [which, newval, oldval, ..] = args;
-    warn!("impl setitimer which {} newval {} oldval {}", which, newval, oldval);
+    warn!(
+        "impl setitimer which {} newval {} oldval {}",
+        which, newval, oldval
+    );
     0
 }
 
@@ -192,7 +201,7 @@ fn linux_syscall_read(args: SyscallArgs) -> usize {
     let [fd, buf, count, ..] = args;
     let mm = task::current().mm();
     let locked_mm = mm.lock();
-    let ret = locked_mm.vmas.iter().any(|(_,vma)| {
+    let ret = locked_mm.vmas.iter().any(|(_, vma)| {
         // error!("vma start {:x};vma end {:x}",vma.vm_start,vma.vm_end);
         vma.vm_start <= buf && buf <= vma.vm_end && vma.vm_flags & mm::VM_WRITE != 0
     });
@@ -221,7 +230,7 @@ fn linux_syscall_write(args: SyscallArgs) -> usize {
     info!("write: {:#x}, {:#x}, {:#x}", fd, buf, size);
     let mm = task::current().mm();
     let locked_mm = mm.lock();
-    let ret = locked_mm.vmas.iter().any(|(_,vma)| {
+    let ret = locked_mm.vmas.iter().any(|(_, vma)| {
         vma.vm_start <= buf && buf <= vma.vm_end && vma.vm_flags & mm::VM_READ != 0
     });
     if !ret && size != 0 {
@@ -263,10 +272,7 @@ fn linux_syscall_mmap(args: SyscallArgs) -> usize {
         va, len, prot, flags, fd, offset
     );
 
-    mmap::mmap(va, len, prot, flags, fd, offset)
-        .unwrap_or_else(|e| {
-            linux_err_from!(e)
-        })
+    mmap::mmap(va, len, prot, flags, fd, offset).unwrap_or_else(|e| linux_err_from!(e))
 }
 
 fn linux_syscall_munmap(args: SyscallArgs) -> usize {
@@ -505,7 +511,7 @@ fn linux_syscall_statfs64(args: SyscallArgs) -> usize {
 
     let current = task::current();
     let fs = current.fs.lock();
-    let path = match fs.absolute_path(&path){
+    let path = match fs.absolute_path(&path) {
         Ok(abs_path) => abs_path,
         Err(_) => unreachable!(), // absolute_path always return Ok for now
     };
@@ -522,10 +528,10 @@ fn linux_syscall_mknodat(args: SyscallArgs) -> usize {
 }
 
 fn linux_syscall_pipe2(args: SyscallArgs) -> usize {
-    let [pipefd ,flags ,..] = args;
+    let [pipefd, flags, ..] = args;
 
     let pipefd = unsafe { core::slice::from_raw_parts_mut(pipefd as *mut i32, 2) };
-    fileops::pipe2(pipefd , flags);
+    fileops::pipe2(pipefd, flags);
     0
 }
 
@@ -535,6 +541,33 @@ fn linux_syscall_umask(args: SyscallArgs) -> usize {
     let current = task::current();
     let mut fs = current.fs.lock();
     fs.umask(mask as u32).unwrap() as usize
+}
+
+fn linux_syscall_symlinkat(args: SyscallArgs) -> usize {
+    let [oldname, newfd, linkpath, ..] = args;
+
+    let oldname = get_user_str(oldname);
+    let linkpath = get_user_str(linkpath);
+    
+    fileops::symlinkat(oldname, newfd, linkpath)
+}
+
+fn linux_syscall_socket(args: SyscallArgs) -> usize {
+    let [_domain, _type, _protocol, ..] = args;
+    error!("unimplemented socket syscall");
+    0
+}
+
+fn linux_syscall_connect(args: SyscallArgs) -> usize {
+    let [_sockfd, _addr, _addrlen, ..] = args;
+    error!("unimplemented connect syscall");
+    0
+}
+
+fn linux_syscall_sendto(args: SyscallArgs) -> usize {
+    let [_sockfd, _buf, _len, _flags, _dest_addr, _addrlen, ..] = args;
+    error!("unimplemented sendto syscall");
+    0
 }
 
 pub fn init() {

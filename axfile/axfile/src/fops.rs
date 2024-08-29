@@ -95,6 +95,20 @@ impl OpenOptions {
         }
     }
 
+    pub const fn from_flags(flags: i32) -> Self {
+        Self {
+            read: true && !(flags & O_WRONLY != 0), 
+            write: (flags & O_RDWR) != 0 || (flags & O_WRONLY) != 0 || (flags & O_CREAT) != 0 || (flags & O_TRUNC) != 0 || (flags & O_APPEND) != 0,
+            append: (flags & O_APPEND) != 0,
+            truncate: (flags & O_TRUNC) != 0 || (flags & O_CREAT) !=0,
+            create: (flags & O_CREAT) !=0,
+            create_new: (flags & O_EXCL) != 0,
+            nonblock: (flags & O_NONBLOCK) != 0,
+            _custom_flags: flags,
+            _mode: 0o666,
+        }
+    }
+
     pub fn set_mode(&mut self, mode: u32) {
         self._mode = mode;
     }
