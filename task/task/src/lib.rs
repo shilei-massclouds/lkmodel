@@ -13,6 +13,8 @@ extern crate alloc;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
+use axtype::{RLimit64, RLIM_NLIMITS};
+use axtype::{RLIMIT_DATA, RLIMIT_STACK, RLIMIT_CORE, RLIMIT_NOFILE};
 use axhal::arch::TaskContext as ThreadStruct;
 use mm::MmStruct;
 use taskctx::switch_mm;
@@ -24,6 +26,7 @@ use fstree::FsStruct;
 use filetable::FileTable;
 use wait_queue::WaitQueue;
 use preempt_guard::NoPreempt;
+use axconfig::TASK_STACK_SIZE;
 
 pub use crate::tid_map::{register_task, unregister_task, get_task};
 pub use taskctx::Tid;
@@ -102,6 +105,7 @@ pub struct TaskStruct {
     pub filetable: Arc<SpinLock<FileTable>>,
     pub sigpending: SpinLock<SigPending>,
     pub sighand: Arc<SpinLock<SigHand>>,
+    pub rlim: [RLimit64; RLIM_NLIMITS],
     pub blocked: AtomicU64,
     pub sched_info: Arc<SchedInfo>,
 
@@ -121,6 +125,7 @@ impl TaskStruct {
             filetable: filetable::init_files(),
             sigpending: SpinLock::new(SigPending::new()),
             sighand: Arc::new(SpinLock::new(SigHand::new())),
+            rlim: rlimit_init(),
             blocked: AtomicU64::new(0),
             sched_info: taskctx::init_thread(),
 
@@ -318,4 +323,13 @@ pub fn init(cpu_id: usize, dtb_pa: usize) {
     assert_eq!(tid, 0);
     register_task(init_task.clone());
     //unsafe { CurrentTask::init_current(init_task.clone()) }
+}
+
+fn rlimit_init() -> [RLimit64; RLIM_NLIMITS] {
+    let mut ret = [RLimit64::default(); RLIM_NLIMITS];
+    ret[RLIMIT_DATA] = RLimit64::new(u64::MAX, u64::MAX);
+    ret[RLIMIT_STACK] = RLimit64::new(TASK_STACK_SIZE as u64, u64::MAX);
+    ret[RLIMIT_CORE] = RLimit64::new(u64::MAX, u64::MAX);
+    ret[RLIMIT_NOFILE] = RLimit64::new(0x400, 0x1000);
+    ret
 }

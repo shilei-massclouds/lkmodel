@@ -192,3 +192,26 @@ pub fn set_bit(nr: usize, bitword: &mut usize) {
 pub fn clr_bit(nr: usize, bitword: &mut usize) {
     *bitword &= !(1 << nr);
 }
+
+//
+// RLimit64
+//
+
+pub const RLIMIT_DATA: usize = 2;  /* max data size */
+pub const RLIMIT_STACK:usize = 3;  /* max stack size */
+pub const RLIMIT_CORE: usize = 4;  /* max core size */
+pub const RLIMIT_NOFILE: usize = 7; /* max number of open files */
+pub const RLIM_NLIMITS: usize = 16;
+
+#[derive(Default, Copy, Clone)]
+pub struct RLimit64 {
+    pub rlim_cur: u64,
+    #[allow(dead_code)]
+    rlim_max: u64,
+}
+
+impl RLimit64 {
+    pub fn new(rlim_cur: u64, rlim_max: u64) -> Self {
+        Self { rlim_cur, rlim_max }
+    }
+}

@@ -3,11 +3,12 @@
 use core::sync::atomic::Ordering;
 use taskctx::Tid;
 use axtype::PAGE_SIZE;
-use axconfig::TASK_STACK_SIZE;
 #[cfg(target_arch = "x86_64")]
 use axerrno::linux_err;
 use axerrno::{LinuxResult, LinuxError, linux_err_from};
 use taskctx::TaskState;
+use axtype::{RLimit64, RLIM_NLIMITS};
+use axtype::{RLIMIT_DATA, RLIMIT_STACK, RLIMIT_CORE, RLIMIT_NOFILE};
 pub use futex::{do_futex, FUTEX_WAKE};
 
 mod futex;
@@ -27,23 +28,6 @@ const EXIT_TRACE: usize = EXIT_ZOMBIE | EXIT_DEAD;
 
 #[cfg(target_arch = "x86_64")]
 const ARCH_SET_FS: usize = 0x1002;
-
-const RLIMIT_DATA: usize = 2;  /* max data size */
-const RLIMIT_STACK:usize = 3;  /* max stack size */
-const RLIMIT_CORE: usize = 4;  /* max core size */
-//const RLIM_NLIMITS: usize = 16;
-
-#[allow(dead_code)]
-struct RLimit64 {
-    rlim_cur: u64,
-    rlim_max: u64,
-}
-
-impl RLimit64 {
-    pub fn new(rlim_cur: u64, rlim_max: u64) -> Self {
-        Self { rlim_cur, rlim_max }
-    }
-}
 
 #[allow(dead_code)]
 #[derive(Debug, PartialEq)]
@@ -86,39 +70,19 @@ pub fn setpgid() -> usize {
 
 // Refer to "include/asm-generic/resource.h"
 pub fn prlimit64(tid: Tid, resource: usize, new_rlim: usize, old_rlim: usize) -> usize {
-    warn!(
+    info!(
         "linux_syscall_prlimit64: tid {}, resource: {}, {:?} {:?}",
         tid, resource, new_rlim, old_rlim
     );
     assert!(tid == 0);
-
-    match resource {
-        RLIMIT_DATA => {
-            if old_rlim != 0 {
-                let old_rlim = old_rlim as *mut RLimit64;
-                unsafe { *old_rlim = RLimit64::new(u64::MAX, u64::MAX); }
-            }
-            0
-        },
-        RLIMIT_STACK => {
-            if old_rlim != 0 {
-                let old_rlim = old_rlim as *mut RLimit64;
-                let stack_size = TASK_STACK_SIZE as u64;
-                unsafe { *old_rlim = RLimit64::new(stack_size, u64::MAX); }
-            }
-            0
-        },
-        RLIMIT_CORE => {
-            if old_rlim != 0 {
-                let old_rlim = old_rlim as *mut RLimit64;
-                unsafe { *old_rlim = RLimit64::new(u64::MAX, u64::MAX); }
-            }
-            0
-        },
-        _ => {
-            unimplemented!("Resource Type: {}", resource);
-        }
+    assert!(resource < RLIM_NLIMITS);
+    assert!(matches!(resource, RLIMIT_DATA|RLIMIT_STACK|RLIMIT_CORE|RLIMIT_NOFILE));
+    let current = task::current();
+    if old_rlim != 0 {
+        let old_rlim = old_rlim as *mut RLimit64;
+        unsafe { *old_rlim = current.rlim[resource]; }
     }
+    0
 }
 
 #[cfg(target_arch = "x86_64")]

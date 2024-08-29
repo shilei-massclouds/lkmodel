@@ -1,4 +1,4 @@
 mount -a
 #dash
 #mdev -s
-/testcases/mmap06
+/testcases/open04

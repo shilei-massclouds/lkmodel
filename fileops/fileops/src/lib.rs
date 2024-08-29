@@ -10,6 +10,7 @@ use alloc::vec;
 use alloc::format;
 use core::cmp::min;
 use axfile::fops::S_ISVTX;
+use axtype::RLIMIT_NOFILE;
 
 mod proc_ops;
 
@@ -45,7 +46,7 @@ const SEEK_END: usize = 2;
 const F_DUPFD: usize = 0;
 
 pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult<File> {
-    error!(
+    info!(
         "openat '{}' at dfd {:#X} flags {:#o} mode {:#o}",
         filename, dfd, flags, mode
     );
@@ -99,9 +100,13 @@ pub fn register_file(file: AxResult<File>, flags: usize) -> usize {
         }
     };
     let current = task::current();
+    let nofile = current.rlim[RLIMIT_NOFILE].rlim_cur;
     let fd = current.filetable
         .lock().insert(Arc::new(Mutex::new(file)), flags);
     info!("openat fd {}", fd);
+    if fd >= nofile as usize {
+        return linux_err!(EMFILE);
+    }
     fd
 }
 
@@ -262,7 +267,7 @@ pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usi
     };
     let st_mode = ((ty as u32) << 12) | perm | sticky_bit as u32;
     let st_size = metadata.size();
-    error!("st_mode {:#o} st_size: {}", st_mode, st_size);
+    info!("st_mode {:#o} st_size: {}", st_mode, st_size);
 
     unsafe {
         *statbuf = KernelStat {

@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 log = "0.4"
+axtype = { git = "ssh://git@github.com/shilei-massclouds/axtype.git" }
 axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal.git" }
 mm = { git = "ssh://git@github.com/shilei-massclouds/mm.git" }
 fstree = { git = "ssh://git@github.com/shilei-massclouds/fstree.git" }
