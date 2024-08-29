@@ -192,16 +192,18 @@ fn linux_syscall_lseek(args: SyscallArgs) -> usize {
 
 fn linux_syscall_read(args: SyscallArgs) -> usize {
     let [fd, buf, count, ..] = args;
-
     let ubuf = unsafe { core::slice::from_raw_parts_mut(buf as *mut u8, count) };
-    fileops::read(fd, ubuf)
+    fileops::read(fd, ubuf).unwrap_or_else(|e| {
+        linux_err_from!(e)
+    })
 }
 
 fn linux_syscall_pread64(args: SyscallArgs) -> usize {
     let [fd, buf, count, offset, ..] = args;
-
     let ubuf = unsafe { core::slice::from_raw_parts_mut(buf as *mut u8, count) };
-    fileops::pread64(fd, ubuf, offset)
+    fileops::pread64(fd, ubuf, offset).unwrap_or_else(|e| {
+        linux_err_from!(e)
+    })
 }
 
 fn linux_syscall_sendfile(args: SyscallArgs) -> usize {
@@ -220,7 +222,9 @@ fn linux_syscall_write(args: SyscallArgs) -> usize {
     info!("write: {:#x}, {:#x}, {:#x}", fd, buf, size);
 
     let ubuf = unsafe { core::slice::from_raw_parts(buf as *const u8, size) };
-    fileops::write(fd, ubuf)
+    fileops::write(fd, ubuf).unwrap_or_else(|e| {
+        linux_err_from!(e)
+    })
 }
 
 fn linux_syscall_writev(args: SyscallArgs) -> usize {

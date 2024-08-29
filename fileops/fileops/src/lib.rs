@@ -133,7 +133,7 @@ fn handle_path(dfd: usize, filename: &str) -> String {
     String::from(filename)
 }
 
-pub fn read(fd: usize, ubuf: &mut [u8]) -> usize {
+pub fn read(fd: usize, ubuf: &mut [u8]) -> LinuxResult<usize> {
     info!("read ... fd {}", fd);
 
     let count = ubuf.len();
@@ -141,7 +141,7 @@ pub fn read(fd: usize, ubuf: &mut [u8]) -> usize {
     let file = current.filetable.lock().get_file(fd).unwrap();
 
     let mut kbuf = vec![0u8; count];
-    let pos = file.lock().read(&mut kbuf).unwrap();
+    let pos = file.lock().read(&mut kbuf)?;
 
     info!(
         "linux_syscall_read: fd {}, count {}, ret {}",
@@ -149,17 +149,17 @@ pub fn read(fd: usize, ubuf: &mut [u8]) -> usize {
     );
 
     ubuf.copy_from_slice(&kbuf);
-    pos
+    Ok(pos)
 }
 
-pub fn pread64(fd: usize, ubuf: &mut [u8], offset: usize) -> usize {
+pub fn pread64(fd: usize, ubuf: &mut [u8], offset: usize) -> LinuxResult<usize> {
     info!("pread64: fd {} len {} offset {}", fd, ubuf.len(), offset);
     let pos = lseek(fd, offset, SEEK_SET);
     assert_eq!(pos, offset);
     read(fd, ubuf)
 }
 
-pub fn write(fd: usize, ubuf: &[u8]) -> usize {
+pub fn write(fd: usize, ubuf: &[u8]) -> LinuxResult<usize> {
     let count = ubuf.len();
     let current = task::current();
     let file = current.filetable.lock().get_file(fd).unwrap();
@@ -167,9 +167,9 @@ pub fn write(fd: usize, ubuf: &[u8]) -> usize {
     let mut kbuf = vec![0u8; count];
     kbuf.copy_from_slice(ubuf);
 
-    let pos = file.lock().write(&kbuf).unwrap();
+    let pos = file.lock().write(&kbuf)?;
     info!("write: fd {}, count {}, ret {}", fd, count, pos);
-    pos
+    Ok(pos)
 }
 
 #[derive(Debug)]

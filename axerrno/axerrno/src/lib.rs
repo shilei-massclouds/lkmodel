@@ -279,7 +279,7 @@ impl From<AxError> for LinuxError {
             NotADirectory => LinuxError::ENOTDIR,
             NotConnected => LinuxError::ENOTCONN,
             NotFound => LinuxError::ENOENT,
-            PermissionDenied => LinuxError::EACCES,
+            PermissionDenied => LinuxError::EBADF,
             ResourceBusy => LinuxError::EBUSY,
             StorageFull => LinuxError::ENOSPC,
             Unsupported => LinuxError::ENOSYS,
