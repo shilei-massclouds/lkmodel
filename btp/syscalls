@@ -13,7 +13,7 @@ mmap12
 mmap13
 mmap14
 mmap15
-mmap16
+# mmap16
 mmap17
 mmap18
 mmap19
@@ -22,3 +22,7 @@ mmap20
 munmap01
 munmap02
 munmap03
+
+open01
+open03
+open04
