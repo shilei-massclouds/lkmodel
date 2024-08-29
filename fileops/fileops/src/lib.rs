@@ -568,6 +568,14 @@ pub fn sendfile(out_fd: usize, in_fd: usize, offset: usize, count: usize) -> usi
     pos
 }
 
+pub fn utimensat(dfd: usize, filename: &str, times: usize, flags: usize) -> usize {
+    let path = handle_path(dfd, filename);
+    error!("utimensat: dfd {:#x} path {} times {} flags {}",
+        dfd, path, times, flags);
+    error!("utimensat: unimplemented yet!");
+    0
+}
+
 fn file_size(file: FileRef) -> LinuxResult<usize> {
     let metadata = file.lock().get_attr()?;
     Ok(metadata.size() as usize)

@@ -82,6 +82,7 @@ define riscv64_install_apps
 
   ls -l ./mnt/bin
   ls -l ./mnt/testcases
+  @du -sBM ./mnt/testcases
   @sudo umount ./mnt
   @rm -rf ./mnt
 endef

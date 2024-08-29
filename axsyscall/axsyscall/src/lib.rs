@@ -6,7 +6,7 @@ use axtype::get_user_str;
 use fileops::iovec;
 use axtype::{align_up_4k, is_aligned_4k};
 use axhal::arch::sysno::*;
-use axerrno::{linux_err_from, LinuxError};
+use axerrno::{linux_err_from, LinuxError, linux_err};
 
 #[macro_use]
 extern crate log;
@@ -34,6 +34,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_WRITE => linux_syscall_write(args),
         LINUX_SYSCALL_WRITEV => linux_syscall_writev(args),
         LINUX_SYSCALL_READLINKAT => usize::MAX,
+        LINUX_SYSCALL_UTIMENSAT => linux_syscall_utimensat(args),
         LINUX_SYSCALL_FTRUNCATE => linux_syscall_ftruncate(args),
         LINUX_SYSCALL_FSTATAT => linux_syscall_fstatat(args),
         LINUX_SYSCALL_UNAME => linux_syscall_uname(args),
@@ -58,6 +59,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_RT_SIGRETURN => linux_syscall_rt_sigreturn(args),
         LINUX_SYSCALL_GETTID => linux_syscall_gettid(args),
         LINUX_SYSCALL_GETPID => linux_syscall_getpid(args),
+        LINUX_SYSCALL_SETRESUID => linux_syscall_setresuid(args),
         LINUX_SYSCALL_GETPPID => linux_syscall_getppid(args),
         LINUX_SYSCALL_GETGID => linux_syscall_getgid(args),
         LINUX_SYSCALL_GETEGID => linux_syscall_getegid(args),
@@ -76,6 +78,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_CAPGET => linux_syscall_capget(args),
         LINUX_SYSCALL_SETITIMER => linux_syscall_setitimer(args),
         LINUX_SYSCALL_MOUNT => linux_syscall_mount(args),
+        LINUX_SYSCALL_SOCKET => linux_syscall_socket(args),
         #[cfg(target_arch = "riscv64")]
         LINUX_SYSCALL_GETDENTS64 => linux_syscall_getdents64(args),
         #[cfg(target_arch = "x86_64")]
@@ -238,6 +241,12 @@ fn linux_syscall_ftruncate(args: SyscallArgs) -> usize {
     fileops::ftruncate(fd, length)
 }
 
+fn linux_syscall_utimensat(args: SyscallArgs) -> usize {
+    let [dfd, filename, times, flags, ..] = args;
+    let filename = get_user_str(filename);
+    fileops::utimensat(dfd, &filename, times, flags)
+}
+
 #[cfg(target_arch = "x86_64")]
 fn linux_syscall_access(_args: SyscallArgs) -> usize {
     warn!("impl linux_syscall_access");
@@ -367,6 +376,10 @@ fn linux_syscall_getppid(_args: SyscallArgs) -> usize {
     sys::getppid()
 }
 
+fn linux_syscall_setresuid(_args: SyscallArgs) -> usize {
+    linux_err!(EINVAL)
+}
+
 fn linux_syscall_getgid(_args: SyscallArgs) -> usize {
     sys::getgid()
 }
@@ -487,6 +500,11 @@ fn linux_syscall_vfork(_args: SyscallArgs) -> usize {
 fn linux_syscall_mount(_args: SyscallArgs) -> usize {
     // TODO: implement mount syscall
     0
+}
+
+fn linux_syscall_socket(_args: SyscallArgs) -> usize {
+    error!("linux_syscall_socket: unimplemented!");
+    linux_err!(EINVAL)
 }
 
 pub fn init() {
