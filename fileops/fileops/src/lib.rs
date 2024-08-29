@@ -9,6 +9,7 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::format;
 use core::cmp::min;
+use axfile::fops::S_ISVTX;
 
 mod proc_ops;
 
@@ -44,13 +45,14 @@ const SEEK_END: usize = 2;
 const F_DUPFD: usize = 0;
 
 pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult<File> {
-    info!(
-        "openat '{}' at dfd {:#X} flags {:#X} mode {:#X}",
+    error!(
+        "openat '{}' at dfd {:#X} flags {:#o} mode {:#o}",
         filename, dfd, flags, mode
     );
 
     let mut opts = OpenOptions::new();
     opts.set_flags(flags as i32);
+    opts.set_mode(mode as i32);
     opts.read(true);
     if (flags as i32 & O_CREAT) != 0 {
         opts.write(true);
@@ -227,12 +229,12 @@ pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usi
     assert!(dfd > 2);
 
     info!("fstatat dfd {:#x} flags {:#x}", dfd, flags);
-    let (metadata, ino) = if (flags & AT_EMPTY_PATH) == 0 {
+    let (metadata, sticky, ino) = if (flags & AT_EMPTY_PATH) == 0 {
         let path = get_user_str(path);
         warn!("!!! NON-EMPTY for path: {}\n", path);
         match openat(dfd, &path, flags, 0) {
             Ok(file) => {
-                (file.get_attr().unwrap(), file.ino)
+                (file.get_attr().unwrap(), file.sticky(), file.ino)
             },
             Err(e) => {
                 return linux_err_from!(e);
@@ -248,14 +250,19 @@ pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usi
             }
         };
         let locked_file = file.lock();
-        (locked_file.get_attr().unwrap(), locked_file.ino)
+        (locked_file.get_attr().unwrap(), locked_file.sticky(), locked_file.ino)
     };
 
     let ty = metadata.file_type() as u8;
     let perm = metadata.perm().bits() as u32;
-    let st_mode = ((ty as u32) << 12) | perm;
+    let sticky_bit = if sticky {
+        S_ISVTX
+    } else {
+        0
+    };
+    let st_mode = ((ty as u32) << 12) | perm | sticky_bit as u32;
     let st_size = metadata.size();
-    warn!("st_size: {}", st_size);
+    error!("st_mode {:#o} st_size: {}", st_mode, st_size);
 
     unsafe {
         *statbuf = KernelStat {

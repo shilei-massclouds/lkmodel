@@ -50,17 +50,23 @@ pub struct CapError;
 pub struct WithCap<T> {
     inner: T,
     cap: Cap,
+    sticky: bool,
 }
 
 impl<T> WithCap<T> {
     /// Create a new instance with the given capability.
-    pub fn new(inner: T, cap: Cap) -> Self {
-        Self { inner, cap }
+    pub fn new(inner: T, cap: Cap, sticky: bool) -> Self {
+        Self { inner, cap, sticky }
     }
 
     /// Get the capability.
     pub const fn cap(&self) -> Cap {
         self.cap
+    }
+
+    /// Get sticky bit.
+    pub const fn sticky(&self) -> bool {
+        self.sticky
     }
 
     /// Check if the inner data can be accessed with the given capability.

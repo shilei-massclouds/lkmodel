@@ -33,6 +33,21 @@ pub const O_APPEND:     i32 = 0o002000;
 pub const O_DIRECTORY:  i32 = 0o200000;     /* must be a directory */
 pub const O_CLOEXEC:    i32 = 0o2000000;    /* set close_on_exec */
 
+/*
+#define S_IFMT  00170000
+#define S_IFSOCK 0140000
+#define S_IFLNK  0120000
+#define S_IFREG  0100000
+#define S_IFBLK  0060000
+#define S_IFDIR  0040000
+#define S_IFCHR  0020000
+#define S_IFIFO  0010000
+#define S_ISUID  0004000
+#define S_ISGID  0002000
+#define S_ISVTX  0001000
+ */
+pub const S_ISVTX: i32 = 0o1000;
+
 static NEXT_INO: AtomicUsize = AtomicUsize::new(0);
 
 pub fn alloc_ino() -> usize {
@@ -67,7 +82,7 @@ pub struct OpenOptions {
     create_new: bool,
     // system-specific
     _custom_flags: i32,
-    _mode: u32,
+    _mode: i32,
 }
 
 impl OpenOptions {
@@ -88,6 +103,9 @@ impl OpenOptions {
     }
     pub fn set_flags(&mut self, flags: i32) {
         self._custom_flags = flags;
+    }
+    pub fn set_mode(&mut self, mode: i32) {
+        self._mode = mode;
     }
     /// Sets the option for read access.
     pub fn read(&mut self, read: bool) {
@@ -202,7 +220,7 @@ fn perm_to_cap(perm: FilePerm) -> Cap {
 impl File {
     pub fn new(node: VfsNodeRef, cap: Cap) -> Self {
         Self {
-            node: WithCap::new(node, cap),
+            node: WithCap::new(node, cap, false),
             is_append: false,
             offset: 0,
             ino: 0,
@@ -250,13 +268,14 @@ impl File {
         if !perm_to_cap(attr.perm()).contains(access_cap) {
             return ax_err!(PermissionDenied);
         }
+        let sticky = (opts._mode & S_ISVTX) != 0;
 
         node.open()?;
         if opts.truncate {
             node.truncate(0)?;
         }
         Ok(Self {
-            node: WithCap::new(node, access_cap),
+            node: WithCap::new(node, access_cap, sticky),
             is_append: opts.append,
             offset: 0,
             ino: alloc_ino(),
@@ -350,6 +369,11 @@ impl File {
     pub fn get_cap(&self) -> Cap {
         self.node.cap()
     }
+
+    /// Gets the file cap.
+    pub fn sticky(&self) -> bool {
+        self.node.sticky()
+    }
 }
 
 impl Directory {
@@ -374,7 +398,7 @@ impl Directory {
 
         node.open()?;
         Ok(Self {
-            node: WithCap::new(node, access_cap),
+            node: WithCap::new(node, access_cap, false),
             entry_idx: 0,
         })
     }
