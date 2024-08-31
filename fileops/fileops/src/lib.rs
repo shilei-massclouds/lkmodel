@@ -110,9 +110,10 @@ pub fn register_file(file: AxResult<File>, flags: usize) -> usize {
     fd
 }
 
-pub fn unregister_file(fd: usize) {
+pub fn unregister_file(fd: usize) -> LinuxResult<Arc<Mutex<File>>> {
     let current = task::current();
-    current.filetable.lock().remove(fd);
+    let mut locked_ftable = current.filetable.lock();
+    locked_ftable.remove(fd).ok_or(LinuxError::EBADF)
 }
 
 fn handle_path(dfd: usize, filename: &str) -> String {

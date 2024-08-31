@@ -43,9 +43,9 @@ impl FileTable {
         fd
     }
 
-    pub fn remove(&mut self, fd: usize) {
+    pub fn remove(&mut self, fd: usize) -> Option<Arc<Mutex<File>>> {
         clr_bit(fd, &mut self.close_on_exec);
-        self.table.remove(fd);
+        self.table.remove(fd).map(|item| item.file)
     }
 
     pub fn alloc_fd(&mut self, start: usize) -> usize {

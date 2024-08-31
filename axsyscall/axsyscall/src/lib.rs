@@ -181,8 +181,11 @@ fn linux_syscall_dup3(args: SyscallArgs) -> usize {
 fn linux_syscall_close(args: SyscallArgs) -> usize {
     let [fd, ..] = args;
     info!("linux_syscall_close [{:#x}] ...", fd);
-    fileops::unregister_file(fd);
-    0
+    if let Err(e) = fileops::unregister_file(fd) {
+        linux_err_from!(e)
+    } else {
+        0
+    }
 }
 
 fn linux_syscall_lseek(args: SyscallArgs) -> usize {
