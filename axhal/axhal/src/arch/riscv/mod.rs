@@ -40,6 +40,11 @@ pub const SR_UXL_64: usize = 0x200000000; /* XLEN = 64 for U-mode */
 pub const SR_SUM: usize = 0x00040000; /* Supervisor User Memory access */
 
 #[inline]
+pub fn user_mode() -> bool {
+    sstatus::read().spp() == sstatus::SPP::User
+}
+
+#[inline]
 pub fn disable_sum() {
     unsafe { sstatus::clear_sum() }
 }

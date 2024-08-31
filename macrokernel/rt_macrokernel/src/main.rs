@@ -68,5 +68,7 @@ fn show_logo() {
 #[panic_handler]
 pub fn panic(info: &PanicInfo) -> ! {
     error!("{}", info);
+    axhal::misc::terminate();
+    #[allow(unreachable_code)]
     arch_boot::panic(info)
 }

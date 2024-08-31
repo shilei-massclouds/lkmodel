@@ -1,4 +1,4 @@
 mount -a
 #dash
 #mdev -s
-/testcases/write01
+/testcases/write03

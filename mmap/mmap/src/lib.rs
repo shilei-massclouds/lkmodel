@@ -8,6 +8,7 @@ use axerrno::{LinuxResult, LinuxError, linux_err};
 use axfile::fops::File;
 use axhal::arch::STACK_TOP;
 use axhal::mem::{phys_to_virt, virt_to_phys};
+use axhal::arch::user_mode;
 use axio::SeekFrom;
 use core::ops::Bound;
 use memory_addr::{align_up_4k, align_down_4k, is_aligned_4k, PAGE_SHIFT, PAGE_SIZE_4K};
@@ -402,9 +403,12 @@ pub fn faultin_page(va: usize, cause: usize) -> Result<usize, usize> {
     {
         if access_error(cause, vma) {
             error!("SEGV_ACCERR");
-            let tid = task::current().tid();
-            force_sig_fault(tid, task::SIGSEGV, SEGV_ACCERR, va);
-            return Err(usize::MAX);
+            if user_mode() {
+                let tid = task::current().tid();
+                force_sig_fault(tid, task::SIGSEGV, SEGV_ACCERR, va);
+                return Err(usize::MAX);
+            }
+            panic!("access error from kernel!");
         }
     }
 
