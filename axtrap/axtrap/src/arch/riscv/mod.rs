@@ -1,5 +1,6 @@
 use axhal::arch::TrapFrame;
 use axhal::trap::TRAPFRAME_SIZE;
+use axhal::arch::user_mode;
 use axsyscall::SyscallArgs;
 use riscv::register::scause::{self, Exception as E, Trap};
 use riscv::register::stval;
@@ -56,10 +57,16 @@ pub fn riscv_trap_handler(tf: &mut TrapFrame, _from_user: bool) {
 
 /// Call page fault handler.
 fn handle_page_fault(badaddr: usize, cause: usize, tf: &mut TrapFrame) {
-    debug!("handle_page_fault... cause {}", cause);
-    if let Err(fault) = mmap::faultin_page(badaddr, cause) {
+    error!("handle_page_fault... cause {}, epc {:#x}", cause, tf.sepc);
+    let mut fixup = 0;
+    if let Err(fault) = mmap::faultin_page(badaddr, cause, tf.sepc, &mut fixup) {
         debug!("fault: {:#x}", fault);
-        if fault != usize::MAX && (fault & VM_FAULT_ERROR) != 0 {
+        if fault == usize::MAX {
+            if fixup != 0 {
+                assert!(!user_mode());
+                tf.sepc =  fixup;
+            }
+        } else if (fault & VM_FAULT_ERROR) != 0 {
             mm_fault_error(badaddr, fault);
         }
     }

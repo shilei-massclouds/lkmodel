@@ -12,6 +12,7 @@ SECTIONS
         _stext = .;
         *(.text.boot)
         *(.text .text.*)
+        *(.fixup)
         . = ALIGN(4K);
         _etext = .;
     }
@@ -21,6 +22,10 @@ SECTIONS
         *(.rodata .rodata.*)
         *(.srodata .srodata.*)
         *(.sdata2 .sdata2.*)
+        . = ALIGN(16);
+        __start___ex_table = .;
+        KEEP(*(__ex_table))
+        __stop___ex_table = .;
         . = ALIGN(4K);
         _erodata = .;
     }

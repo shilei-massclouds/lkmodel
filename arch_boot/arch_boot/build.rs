@@ -8,6 +8,7 @@ fn main() {
         gen_linker_script(&arch, platform).unwrap();
     }
 
+    println!("cargo::rerun-if-changed=linker.lds.S");
     println!("cargo:rustc-cfg=platform=\"{}\"", platform);
     println!("cargo:rustc-cfg=platform_family=\"{}\"", axconfig::FAMILY);
 }

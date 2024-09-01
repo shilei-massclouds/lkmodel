@@ -450,7 +450,8 @@ fn get_arg_page(
     let va = TASK_SIZE - STACK_SIZE;
     mmap::_mmap(va, STACK_SIZE, PROT_READ | PROT_WRITE, MAP_FIXED | MAP_ANONYMOUS, None, 0)?;
     // Todo: set proper cause for faultin_page.
-    let direct_va = mmap::faultin_page(TASK_SIZE - PAGE_SIZE, 0).unwrap();
+    let mut _fixup = 0;
+    let direct_va = mmap::faultin_page(TASK_SIZE - PAGE_SIZE, 0, 0, &mut _fixup).unwrap();
     let mut stack = UserStack::new(TASK_SIZE, direct_va + PAGE_SIZE);
     stack.push(&[null::<u64>()]);
     debug!("initial: {:#x}", stack.get_sp());

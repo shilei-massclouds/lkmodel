@@ -224,6 +224,15 @@ fn linux_syscall_write(args: SyscallArgs) -> usize {
     let [fd, buf, size, ..] = args;
     info!("write: {:#x}, {:#x}, {:#x}", fd, buf, size);
 
+    if buf == 0 || size == 0 {
+        return 0;
+    }
+
+    let err = axhal::arch::fault_in_readable(buf, size);
+    if err != 0 {
+        return err;
+    }
+
     let ubuf = unsafe { core::slice::from_raw_parts(buf as *const u8, size) };
     fileops::write(fd, ubuf).unwrap_or_else(|e| {
         linux_err_from!(e)

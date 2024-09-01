@@ -141,7 +141,8 @@ pub fn mmap(
         error!("MAP_POPULATE");
         let mut pos = 0;
         while pos < len {
-            let _ = faultin_page(va + pos, 0);
+            let mut _fixup = 0;
+            let _ = faultin_page(va + pos, 0, 0, &mut _fixup);
             pos += PAGE_SIZE_4K;
         }
     }
@@ -355,7 +356,9 @@ pub fn get_unmapped_vma(_va: usize, len: usize) -> usize {
 #[cfg(target_arch = "riscv64")]
 const SEGV_ACCERR: usize = 2;
 
-pub fn faultin_page(va: usize, cause: usize) -> Result<usize, usize> {
+pub fn faultin_page(
+    va: usize, cause: usize, epc: usize, fixup: &mut usize,
+) -> Result<usize, usize> {
     let va = align_down_4k(va);
     info!("--------- faultin_page... va {:#X} cause {}", va, cause);
     let mm = task::current().mm();
@@ -402,13 +405,9 @@ pub fn faultin_page(va: usize, cause: usize) -> Result<usize, usize> {
     #[cfg(target_arch = "riscv64")]
     {
         if access_error(cause, vma) {
-            error!("SEGV_ACCERR");
-            if user_mode() {
-                let tid = task::current().tid();
-                force_sig_fault(tid, task::SIGSEGV, SEGV_ACCERR, va);
-                return Err(usize::MAX);
-            }
-            panic!("access error from kernel!");
+            // tsk->thread.bad_cause = cause;
+            error!("bad_area!");
+            return bad_area(va, epc, fixup);
         }
     }
 
@@ -464,6 +463,69 @@ pub fn faultin_page(va: usize, cause: usize) -> Result<usize, usize> {
     }
 
     Ok(phys_to_virt(pa.into()).into())
+}
+
+#[cfg(target_arch = "riscv64")]
+fn bad_area(va: usize, epc: usize, fixup: &mut usize) -> Result<usize, usize> {
+    //
+    // Something tried to access memory that isn't in our memory map.
+    // Fix it, but check if it's kernel or user first.
+    //
+    // mmap_read_unlock(mm);
+
+    // User mode accesses just cause a SIGSEGV
+    if user_mode() {
+        let tid = task::current().tid();
+        force_sig_fault(tid, task::SIGSEGV, SEGV_ACCERR, va);
+        return Err(usize::MAX);
+    }
+    no_context(epc, fixup)
+}
+
+#[cfg(target_arch = "riscv64")]
+fn no_context(epc: usize, fixup: &mut usize) -> Result<usize, usize> {
+    // Are we prepared to handle this kernel fault?
+    if let Some(addr) = fixup_exception(epc) {
+        *fixup = addr;
+        return Err(usize::MAX);
+    }
+    unreachable!("no_context!");
+}
+
+fn search_exception_table(epc: usize) -> Option<usize> {
+    extern "C" {
+        fn __start___ex_table();
+        fn __stop___ex_table();
+    }
+
+    let mut start = __start___ex_table as usize;
+    let stop = __stop___ex_table as usize;
+
+    while start < stop {
+        let ptr = start as *const usize;
+        let addr = unsafe { *ptr };
+        start += 8;
+
+        let ptr = start as *const usize;
+        let fixup = unsafe { *ptr };
+        start += 8;
+
+        error!("{:#x} -> {:#x}", addr, fixup);
+
+        if addr == epc {
+            return Some(fixup);
+        }
+    }
+
+    error!("!search {:#x} {:#x}",
+        __start___ex_table as usize, __stop___ex_table as usize);
+
+    None
+}
+
+#[cfg(target_arch = "riscv64")]
+fn fixup_exception(epc: usize) -> Option<usize> {
+    search_exception_table(epc)
 }
 
 #[cfg(target_arch = "riscv64")]
@@ -526,7 +588,8 @@ pub fn set_brk(va: usize) -> usize {
         assert!(is_aligned_4k(offset));
         _mmap(brk, offset, PROT_READ | PROT_WRITE, MAP_FIXED | MAP_ANONYMOUS, None, 0).unwrap();
         // Todo: set proper cause for faultin_page.
-        let _ = faultin_page(brk, 0 /* cause */);
+        let mut _fixup = 0;
+        let _ = faultin_page(brk, 0 /* cause */, 0, &mut _fixup);
         mm.lock().set_brk(va);
         va
     }
