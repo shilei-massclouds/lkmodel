@@ -57,7 +57,7 @@ pub fn riscv_trap_handler(tf: &mut TrapFrame, _from_user: bool) {
 
 /// Call page fault handler.
 fn handle_page_fault(badaddr: usize, cause: usize, tf: &mut TrapFrame) {
-    error!("handle_page_fault... cause {}, epc {:#x}", cause, tf.sepc);
+    debug!("handle_page_fault... cause {}, epc {:#x}", cause, tf.sepc);
     let mut fixup = 0;
     if let Err(fault) = mmap::faultin_page(badaddr, cause, tf.sepc, &mut fixup) {
         debug!("fault: {:#x}", fault);

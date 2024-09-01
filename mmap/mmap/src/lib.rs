@@ -406,7 +406,6 @@ pub fn faultin_page(
     {
         if access_error(cause, vma) {
             // tsk->thread.bad_cause = cause;
-            error!("bad_area!");
             return bad_area(va, epc, fixup);
         }
     }
@@ -500,6 +499,7 @@ fn search_exception_table(epc: usize) -> Option<usize> {
 
     let mut start = __start___ex_table as usize;
     let stop = __stop___ex_table as usize;
+    error!("search ex_table {:#x} {:#x}", start, stop);
 
     while start < stop {
         let ptr = start as *const usize;
@@ -517,10 +517,8 @@ fn search_exception_table(epc: usize) -> Option<usize> {
         }
     }
 
-    error!("!search {:#x} {:#x}",
-        __start___ex_table as usize, __stop___ex_table as usize);
-
-    None
+    panic!("no fixup!");
+    //None
 }
 
 #[cfg(target_arch = "riscv64")]
