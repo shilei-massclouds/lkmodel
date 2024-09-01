@@ -3,9 +3,7 @@
 use core::sync::atomic::Ordering;
 use taskctx::Tid;
 use axtype::PAGE_SIZE;
-#[cfg(target_arch = "x86_64")]
-use axerrno::linux_err;
-use axerrno::{LinuxResult, LinuxError, linux_err_from};
+use axerrno::{LinuxResult, LinuxError, linux_err_from, linux_err};
 use taskctx::TaskState;
 use axtype::{RLimit64, RLIM_NLIMITS};
 use axtype::{RLIMIT_DATA, RLIMIT_STACK, RLIMIT_CORE, RLIMIT_NOFILE};
@@ -103,6 +101,20 @@ pub fn arch_prctl(code: usize, addr: usize) -> usize {
             linux_err!(EPERM)
         }
     }
+}
+
+pub fn setresuid(ruid: usize, euid: usize, suid: usize) -> usize {
+    info!("setresuid: {:#x}, {:#x}, {:#x}", ruid, euid, suid);
+    let ruid = ruid as u32;
+    let euid = euid as u32;
+    let suid = suid as u32;
+
+    let task = task::current();
+    let mut cred = task.cred.lock();
+    cred.uid = ruid;
+    cred.euid = euid;
+    cred.suid = suid;
+    0
 }
 
 pub fn wait4(pid: usize, wstatus: usize, options: usize, rusage: usize) -> usize {

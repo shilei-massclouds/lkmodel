@@ -495,7 +495,6 @@ pub fn fcntl(fd: usize, cmd: usize, udata: usize) -> usize {
     let cur = task::current();
     let mut locked_fdt = cur.filetable.lock();
     let new_fd = locked_fdt.alloc_fd(udata);
-    //unimplemented!("fcntl: fd {}-{} cmd {} udata {}", fd, new_fd, cmd, udata);
     error!("fcntl: fd {}-{} cmd {} udata {}", fd, new_fd, cmd, udata);
     let file = locked_fdt.get_file(fd).unwrap();
     locked_fdt.fd_install(new_fd, file.clone());

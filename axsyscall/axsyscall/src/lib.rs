@@ -392,8 +392,9 @@ fn linux_syscall_getppid(_args: SyscallArgs) -> usize {
     sys::getppid()
 }
 
-fn linux_syscall_setresuid(_args: SyscallArgs) -> usize {
-    linux_err!(EINVAL)
+fn linux_syscall_setresuid(args: SyscallArgs) -> usize {
+    let [ruid, euid, suid, ..] = args;
+    sys::setresuid(ruid, euid, suid)
 }
 
 fn linux_syscall_getgid(_args: SyscallArgs) -> usize {

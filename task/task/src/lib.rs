@@ -99,6 +99,16 @@ impl SigHand {
     }
 }
 
+#[derive(Default)]
+pub struct Cred {
+    pub uid:    u32,    // real UID of the task
+    pub gid:    u32,    // real GID of the task
+    pub suid:   u32,    // saved UID of the task
+    pub sgid:   u32,    // saved GID of the task
+    pub euid:   u32,    // effective UID of the task
+    pub egid:   u32,    // effective GID of the task
+}
+
 pub struct TaskStruct {
     pub mm: Option<Arc<SpinNoIrq<MmStruct>>>,
     pub fs: Arc<SpinLock<FsStruct>>,
@@ -108,6 +118,7 @@ pub struct TaskStruct {
     pub rlim: [RLimit64; RLIM_NLIMITS],
     pub blocked: AtomicU64,
     pub sched_info: Arc<SchedInfo>,
+    pub cred: Arc<SpinLock<Cred>>,
 
     pub exit_state: AtomicUsize,
     pub exit_code: AtomicU32,
@@ -128,6 +139,7 @@ impl TaskStruct {
             rlim: rlimit_init(),
             blocked: AtomicU64::new(0),
             sched_info: taskctx::init_thread(),
+            cred: Arc::new(SpinLock::new(Cred::default())),
 
             exit_state: AtomicUsize::new(0),
             exit_code: AtomicU32::new(0),
