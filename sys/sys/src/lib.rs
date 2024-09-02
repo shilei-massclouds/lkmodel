@@ -3,7 +3,7 @@
 use core::sync::atomic::Ordering;
 use taskctx::Tid;
 use axtype::PAGE_SIZE;
-use axerrno::{LinuxResult, LinuxError, linux_err_from, linux_err};
+use axerrno::{LinuxResult, LinuxError, linux_err_from};
 use taskctx::TaskState;
 use axtype::{RLimit64, RLIM_NLIMITS};
 use axtype::{RLIMIT_DATA, RLIMIT_STACK, RLIMIT_CORE, RLIMIT_NOFILE};
