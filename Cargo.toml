@@ -24,6 +24,7 @@ members = [
     "mmap/rt_mmap",
     "fstree/rt_fstree",
     "ext2fs/ext2fs",
+    "axfs_ramfs/rt_ramfs",
     "macrokernel/rt_macrokernel",
 ]
 
@@ -141,8 +142,9 @@ path = "./axtype/axtype"
 [patch."ssh://git@github.com/shilei-massclouds/axfs_devfs".axfs_devfs]
 path = "./axfs_devfs/axfs_devfs"
 
-[patch."ssh://git@github.com/shilei-massclouds/axfs_ramfs".axfs_ramfs]
-path = "./axfs_ramfs/axfs_ramfs"
+[patch."ssh://git@github.com/shilei-massclouds/axfs_ramfs"]
+axfs_ramfs = { path = "./axfs_ramfs/axfs_ramfs" }
+rt_ramfs = { path = "./axfs_ramfs/rt_ramfs" }
 
 [patch."ssh://git@github.com/shilei-massclouds/rust_fatfs".rust_fatfs]
 path = "./rust_fatfs/rust_fatfs"
