@@ -25,6 +25,7 @@ members = [
     "fstree/rt_fstree",
     "ext2fs/ext2fs",
     "axfs_ramfs/rt_ramfs",
+    "axdtb/rt_axdtb",
     "macrokernel/rt_macrokernel",
 ]
 
@@ -129,8 +130,9 @@ scheduler = { path = "./scheduler/scheduler" }
 [patch."ssh://git@github.com/shilei-massclouds/taskctx"]
 taskctx = { path = "./taskctx/taskctx" }
 
-[patch."ssh://git@github.com/shilei-massclouds/axdtb".axdtb]
-path = "./axdtb/axdtb"
+[patch."ssh://git@github.com/shilei-massclouds/axdtb"]
+axdtb = { path = "./axdtb/axdtb" }
+rt_axdtb = { path = "./axdtb/rt_axdtb" }
 
 [patch."ssh://git@github.com/shilei-massclouds/axtrap"]
 axtrap = { path = "./axtrap/axtrap" }
