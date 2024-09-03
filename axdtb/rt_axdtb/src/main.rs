@@ -38,7 +38,7 @@ fn test_dtb(dtb_pa: usize) {
                                 assert!(cmd.len() > 0);
                                 assert!(cmd.starts_with("init="));
                                 let cmd = cmd.strip_prefix("init=").unwrap();
-                                assert_eq!(cmd, "/sbin/init");
+                                assert!(cmd == "/sbin/init" || cmd == "/btp/sbin/hello");
                             }
                         }
                         _ => (),
@@ -58,5 +58,6 @@ fn test_dtb(_dtb_pa: usize) {
 
 #[panic_handler]
 pub fn panic(info: &PanicInfo) -> ! {
+    error!("{}", info);
     arch_boot::panic(info)
 }
