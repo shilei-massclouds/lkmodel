@@ -4,6 +4,8 @@ use axfs_vfs::{VfsError, VfsNodeType, VfsResult, VfsOps};
 use axfs_ramfs::RamFileSystem;
 
 pub fn test_basic() {
+    info!("==============> basic test ...");
+
     // .
     // ├── foo
     // │   ├── bar
@@ -47,6 +49,7 @@ pub fn test_basic() {
     assert_eq!(root.remove("./foo//.//f3"), Ok(()));
     assert_eq!(root.remove("./foo"), Ok(()));
     assert!(ramfs.root_dir_node().get_entries().is_empty());
+    info!("==============> basic test ok!");
 }
 
 fn test_ops(devfs: &RamFileSystem) -> VfsResult {

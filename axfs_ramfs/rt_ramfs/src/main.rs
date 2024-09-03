@@ -7,6 +7,7 @@ extern crate alloc;
 use core::panic::PanicInfo;
 
 mod basic;
+mod bench;
 
 /// Entry
 #[no_mangle]
@@ -17,6 +18,7 @@ pub extern "Rust" fn runtime_main(_cpu_id: usize, _dtb_pa: usize) {
     axalloc::init();
 
     basic::test_basic();
+    bench::test_write();
 
     info!("[rt_ramfs]: ok!");
     axhal::misc::terminate();
