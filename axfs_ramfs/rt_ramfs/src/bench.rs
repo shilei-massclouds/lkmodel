@@ -1,7 +1,7 @@
 use axfs_vfs::{VfsNodeType, VfsResult, VfsOps};
 use axfs_ramfs::RamFileSystem;
 
-const BUFSIZ: usize = axtype::PAGE_SIZE;
+const BUFSIZ: usize = 2 * axtype::PAGE_SIZE;
 
 pub fn test_write() {
     info!("==============> cycle write test ...");
@@ -20,7 +20,7 @@ fn cycle_write() -> VfsResult {
     let mut offset = 0;
     let mut len = BUFSIZ;
     while len > 0 {
-        info!("[{}]: ...", len);
+        debug!("[{}]: ...", len);
         assert_eq!(node.write_at(offset, &buf[..len])?, len);
         offset += len as u64;
         len -= 1;

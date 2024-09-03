@@ -30,7 +30,7 @@ qemu_args-loongarch64 := \
 ifeq ($(ARCH), loongarch64)
 qemu_args-y := -smp $(SMP) $(qemu_args-$(ARCH))
 else
-qemu_args-y := -m 128M -smp $(SMP) $(qemu_args-$(ARCH))
+qemu_args-y := -m 256M -smp $(SMP) $(qemu_args-$(ARCH))
 endif
 
 ifneq ($(INIT_CMD), )

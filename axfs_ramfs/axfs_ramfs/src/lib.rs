@@ -3,7 +3,10 @@
 //! The implementation is based on [`axfs_vfs`].
 
 #![cfg_attr(not(test), no_std)]
+#![feature(btree_cursors)]
 
+#[macro_use]
+extern crate log;
 extern crate alloc;
 
 mod dir;
