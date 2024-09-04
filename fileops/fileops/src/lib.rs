@@ -63,6 +63,9 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
     if (flags as i32 & (O_WRONLY|O_RDWR|O_TRUNC|O_APPEND)) != 0 {
         opts.write(true);
     }
+    if (flags as i32 & O_APPEND) != 0 {
+        opts.append(true);
+    }
     if (flags as i32 & O_TRUNC) != 0 {
         opts.truncate(true);
     }
