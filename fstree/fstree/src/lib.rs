@@ -66,14 +66,14 @@ impl FsStruct {
         }
     }
 
-    pub fn create_file(&self, dir: Option<&VfsNodeRef>, path: &str) -> AxResult<VfsNodeRef> {
+    pub fn create_file(&self, dir: Option<&VfsNodeRef>, path: &str, ty: VfsNodeType) -> AxResult<VfsNodeRef> {
         if path.is_empty() {
             return ax_err!(NotFound);
         } else if path.ends_with('/') {
             return ax_err!(NotADirectory);
         }
         let parent = self.parent_node_of(dir, path);
-        parent.create(path, VfsNodeType::File)?;
+        parent.create(path, ty)?;
         parent.lookup(path)
     }
 

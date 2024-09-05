@@ -223,6 +223,16 @@ impl VfsNodeAttr {
     }
 
     /// Creates a new `VfsNodeAttr` for a file, with the default file permission.
+    pub const fn new_pipe(size: u64, blocks: u64) -> Self {
+        Self {
+            mode: VfsNodePerm::default_file(),
+            ty: VfsNodeType::Fifo,
+            size,
+            blocks,
+        }
+    }
+
+    /// Creates a new `VfsNodeAttr` for a file, with the default file permission.
     pub const fn new_file(size: u64, blocks: u64) -> Self {
         Self {
             mode: VfsNodePerm::default_file(),

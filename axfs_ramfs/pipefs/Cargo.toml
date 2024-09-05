@@ -1,0 +1,13 @@
+[package]
+name = "pipefs"
+version = "0.1.0"
+edition = "2024"
+authors = ["Shi Lei <shi_lei@massclouds.com>"]
+description = "RAM filesystem used by ArceOS"
+license = "GPL-3.0-or-later OR Apache-2.0"
+
+[dependencies]
+spin = "0.9"
+log = "0.4"
+axfs_vfs = { git = "ssh://git@github.com/shilei-massclouds/axfs_vfs.git" }
+axtype = { git = "ssh://git@github.com/shilei-massclouds/axtype.git" }

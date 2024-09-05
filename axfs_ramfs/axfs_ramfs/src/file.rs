@@ -2,10 +2,90 @@ use core::ops::Bound;
 use core::cmp::min;
 use core::sync::atomic::{AtomicUsize, Ordering};
 use alloc::vec;
+use alloc::collections::VecDeque;
 use alloc::collections::BTreeMap;
 use axfs_vfs::{impl_vfs_non_dir_default, VfsNodeAttr, VfsNodeOps, VfsResult};
 use spin::RwLock;
 use axtype::{PAGE_SIZE, PAGE_SHIFT};
+use axtype::{O_RDONLY, O_WRONLY};
+
+/// The pipe node in the RAM filesystem.
+pub struct PipeNode {
+    buf: RwLock<VecDeque<u8>>,
+    readers: AtomicUsize,
+    writers: AtomicUsize,
+}
+
+impl PipeNode {
+    pub(super) const fn new() -> Self {
+        Self {
+            buf: RwLock::new(VecDeque::new()),
+            readers: AtomicUsize::new(0),
+            writers: AtomicUsize::new(0),
+        }
+    }
+
+    fn open_for_read(&self) -> VfsResult {
+        let _ = self.readers.fetch_add(1, Ordering::Relaxed);
+        while self.writers.load(Ordering::Relaxed) == 0 {
+            run_queue::yield_now();
+        }
+        error!("open_for_read ok!");
+        Ok(())
+    }
+
+    fn open_for_write(&self) -> VfsResult {
+        let _ =  self.writers.fetch_add(1, Ordering::Relaxed);
+        while self.readers.load(Ordering::Relaxed) == 0 {
+            run_queue::yield_now();
+        }
+        error!("open_for_write ok!");
+        Ok(())
+    }
+}
+
+impl VfsNodeOps for PipeNode {
+    fn open(&self, mode: i32) -> VfsResult {
+        error!("pipe opened! mode {:#o}, {}", mode, O_RDONLY);
+        match mode {
+            O_RDONLY => {
+                self.open_for_read()
+            },
+            O_WRONLY => {
+                self.open_for_write()
+            },
+            _ => panic!("bad mode {:#o}", mode),
+        }
+    }
+
+    fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
+        Ok(VfsNodeAttr::new_pipe(0, 0))
+    }
+
+    fn read_at(&self, pos: u64, buf: &mut [u8]) -> VfsResult<usize> {
+        assert_eq!(pos, 0);
+        while self.buf.read().len() == 0 {
+            error!("WouldBlock!");
+            run_queue::yield_now();
+        }
+        let size = min(buf.len(), self.buf.read().len());
+        let src = &mut self.buf.write();
+        for i in 0..size {
+            buf[i] = src.pop_front().unwrap();
+        }
+        return Ok(size);
+    }
+
+    fn write_at(&self, pos: u64, buf: &[u8]) -> VfsResult<usize> {
+        assert_eq!(pos, 0);
+        for i in 0..buf.len() {
+            self.buf.write().push_back(buf[i]);
+        }
+        Ok(buf.len())
+    }
+
+    impl_vfs_non_dir_default! {}
+}
 
 /// The file node in the RAM filesystem.
 ///

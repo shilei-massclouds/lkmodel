@@ -21,12 +21,14 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_GETCWD => linux_syscall_getcwd(args),
         LINUX_SYSCALL_CHDIR => linux_syscall_chdir(args),
         LINUX_SYSCALL_FACCESSAT => linux_syscall_faccessat(args),
+        LINUX_SYSCALL_MKNODAT => linux_syscall_mknodat(args),
         LINUX_SYSCALL_MKDIRAT => linux_syscall_mkdirat(args),
         LINUX_SYSCALL_UNLINKAT => linux_syscall_unlinkat(args),
         LINUX_SYSCALL_DUP => linux_syscall_dup(args),
         LINUX_SYSCALL_DUP3 => linux_syscall_dup3(args),
         LINUX_SYSCALL_OPENAT => linux_syscall_openat(args),
         LINUX_SYSCALL_CLOSE => linux_syscall_close(args),
+        LINUX_SYSCALL_PIPE2 => linux_syscall_pipe2(args),
         LINUX_SYSCALL_LSEEK => linux_syscall_lseek(args),
         LINUX_SYSCALL_READ => linux_syscall_read(args),
         LINUX_SYSCALL_PREAD64 => linux_syscall_pread64(args),
@@ -152,6 +154,12 @@ fn linux_syscall_mkdirat(args: SyscallArgs) -> usize {
     fileops::mkdirat(dfd, &pathname, mode)
 }
 
+fn linux_syscall_mknodat(args: SyscallArgs) -> usize {
+    let [dfd, filename, mode, dev, ..] = args;
+    let filename = get_user_str(filename);
+    fileops::mknodat(dfd, &filename, mode, dev)
+}
+
 fn linux_syscall_unlinkat(args: SyscallArgs) -> usize {
     let [dfd, path, flags, ..] = args;
     let path = get_user_str(path);
@@ -186,6 +194,10 @@ fn linux_syscall_close(args: SyscallArgs) -> usize {
     } else {
         0
     }
+}
+
+fn linux_syscall_pipe2(_args: SyscallArgs) -> usize {
+    unimplemented!("linux_syscall_pipe2");
 }
 
 fn linux_syscall_lseek(args: SyscallArgs) -> usize {

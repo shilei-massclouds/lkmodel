@@ -90,7 +90,7 @@ pub trait VfsOps: Send + Sync {
 /// Node (file/directory) operations.
 pub trait VfsNodeOps: Send + Sync {
     /// Do something when the node is opened.
-    fn open(&self) -> VfsResult {
+    fn open(&self, _mode: i32) -> VfsResult {
         Ok(())
     }
 

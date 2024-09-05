@@ -6,8 +6,7 @@ use alloc::vec::Vec;
 use axfile::fops::File;
 use mutex::Mutex;
 use spinpreempt::SpinLock;
-use axfile::fops::O_CLOEXEC;
-use axtype::{set_bit, clr_bit};
+use axtype::{set_bit, clr_bit, O_CLOEXEC};
 
 pub struct FileTable {
     table: SlotVec<FileTableEntry>,

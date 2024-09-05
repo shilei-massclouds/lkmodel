@@ -9,7 +9,7 @@ use axfs_vfs::{VfsDirEntry, VfsNodeAttr, VfsNodeOps, VfsNodeRef, VfsNodeType};
 use axfs_vfs::{VfsError, VfsResult, DT_, LinuxDirent64};
 use spin::RwLock;
 
-use crate::file::FileNode;
+use crate::file::{FileNode, PipeNode};
 
 /// The directory node in the RAM filesystem.
 ///
@@ -52,6 +52,7 @@ impl DirNode {
         let node: VfsNodeRef = match ty {
             VfsNodeType::File => Arc::new(FileNode::new()),
             VfsNodeType::Dir => Self::new(Some(self.this.clone())),
+            VfsNodeType::Fifo => Arc::new(PipeNode::new()),
             _ => return Err(VfsError::Unsupported),
         };
         self.children.write().insert(name.into(), node);

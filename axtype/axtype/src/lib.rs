@@ -215,3 +215,17 @@ impl RLimit64 {
         Self { rlim_cur, rlim_max }
     }
 }
+
+///
+/// FileMode
+///
+pub const O_ACCMODE:    i32 = 0o003;
+pub const O_RDONLY:     i32 = 0o000;
+pub const O_WRONLY:     i32 = 0o001;
+pub const O_RDWR:       i32 = 0o002;
+pub const O_CREAT:      i32 = 0o100;
+pub const O_TRUNC:      i32 = 0o001000;
+pub const O_APPEND:     i32 = 0o002000;
+pub const O_DIRECTORY:  i32 = 0o200000;     /* must be a directory */
+pub const O_CLOEXEC:    i32 = 0o2000000;    /* set close_on_exec */
+

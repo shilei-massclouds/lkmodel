@@ -9,7 +9,7 @@ use alloc::sync::Arc;
 use alloc::vec;
 use alloc::format;
 use core::cmp::min;
-use axfile::fops::S_ISVTX;
+use axfile::fops::{S_ISVTX, S_IFMT, S_IFREG, S_IFIFO};
 use axtype::RLIMIT_NOFILE;
 
 mod proc_ops;
@@ -25,7 +25,7 @@ use axtype::get_user_str;
 use axio::SeekFrom;
 use axfs_vfs::VfsNodeType;
 use axfs_vfs::path::canonicalize;
-use axfile::fops::{O_CREAT, O_TRUNC, O_APPEND, O_WRONLY, O_RDWR};
+use axtype::{O_CREAT, O_TRUNC, O_APPEND, O_WRONLY, O_RDWR};
 
 pub type FileRef = Arc<Mutex<File>>;
 
@@ -46,7 +46,7 @@ const SEEK_END: usize = 2;
 const F_DUPFD: usize = 0;
 
 pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult<File> {
-    info!(
+    error!(
         "openat '{}' at dfd {:#X} flags {:#o} mode {:#o}",
         filename, dfd, flags, mode
     );
@@ -86,6 +86,29 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
             Err(e)
         }
     })
+
+    /*
+    loop {
+        match File::open(&path, &opts, &fs) {
+            Ok(f) => {
+                return Ok(f);
+            },
+            Err(WouldBlock) => {
+                // Due to pipe open, there's no readers or writes
+                error!("open blocked: ...");
+                task::yield_now();
+                continue;
+            },
+            Err(NotFound) => {
+                // Handle special filesystem, e.g., procfs, sysfs ..
+                return special_open(&path, &opts);
+            },
+            Err(e) => {
+                return Err(e);
+            }
+        }
+    }
+    */
 }
 
 pub fn special_open(path: &str, opts: &OpenOptions) -> AxResult<File> {
@@ -363,6 +386,33 @@ pub fn ioctl(fd: usize, request: usize, udata: usize) -> usize {
     0
 }
 
+pub fn mknodat(dfd: usize, filename: &str, mode: usize, dev: usize) -> usize {
+    error!(
+        "mknodat: dfd {:#x}, filename {}, mode {:#o}, dev {:#x}",
+        dfd, filename, mode, dev
+    );
+    assert_eq!(dfd, AT_FDCWD);
+
+    let path = handle_path(dfd, filename);
+    error!("mknodat: path {}", path);
+
+    let current = task::current();
+    let fs = current.fs.lock();
+
+    let mode = mode as i32;
+    match mode & S_IFMT {
+        S_IFREG => {
+            error!("create empty file!");
+        },
+        S_IFIFO => {
+            fs.create_file(None, &path, VfsNodeType::Fifo).unwrap();
+            error!("create pipe!");
+        },
+        _ => panic!("unknown mode {:#o}", mode & S_IFMT),
+    }
+    0
+}
+
 pub fn mkdirat(dfd: usize, pathname: &str, mode: usize) -> usize {
     info!(
         "mkdirat: dfd {:#X}, pathname {}, mode {:#X}",
@@ -398,7 +448,7 @@ pub fn unlinkat(dfd: usize, path: &str, flags: usize) -> usize {
             Err(e) => linux_err_from!(e),
         }
     } else {
-        if !ty.is_file() {
+        if ty.is_dir() {
             return linux_err!(EISDIR);
         }
         match remove_file(path, &fs) {

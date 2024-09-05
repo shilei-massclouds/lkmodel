@@ -1,13 +1,14 @@
 //! Low-level filesystem operations.
 
 use axerrno::{ax_err, ax_err_type, AxResult};
-use axfs_vfs::{VfsError, VfsNodeRef};
+use axfs_vfs::{VfsError, VfsNodeRef, VfsNodeType};
 use axio::SeekFrom;
 use capability::{Cap, WithCap};
 use core::fmt;
 use fstree::FsStruct;
 use alloc::collections::BTreeMap;
 use core::sync::atomic::{AtomicUsize, Ordering};
+use axtype::{O_RDONLY, O_WRONLY, O_DIRECTORY};
 
 #[cfg(feature = "myfs")]
 pub use crate::dev::Disk;
@@ -23,30 +24,19 @@ pub type FileAttr = axfs_vfs::VfsNodeAttr;
 /// Alias of [`axfs_vfs::VfsNodePerm`].
 pub type FilePerm = axfs_vfs::VfsNodePerm;
 
-pub const O_ACCMODE:    i32 = 0o003;
-pub const O_RDONLY:     i32 = 0o000;
-pub const O_WRONLY:     i32 = 0o001;
-pub const O_RDWR:       i32 = 0o002;
-pub const O_CREAT:      i32 = 0o100;
-pub const O_TRUNC:      i32 = 0o001000;
-pub const O_APPEND:     i32 = 0o002000;
-pub const O_DIRECTORY:  i32 = 0o200000;     /* must be a directory */
-pub const O_CLOEXEC:    i32 = 0o2000000;    /* set close_on_exec */
-
 /*
-#define S_IFMT  00170000
 #define S_IFSOCK 0140000
 #define S_IFLNK  0120000
-#define S_IFREG  0100000
 #define S_IFBLK  0060000
 #define S_IFDIR  0040000
 #define S_IFCHR  0020000
-#define S_IFIFO  0010000
 #define S_ISUID  0004000
 #define S_ISGID  0002000
-#define S_ISVTX  0001000
  */
-pub const S_ISVTX: i32 = 0o1000;
+pub const S_IFMT:   i32 = 0o170000;
+pub const S_IFREG:  i32 = 0o100000;
+pub const S_IFIFO:  i32 = 0o10000;
+pub const S_ISVTX:  i32 = 0o1000;
 
 static NEXT_INO: AtomicUsize = AtomicUsize::new(0);
 
@@ -229,7 +219,7 @@ impl File {
     }
 
     fn _open_at(dir: Option<&VfsNodeRef>, path: &str, opts: &OpenOptions, fs: &FsStruct) -> AxResult<Self> {
-        debug!("open file: {} {:?}", path, opts);
+        error!("open file: {} {:?}", path, opts);
         if !opts.is_valid() {
             return ax_err!(InvalidInput);
         }
@@ -245,7 +235,7 @@ impl File {
                     node
                 }
                 // not exists, create new
-                Err(VfsError::NotFound) => fs.create_file(dir, path)?,
+                Err(VfsError::NotFound) => fs.create_file(dir, path, VfsNodeType::File)?,
                 Err(e) => return Err(e),
             }
         } else {
@@ -270,7 +260,12 @@ impl File {
         }
         let sticky = (opts._mode & S_ISVTX) != 0;
 
-        node.open()?;
+        let mode = if opts.write {
+            O_WRONLY
+        } else {
+            O_RDONLY
+        };
+        node.open(mode)?;
         if opts.truncate {
             node.truncate(0)?;
         }
@@ -396,7 +391,7 @@ impl Directory {
             return ax_err!(PermissionDenied);
         }
 
-        node.open()?;
+        node.open(0)?;
         Ok(Self {
             node: WithCap::new(node, access_cap, false),
             entry_idx: 0,
@@ -431,7 +426,7 @@ impl Directory {
 
     /// Creates an empty file at the path relative to this directory.
     pub fn create_file(&self, path: &str, fs: &FsStruct) -> AxResult<VfsNodeRef> {
-        fs.create_file(self.access_at(path)?, path)
+        fs.create_file(self.access_at(path)?, path, VfsNodeType::File)
     }
 
     /// Creates an empty directory at the path relative to this directory.

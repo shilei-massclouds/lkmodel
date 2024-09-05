@@ -74,4 +74,6 @@ pub const LINUX_SYSCALL_VFORK: usize = 58;
 pub const LINUX_SYSCALL_CLOCK_NANOSLEEP: usize = 230;
 pub const LINUX_SYSCALL_MOUNT: usize = 165;
 pub const LINUX_SYSCALL_FUTEX: usize = 202;
+pub const LINUX_SYSCALL_MKNODAT: usize = 259;
 pub const LINUX_SYSCALL_UTIMENSAT: usize = 280;
+pub const LINUX_SYSCALL_PIPE2: usize = 293;
