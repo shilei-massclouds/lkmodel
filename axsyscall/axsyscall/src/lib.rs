@@ -196,8 +196,14 @@ fn linux_syscall_close(args: SyscallArgs) -> usize {
     }
 }
 
-fn linux_syscall_pipe2(_args: SyscallArgs) -> usize {
-    unimplemented!("linux_syscall_pipe2");
+fn linux_syscall_pipe2(args: SyscallArgs) -> usize {
+    let [fds, flags, ..] = args;
+
+    if let Err(e) = fileops::pipe2(fds, flags) {
+        linux_err_from!(e)
+    } else {
+        0
+    }
 }
 
 fn linux_syscall_lseek(args: SyscallArgs) -> usize {

@@ -167,8 +167,11 @@ pub fn pread64(fd: usize, ubuf: &mut [u8], offset: usize) -> LinuxResult<usize> 
 
 pub fn write(fd: usize, ubuf: &[u8]) -> LinuxResult<usize> {
     let count = ubuf.len();
+    error!("write: fd {}, count {} ..", fd as i32, count);
+
     let current = task::current();
-    let file = current.filetable.lock().get_file(fd).unwrap();
+    let file = current.filetable.lock().get_file(fd)
+        .ok_or(LinuxError::EBADF)?;
 
     let mut kbuf = vec![0u8; count];
     kbuf.copy_from_slice(ubuf);
@@ -606,6 +609,11 @@ pub fn utimensat(dfd: usize, filename: &str, times: usize, flags: usize) -> usiz
         dfd, path, times, flags);
     error!("utimensat: unimplemented yet!");
     0
+}
+
+pub fn pipe2(fds: usize, flags: usize) -> LinuxResult {
+    error!("pipe2: fds {:#x} flags {:#x}", fds, flags);
+    Ok(())
 }
 
 fn file_size(file: FileRef) -> LinuxResult<usize> {

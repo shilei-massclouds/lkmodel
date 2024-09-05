@@ -26,6 +26,9 @@ impl FileTable {
     }
 
     pub fn get_file(&self, fd: usize) -> Option<Arc<Mutex<File>>> {
+        if (fd as i32) < 0 {
+            return None;
+        }
         self.table
             .get(fd)
             .map(|entry| entry.file.clone())
