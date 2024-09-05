@@ -87,7 +87,6 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
             // Handle special filesystem, e.g., procfs, sysfs ..
             special_open(&path, &opts)
         } else {
-            error!("openat: err {}", e);
             Err(e)
         }
     })
@@ -122,7 +121,7 @@ pub fn register_file(file: AxResult<File>, flags: usize) -> usize {
 pub fn unregister_file(fd: usize) -> LinuxResult<Arc<Mutex<File>>> {
     let current = task::current();
     let mut locked_ftable = current.filetable.lock();
-    error!("unregister: fd {}", fd);
+    debug!("unregister: fd {}", fd);
     locked_ftable.remove(fd).ok_or(LinuxError::EBADF)
 }
 
@@ -390,14 +389,14 @@ pub fn ioctl(fd: usize, request: usize, udata: usize) -> usize {
 }
 
 pub fn mknodat(dfd: usize, filename: &str, mode: usize, dev: usize) -> usize {
-    error!(
+    debug!(
         "mknodat: dfd {:#x}, filename {}, mode {:#o}, dev {:#x}",
         dfd, filename, mode, dev
     );
     assert_eq!(dfd, AT_FDCWD);
 
     let path = handle_path(dfd, filename);
-    error!("mknodat: path {}", path);
+    debug!("mknodat: path {}", path);
 
     let current = task::current();
     let fs = current.fs.lock();
@@ -409,7 +408,6 @@ pub fn mknodat(dfd: usize, filename: &str, mode: usize, dev: usize) -> usize {
         },
         S_IFIFO => {
             fs.create_file(None, &path, VfsNodeType::Fifo).unwrap();
-            error!("create pipe!");
         },
         _ => panic!("unknown mode {:#o}", mode & S_IFMT),
     }
@@ -633,7 +631,7 @@ pub fn utimensat(dfd: usize, filename: &str, times: usize, flags: usize) -> usiz
 }
 
 pub fn pipe2(fds: usize, flags: usize) -> LinuxResult {
-    error!("pipe2: fds {:#x} flags {:#x}", fds, flags);
+    debug!("pipe2: fds {:#x} flags {:#x}", fds, flags);
     let node = Arc::new(PipeNode::init_pipe_node());
     let rfile = File::new(node.clone(), Cap::READ);
     let wfile = File::new(node.clone(), Cap::WRITE);
@@ -645,7 +643,7 @@ pub fn pipe2(fds: usize, flags: usize) -> LinuxResult {
     let fds = unsafe { slice::from_raw_parts_mut(fds, 2) };
     fds[0] = rfd;
     fds[1] = wfd;
-    error!("pipe2 ok! fd0 {:#x} fd1 {:#x}", fds[0], fds[1]);
+    debug!("pipe2 ok! fd0 {:#x} fd1 {:#x}", fds[0], fds[1]);
     Ok(())
 }
 

@@ -219,7 +219,7 @@ impl File {
     }
 
     fn _open_at(dir: Option<&VfsNodeRef>, path: &str, opts: &OpenOptions, fs: &FsStruct) -> AxResult<Self> {
-        error!("open file: {} {:?}", path, opts);
+        debug!("open file: {} {:?}", path, opts);
         if !opts.is_valid() {
             return ax_err!(InvalidInput);
         }
