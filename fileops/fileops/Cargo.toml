@@ -25,6 +25,7 @@ axfs_vfs = { git = "ssh://git@github.com/shilei-massclouds/axfs_vfs" }
 axfs_ramfs = { git = "ssh://git@github.com/shilei-massclouds/axfs_ramfs" }
 capability = { git = "ssh://git@github.com/shilei-massclouds/capability" }
 mm = { git = "ssh://git@github.com/shilei-massclouds/mm" }
+signal = { git = "ssh://git@github.com/shilei-massclouds/signal" }
 
 [target.'cfg(any(target_arch = "riscv32", target_arch = "riscv64"))'.dependencies]
 riscv = "0.10"

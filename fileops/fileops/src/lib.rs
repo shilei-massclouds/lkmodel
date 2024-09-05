@@ -14,12 +14,13 @@ use axfile::fops::{S_ISVTX, S_IFMT, S_IFREG, S_IFIFO};
 use axtype::RLIMIT_NOFILE;
 use capability::Cap;
 use axfs_ramfs::PipeNode;
+use signal::force_sig_fault;
 
 mod proc_ops;
 
 use axerrno::AxResult;
 use axerrno::{LinuxError, LinuxResult, linux_err, linux_err_from};
-use axerrno::AxError::NotFound;
+use axerrno::AxError::{NotFound, BrokenPipe};
 use axfile::api::{create_dir, remove_dir, remove_file};
 use axfile::fops::File;
 use axfile::fops::OpenOptions;
@@ -121,6 +122,7 @@ pub fn register_file(file: AxResult<File>, flags: usize) -> usize {
 pub fn unregister_file(fd: usize) -> LinuxResult<Arc<Mutex<File>>> {
     let current = task::current();
     let mut locked_ftable = current.filetable.lock();
+    error!("unregister: fd {}", fd);
     locked_ftable.remove(fd).ok_or(LinuxError::EBADF)
 }
 
@@ -169,6 +171,8 @@ pub fn pread64(fd: usize, ubuf: &mut [u8], offset: usize) -> LinuxResult<usize> 
     read(fd, ubuf)
 }
 
+/*
+*/
 pub fn write(fd: usize, ubuf: &[u8]) -> LinuxResult<usize> {
     let count = ubuf.len();
     debug!("write: fd {}, count {} ..", fd as i32, count);
@@ -180,9 +184,22 @@ pub fn write(fd: usize, ubuf: &[u8]) -> LinuxResult<usize> {
     let mut kbuf = vec![0u8; count];
     kbuf.copy_from_slice(ubuf);
 
+    let mut locked_file = file.lock();
+    match locked_file.write(&kbuf) {
+        Ok(pos) => Ok(pos),
+        Err(BrokenPipe) => {
+            error!("EPIPE");
+            let tid = current.tid();
+            force_sig_fault(tid, task::SIGPIPE, 0, 0);
+            Err(LinuxError::EPIPE)
+        },
+        Err(e) => Err(e.into()),
+    }
+    /*
     let pos = file.lock().write(&kbuf)?;
     info!("write: fd {}, count {}, ret {}", fd, count, pos);
     Ok(pos)
+    */
 }
 
 #[derive(Debug)]
@@ -628,6 +645,7 @@ pub fn pipe2(fds: usize, flags: usize) -> LinuxResult {
     let fds = unsafe { slice::from_raw_parts_mut(fds, 2) };
     fds[0] = rfd;
     fds[1] = wfd;
+    error!("pipe2 ok! fd0 {:#x} fd1 {:#x}", fds[0], fds[1]);
     Ok(())
 }
 

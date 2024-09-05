@@ -140,6 +140,11 @@ impl VfsNodeOps for PipeNode {
             while !self.read_ready.load(Ordering::Relaxed) {
                 run_queue::yield_now();
             }
+            let readers = self.readers.load(Ordering::Relaxed);
+            error!("writer_at: BlockMode readers {}", readers);
+            if readers == 0 {
+                return Err(VfsError::BrokenPipe);
+            }
         }
 
         while self.buf.read().len() >= PIPE_CAPACITY {
