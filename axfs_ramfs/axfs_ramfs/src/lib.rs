@@ -17,6 +17,7 @@ mod tests;
 
 pub use self::dir::DirNode;
 pub use self::file::FileNode;
+pub use self::file::PipeNode;
 
 use alloc::sync::Arc;
 use axfs_vfs::{VfsNodeRef, VfsOps, VfsResult};

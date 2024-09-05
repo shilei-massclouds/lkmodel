@@ -1,3 +1,4 @@
+hello
 execl
 mkdir
 mmap
@@ -5,3 +6,6 @@ mount
 signal
 vfork
 devfs
+pthread
+named_pipe
+# pipe

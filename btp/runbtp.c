@@ -38,6 +38,9 @@ int main()
 }
 
 void test(const char *name, struct results *r) {
+    if (name == NULL || strlen(name) == 0 || name[0] == '#')
+        return;
+
     printf("[%s] ...\n", name);
 
     char buf[128];

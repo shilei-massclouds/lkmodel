@@ -8,9 +8,12 @@ use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec;
 use alloc::format;
+use core::slice;
 use core::cmp::min;
 use axfile::fops::{S_ISVTX, S_IFMT, S_IFREG, S_IFIFO};
 use axtype::RLIMIT_NOFILE;
+use capability::Cap;
+use axfs_ramfs::PipeNode;
 
 mod proc_ops;
 
@@ -46,7 +49,7 @@ const SEEK_END: usize = 2;
 const F_DUPFD: usize = 0;
 
 pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult<File> {
-    error!(
+    debug!(
         "openat '{}' at dfd {:#X} flags {:#o} mode {:#o}",
         filename, dfd, flags, mode
     );
@@ -100,7 +103,7 @@ pub fn register_file(file: AxResult<File>, flags: usize) -> usize {
     let file = match file {
         Ok(f) => f,
         Err(e) => {
-            error!("register_file: err {}", linux_err_from!(e) as isize);
+            debug!("register_file: err {}", linux_err_from!(e) as isize);
             return linux_err_from!(e);
         }
     };
@@ -144,7 +147,8 @@ pub fn read(fd: usize, ubuf: &mut [u8]) -> LinuxResult<usize> {
 
     let count = ubuf.len();
     let current = task::current();
-    let file = current.filetable.lock().get_file(fd).unwrap();
+    let file = current.filetable.lock().get_file(fd)
+        .ok_or(LinuxError::EBADF)?;
 
     let mut kbuf = vec![0u8; count];
     let pos = file.lock().read(&mut kbuf)?;
@@ -167,7 +171,7 @@ pub fn pread64(fd: usize, ubuf: &mut [u8], offset: usize) -> LinuxResult<usize> 
 
 pub fn write(fd: usize, ubuf: &[u8]) -> LinuxResult<usize> {
     let count = ubuf.len();
-    error!("write: fd {}, count {} ..", fd as i32, count);
+    debug!("write: fd {}, count {} ..", fd as i32, count);
 
     let current = task::current();
     let file = current.filetable.lock().get_file(fd)
@@ -613,6 +617,17 @@ pub fn utimensat(dfd: usize, filename: &str, times: usize, flags: usize) -> usiz
 
 pub fn pipe2(fds: usize, flags: usize) -> LinuxResult {
     error!("pipe2: fds {:#x} flags {:#x}", fds, flags);
+    let node = Arc::new(PipeNode::init_pipe_node());
+    let rfile = File::new(node.clone(), Cap::READ);
+    let wfile = File::new(node.clone(), Cap::WRITE);
+    let rfd = register_file(Ok(rfile), 0) as i32;
+    let wfd = register_file(Ok(wfile), 0) as i32;
+    assert!(rfd > 0);
+    assert!(wfd > 0);
+    let fds = fds as *mut i32;
+    let fds = unsafe { slice::from_raw_parts_mut(fds, 2) };
+    fds[0] = rfd;
+    fds[1] = wfd;
     Ok(())
 }
 

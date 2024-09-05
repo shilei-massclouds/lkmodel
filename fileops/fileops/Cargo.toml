@@ -22,6 +22,7 @@ axalloc = { git = "ssh://git@github.com/shilei-massclouds/axalloc" }
 page_table = { git = "ssh://git@github.com/shilei-massclouds/page_table" }
 axlog2 = { git = "ssh://git@github.com/shilei-massclouds/axlog2" }
 axfs_vfs = { git = "ssh://git@github.com/shilei-massclouds/axfs_vfs" }
+axfs_ramfs = { git = "ssh://git@github.com/shilei-massclouds/axfs_ramfs" }
 capability = { git = "ssh://git@github.com/shilei-massclouds/capability" }
 mm = { git = "ssh://git@github.com/shilei-massclouds/mm" }
 

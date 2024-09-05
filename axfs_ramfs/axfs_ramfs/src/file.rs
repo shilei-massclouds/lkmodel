@@ -21,7 +21,7 @@ pub struct PipeNode {
 }
 
 impl PipeNode {
-    pub(super) const fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             buf: RwLock::new(VecDeque::new()),
             readers: AtomicUsize::new(0),
@@ -29,6 +29,13 @@ impl PipeNode {
             read_nonblock: AtomicBool::new(false),
             write_nonblock: AtomicBool::new(false),
         }
+    }
+
+    pub fn init_pipe_node() -> Self {
+        let node = PipeNode::new();
+        let _ = node.readers.fetch_add(1, Ordering::Relaxed);
+        let _ = node.writers.fetch_add(1, Ordering::Relaxed);
+        node
     }
 
     fn open_for_read(&self, block: bool) -> VfsResult {
@@ -57,7 +64,7 @@ impl PipeNode {
             return Ok(());
         }
 
-        let _ =  self.writers.fetch_add(1, Ordering::Relaxed);
+        let _ = self.writers.fetch_add(1, Ordering::Relaxed);
         while self.readers.load(Ordering::Relaxed) == 0 {
             run_queue::yield_now();
         }
@@ -79,21 +86,31 @@ impl VfsNodeOps for PipeNode {
         }
     }
 
+    /*
+    fn release(&self) -> VfsResult {
+        error!("pipe release!");
+        // Todo: move this action to file level.
+        let _ = self.readers.fetch_sub(0, Ordering::Relaxed);
+        let _ = self.writers.fetch_sub(1, Ordering::Relaxed);
+        Ok(())
+    }
+    */
+
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
         Ok(VfsNodeAttr::new_pipe(0, 0))
     }
 
     fn read_at(&self, pos: u64, buf: &mut [u8]) -> VfsResult<usize> {
+        debug!("read_at: pos {} buf {} ..", pos, buf.len());
         while self.buf.read().is_empty() {
             if self.read_nonblock.load(Ordering::Relaxed) {
                 return Err(VfsError::WouldBlock);
             }
-            error!("WouldBlock!");
-            run_queue::yield_now();
-        }
-        assert_eq!(pos, 0);
-        while self.buf.read().len() == 0 {
-            error!("WouldBlock!");
+            let writers = self.writers.load(Ordering::Relaxed);
+            if writers == 0 {
+                return Ok(0);
+            }
+            error!("read_at WouldBlock! writers {}", writers);
             run_queue::yield_now();
         }
         let size = min(buf.len(), self.buf.read().len());
@@ -105,11 +122,18 @@ impl VfsNodeOps for PipeNode {
     }
 
     fn write_at(&self, pos: u64, buf: &[u8]) -> VfsResult<usize> {
+        debug!("write_at: pos {} buf {} ..", pos, buf.len());
+        if !self.write_nonblock.load(Ordering::Relaxed) {
+            let readers = self.readers.load(Ordering::Relaxed);
+            error!("writer_at: BlockMode readers {}", readers);
+        }
+
         while self.buf.read().len() >= PIPE_CAPACITY {
             if self.write_nonblock.load(Ordering::Relaxed) {
                 return Err(VfsError::WouldBlock);
             }
-            error!("WouldBlock!");
+            let readers = self.readers.load(Ordering::Relaxed);
+            error!("writer_at: WouldBlock! readers {}", readers);
             run_queue::yield_now();
         }
         assert_eq!(pos, 0);
