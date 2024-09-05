@@ -40,9 +40,11 @@ int main()
 
         printf("child writes to pipe ok!\n");
         close(wfd);
+        printf("child prepares to exit..\n");
         exit(0);
     }
 
+    printf("parent open ..\n");
     rfd = open(FIFO_NAME, O_RDONLY);
     if (rfd < 0) {
         perror("parent opens pipe error!");

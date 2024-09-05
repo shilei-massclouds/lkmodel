@@ -18,6 +18,8 @@ pub struct PipeNode {
     writers: AtomicUsize,
     read_nonblock: AtomicBool,
     write_nonblock: AtomicBool,
+    read_ready: AtomicBool,
+    write_ready: AtomicBool,
 }
 
 impl PipeNode {
@@ -28,6 +30,8 @@ impl PipeNode {
             writers: AtomicUsize::new(0),
             read_nonblock: AtomicBool::new(false),
             write_nonblock: AtomicBool::new(false),
+            read_ready: AtomicBool::new(false),
+            write_ready: AtomicBool::new(false),
         }
     }
 
@@ -35,10 +39,14 @@ impl PipeNode {
         let node = PipeNode::new();
         let _ = node.readers.fetch_add(1, Ordering::Relaxed);
         let _ = node.writers.fetch_add(1, Ordering::Relaxed);
+        node.read_ready.store(true, Ordering::Relaxed);
+        node.write_ready.store(true, Ordering::Relaxed);
         node
     }
 
     fn open_for_read(&self, block: bool) -> VfsResult {
+        error!("open_for_read ...");
+        let _ = self.readers.fetch_add(1, Ordering::Relaxed);
         if self.read_nonblock.load(Ordering::Relaxed) {
             return Ok(());
         }
@@ -47,15 +55,17 @@ impl PipeNode {
             return Ok(());
         }
 
-        let _ = self.readers.fetch_add(1, Ordering::Relaxed);
         while self.writers.load(Ordering::Relaxed) == 0 {
             run_queue::yield_now();
         }
+        self.read_ready.store(true, Ordering::Relaxed);
         error!("open_for_read ok!");
         Ok(())
     }
 
     fn open_for_write(&self, block: bool) -> VfsResult {
+        error!("open_for_write ...");
+        let _ = self.writers.fetch_add(1, Ordering::Relaxed);
         if self.write_nonblock.load(Ordering::Relaxed) {
             return Ok(());
         }
@@ -64,10 +74,10 @@ impl PipeNode {
             return Ok(());
         }
 
-        let _ = self.writers.fetch_add(1, Ordering::Relaxed);
         while self.readers.load(Ordering::Relaxed) == 0 {
             run_queue::yield_now();
         }
+        self.write_ready.store(true, Ordering::Relaxed);
         error!("open_for_write ok!");
         Ok(())
     }
@@ -86,22 +96,25 @@ impl VfsNodeOps for PipeNode {
         }
     }
 
-    /*
     fn release(&self) -> VfsResult {
-        error!("pipe release!");
         // Todo: move this action to file level.
-        let _ = self.readers.fetch_sub(0, Ordering::Relaxed);
-        let _ = self.writers.fetch_sub(1, Ordering::Relaxed);
+        let r = self.readers.fetch_sub(1, Ordering::Relaxed);
+        let w = self.writers.fetch_sub(1, Ordering::Relaxed);
+        error!("---> pipe release! r {}, w {}", r, w);
         Ok(())
     }
-    */
 
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
         Ok(VfsNodeAttr::new_pipe(0, 0))
     }
 
     fn read_at(&self, pos: u64, buf: &mut [u8]) -> VfsResult<usize> {
-        debug!("read_at: pos {} buf {} ..", pos, buf.len());
+        error!("read_at: pos {} buf {} ..", pos, buf.len());
+        if !self.read_nonblock.load(Ordering::Relaxed) {
+            while !self.write_ready.load(Ordering::Relaxed) {
+                run_queue::yield_now();
+            }
+        }
         while self.buf.read().is_empty() {
             if self.read_nonblock.load(Ordering::Relaxed) {
                 return Err(VfsError::WouldBlock);
@@ -124,8 +137,9 @@ impl VfsNodeOps for PipeNode {
     fn write_at(&self, pos: u64, buf: &[u8]) -> VfsResult<usize> {
         debug!("write_at: pos {} buf {} ..", pos, buf.len());
         if !self.write_nonblock.load(Ordering::Relaxed) {
-            let readers = self.readers.load(Ordering::Relaxed);
-            error!("writer_at: BlockMode readers {}", readers);
+            while !self.read_ready.load(Ordering::Relaxed) {
+                run_queue::yield_now();
+            }
         }
 
         while self.buf.read().len() >= PIPE_CAPACITY {
