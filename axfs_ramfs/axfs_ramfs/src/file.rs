@@ -1,19 +1,23 @@
 use core::ops::Bound;
 use core::cmp::min;
-use core::sync::atomic::{AtomicUsize, Ordering};
+use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use alloc::vec;
 use alloc::collections::VecDeque;
 use alloc::collections::BTreeMap;
-use axfs_vfs::{impl_vfs_non_dir_default, VfsNodeAttr, VfsNodeOps, VfsResult};
+use axfs_vfs::{impl_vfs_non_dir_default, VfsNodeAttr, VfsNodeOps, VfsResult, VfsError};
 use spin::RwLock;
 use axtype::{PAGE_SIZE, PAGE_SHIFT};
-use axtype::{O_RDONLY, O_WRONLY};
+use axtype::{O_WRONLY, O_RDWR, O_NONBLOCK};
+
+const PIPE_CAPACITY: usize = 16 * PAGE_SIZE;
 
 /// The pipe node in the RAM filesystem.
 pub struct PipeNode {
     buf: RwLock<VecDeque<u8>>,
     readers: AtomicUsize,
     writers: AtomicUsize,
+    read_nonblock: AtomicBool,
+    write_nonblock: AtomicBool,
 }
 
 impl PipeNode {
@@ -22,10 +26,20 @@ impl PipeNode {
             buf: RwLock::new(VecDeque::new()),
             readers: AtomicUsize::new(0),
             writers: AtomicUsize::new(0),
+            read_nonblock: AtomicBool::new(false),
+            write_nonblock: AtomicBool::new(false),
         }
     }
 
-    fn open_for_read(&self) -> VfsResult {
+    fn open_for_read(&self, block: bool) -> VfsResult {
+        if self.read_nonblock.load(Ordering::Relaxed) {
+            return Ok(());
+        }
+        if !block {
+            self.read_nonblock.store(true, Ordering::Relaxed);
+            return Ok(());
+        }
+
         let _ = self.readers.fetch_add(1, Ordering::Relaxed);
         while self.writers.load(Ordering::Relaxed) == 0 {
             run_queue::yield_now();
@@ -34,7 +48,15 @@ impl PipeNode {
         Ok(())
     }
 
-    fn open_for_write(&self) -> VfsResult {
+    fn open_for_write(&self, block: bool) -> VfsResult {
+        if self.write_nonblock.load(Ordering::Relaxed) {
+            return Ok(());
+        }
+        if !block {
+            self.write_nonblock.store(true, Ordering::Relaxed);
+            return Ok(());
+        }
+
         let _ =  self.writers.fetch_add(1, Ordering::Relaxed);
         while self.readers.load(Ordering::Relaxed) == 0 {
             run_queue::yield_now();
@@ -45,16 +67,15 @@ impl PipeNode {
 }
 
 impl VfsNodeOps for PipeNode {
-    fn open(&self, mode: i32) -> VfsResult {
-        error!("pipe opened! mode {:#o}, {}", mode, O_RDONLY);
-        match mode {
-            O_RDONLY => {
-                self.open_for_read()
-            },
-            O_WRONLY => {
-                self.open_for_write()
-            },
-            _ => panic!("bad mode {:#o}", mode),
+    fn open(&self, flags: i32) -> VfsResult {
+        assert!((flags & O_RDWR) == 0);
+
+        let block = (flags & O_NONBLOCK) == 0;
+        error!("pipe opened! mode {:#o} block {}", flags, block);
+        if (flags & O_WRONLY) != 0 {
+            self.open_for_write(block)
+        } else {
+            self.open_for_read(block)
         }
     }
 
@@ -63,6 +84,13 @@ impl VfsNodeOps for PipeNode {
     }
 
     fn read_at(&self, pos: u64, buf: &mut [u8]) -> VfsResult<usize> {
+        while self.buf.read().is_empty() {
+            if self.read_nonblock.load(Ordering::Relaxed) {
+                return Err(VfsError::WouldBlock);
+            }
+            error!("WouldBlock!");
+            run_queue::yield_now();
+        }
         assert_eq!(pos, 0);
         while self.buf.read().len() == 0 {
             error!("WouldBlock!");
@@ -77,6 +105,13 @@ impl VfsNodeOps for PipeNode {
     }
 
     fn write_at(&self, pos: u64, buf: &[u8]) -> VfsResult<usize> {
+        while self.buf.read().len() >= PIPE_CAPACITY {
+            if self.write_nonblock.load(Ordering::Relaxed) {
+                return Err(VfsError::WouldBlock);
+            }
+            error!("WouldBlock!");
+            run_queue::yield_now();
+        }
         assert_eq!(pos, 0);
         for i in 0..buf.len() {
             self.buf.write().push_back(buf[i]);

@@ -28,7 +28,7 @@ pub extern "Rust" fn runtime_main(cpu_id: usize, dtb: usize) {
 }
 
 pub fn init(cpu_id: usize, dtb: usize) {
-    axlog2::init("info");
+    //axlog2::init("info");
     show_logo();
 
     userboot::init(cpu_id, dtb);

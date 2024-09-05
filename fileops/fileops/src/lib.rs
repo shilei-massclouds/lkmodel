@@ -83,32 +83,10 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
             // Handle special filesystem, e.g., procfs, sysfs ..
             special_open(&path, &opts)
         } else {
+            error!("openat: err {}", e);
             Err(e)
         }
     })
-
-    /*
-    loop {
-        match File::open(&path, &opts, &fs) {
-            Ok(f) => {
-                return Ok(f);
-            },
-            Err(WouldBlock) => {
-                // Due to pipe open, there's no readers or writes
-                error!("open blocked: ...");
-                task::yield_now();
-                continue;
-            },
-            Err(NotFound) => {
-                // Handle special filesystem, e.g., procfs, sysfs ..
-                return special_open(&path, &opts);
-            },
-            Err(e) => {
-                return Err(e);
-            }
-        }
-    }
-    */
 }
 
 pub fn special_open(path: &str, opts: &OpenOptions) -> AxResult<File> {
@@ -122,6 +100,7 @@ pub fn register_file(file: AxResult<File>, flags: usize) -> usize {
     let file = match file {
         Ok(f) => f,
         Err(e) => {
+            error!("register_file: err {}", linux_err_from!(e) as isize);
             return linux_err_from!(e);
         }
     };

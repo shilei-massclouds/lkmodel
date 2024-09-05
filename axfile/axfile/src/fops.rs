@@ -8,7 +8,7 @@ use core::fmt;
 use fstree::FsStruct;
 use alloc::collections::BTreeMap;
 use core::sync::atomic::{AtomicUsize, Ordering};
-use axtype::{O_RDONLY, O_WRONLY, O_DIRECTORY};
+use axtype::O_DIRECTORY;
 
 #[cfg(feature = "myfs")]
 pub use crate::dev::Disk;
@@ -260,12 +260,7 @@ impl File {
         }
         let sticky = (opts._mode & S_ISVTX) != 0;
 
-        let mode = if opts.write {
-            O_WRONLY
-        } else {
-            O_RDONLY
-        };
-        node.open(mode)?;
+        node.open(opts._custom_flags)?;
         if opts.truncate {
             node.truncate(0)?;
         }
