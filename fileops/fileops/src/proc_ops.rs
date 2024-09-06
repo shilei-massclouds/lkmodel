@@ -14,20 +14,27 @@ use axfile::fops::File;
 use crate::OpenOptions;
 use mm::{VM_READ, VM_WRITE, VM_EXEC, VM_MAYSHARE};
 use core::cmp::min;
+use axfs_vfs::alloc_ino;
 
 struct ProcNode {
     path: String,
+    ino: usize,
 }
 
 impl ProcNode {
     pub fn new(path: String) -> Self {
         Self {
             path,
+            ino: alloc_ino(),
         }
     }
 }
 
 impl VfsNodeOps for ProcNode {
+    fn get_ino(&self) -> usize {
+        self.ino
+    }
+
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
         error!("VfsNode get_attr: {}", self.path);
         let perm = VfsNodePerm::from_bits_truncate(0o755);

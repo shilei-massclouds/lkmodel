@@ -47,6 +47,7 @@ pub mod path;
 
 use alloc::{sync::Arc, vec::Vec};
 use axerrno::{ax_err, AxError, AxResult};
+use core::sync::atomic::{AtomicUsize, Ordering};
 
 pub use self::structs::{FileSystemInfo, VfsDirEntry, VfsNodeAttr, VfsNodePerm, VfsNodeType, DT_, LinuxDirent64};
 
@@ -60,6 +61,12 @@ pub type VfsError = AxError;
 
 /// Alias of [`AxResult`].
 pub type VfsResult<T = ()> = AxResult<T>;
+
+static NEXT_INO: AtomicUsize = AtomicUsize::new(0);
+
+pub fn alloc_ino() -> usize {
+    NEXT_INO.fetch_add(1, Ordering::Relaxed)
+}
 
 /// Filesystem operations.
 pub trait VfsOps: Send + Sync {
@@ -172,6 +179,9 @@ pub trait VfsNodeOps: Send + Sync {
     fn as_any(&self) -> &dyn core::any::Any {
         unimplemented!()
     }
+
+    /// Get inode number
+    fn get_ino(&self) -> usize;
 }
 
 #[doc(hidden)]
@@ -241,6 +251,10 @@ impl VfsNodeOps for RootDirectory {
                 fs.root_dir().rename(rest_path, dst_path)
             }
         })
+    }
+
+    fn get_ino(&self) -> usize {
+        alloc_ino()
     }
 }
 

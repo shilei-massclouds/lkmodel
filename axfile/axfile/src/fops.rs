@@ -7,7 +7,6 @@ use capability::{Cap, WithCap};
 use core::fmt;
 use fstree::FsStruct;
 use alloc::collections::BTreeMap;
-use core::sync::atomic::{AtomicUsize, Ordering};
 use axtype::O_DIRECTORY;
 
 #[cfg(feature = "myfs")]
@@ -38,18 +37,11 @@ pub const S_IFREG:  i32 = 0o100000;
 pub const S_IFIFO:  i32 = 0o10000;
 pub const S_ISVTX:  i32 = 0o1000;
 
-static NEXT_INO: AtomicUsize = AtomicUsize::new(0);
-
-pub fn alloc_ino() -> usize {
-    NEXT_INO.fetch_add(1, Ordering::Relaxed)
-}
-
 /// An opened file object, with open permissions and a cursor.
 pub struct File {
     node: WithCap<VfsNodeRef>,
     is_append: bool,
     offset: u64,
-    pub ino: usize,
     pub shared_map: BTreeMap<usize, usize>,
 }
 
@@ -213,9 +205,12 @@ impl File {
             node: WithCap::new(node, cap, false),
             is_append: false,
             offset: 0,
-            ino: 0,
             shared_map: BTreeMap::new(),
         }
+    }
+
+    pub fn get_ino(&self) -> usize {
+        self.node.access(Cap::empty()).unwrap().get_ino()
     }
 
     fn _open_at(dir: Option<&VfsNodeRef>, path: &str, opts: &OpenOptions, fs: &FsStruct) -> AxResult<Self> {
@@ -268,7 +263,6 @@ impl File {
             node: WithCap::new(node, access_cap, sticky),
             is_append: opts.append,
             offset: 0,
-            ino: alloc_ino(),
             shared_map: BTreeMap::new(),
         })
     }

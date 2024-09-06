@@ -1654,6 +1654,10 @@ impl Ext2Inode {
 }
 
 impl VfsNodeOps for Ext2Inode {
+    fn get_ino(&self) -> usize {
+        self.entry.directory.get_inode() as usize
+    }
+
     fn create(&self, path: &str, ty: VfsNodeType) -> VfsResult {
         info!("create path: {} {:?}", path, ty);
 

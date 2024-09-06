@@ -6,6 +6,10 @@ use axfs_vfs::{VfsNodeAttr, VfsNodeOps, VfsNodePerm, VfsNodeType, VfsResult};
 pub struct ConsoleDev;
 
 impl VfsNodeOps for ConsoleDev {
+    fn get_ino(&self) -> usize {
+        0
+    }
+
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
         Ok(VfsNodeAttr::new(
             VfsNodePerm::default_file(),

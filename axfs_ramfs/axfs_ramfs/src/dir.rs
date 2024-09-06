@@ -4,6 +4,7 @@ use core::ptr::copy_nonoverlapping;
 use alloc::collections::BTreeMap;
 use alloc::sync::{Arc, Weak};
 use alloc::{string::String, vec::Vec};
+use axfs_vfs::alloc_ino;
 
 use axfs_vfs::{VfsDirEntry, VfsNodeAttr, VfsNodeOps, VfsNodeRef, VfsNodeType};
 use axfs_vfs::{VfsError, VfsResult, DT_, LinuxDirent64};
@@ -18,6 +19,7 @@ pub struct DirNode {
     this: Weak<DirNode>,
     parent: RwLock<Weak<dyn VfsNodeOps>>,
     children: RwLock<BTreeMap<String, VfsNodeRef>>,
+    ino: usize,
 }
 
 impl DirNode {
@@ -26,6 +28,7 @@ impl DirNode {
             this: this.clone(),
             parent: RwLock::new(parent.unwrap_or_else(|| Weak::<Self>::new())),
             children: RwLock::new(BTreeMap::new()),
+            ino: alloc_ino(),
         })
     }
 
@@ -74,6 +77,10 @@ impl DirNode {
 }
 
 impl VfsNodeOps for DirNode {
+    fn get_ino(&self) -> usize {
+        self.ino
+    }
+
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
         Ok(VfsNodeAttr::new_dir(4096, 0))
     }

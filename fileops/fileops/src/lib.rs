@@ -15,6 +15,7 @@ use axtype::RLIMIT_NOFILE;
 use capability::Cap;
 use axfs_ramfs::PipeNode;
 use signal::force_sig_fault;
+use axfs_vfs::VfsNodeRef;
 
 mod proc_ops;
 
@@ -50,7 +51,7 @@ const SEEK_END: usize = 2;
 const F_DUPFD: usize = 0;
 
 pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult<File> {
-    debug!(
+    info!(
         "openat '{}' at dfd {:#X} flags {:#o} mode {:#o}",
         filename, dfd, flags, mode
     );
@@ -90,6 +91,13 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
             Err(e)
         }
     })
+}
+
+fn lookup_node(dfd: usize, filename: &str) -> AxResult<VfsNodeRef> {
+    let current = task::current();
+    let fs = current.fs.lock();
+    let path = handle_path(dfd, filename);
+    fs.lookup(None, &path)
 }
 
 pub fn special_open(path: &str, opts: &OpenOptions) -> AxResult<File> {
@@ -265,10 +273,10 @@ pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usi
     info!("fstatat dfd {:#x} flags {:#x}", dfd, flags);
     let (metadata, sticky, ino) = if (flags & AT_EMPTY_PATH) == 0 {
         let path = get_user_str(path);
-        warn!("!!! NON-EMPTY for path: {}\n", path);
-        match openat(dfd, &path, flags, 0) {
-            Ok(file) => {
-                (file.get_attr().unwrap(), file.sticky(), file.ino)
+        //match openat(dfd, &path, flags, 0) {
+        match lookup_node(dfd, &path) {
+            Ok(node) => {
+                (node.get_attr().unwrap(), false, node.get_ino())
             },
             Err(e) => {
                 return linux_err_from!(e);
@@ -284,7 +292,7 @@ pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usi
             }
         };
         let locked_file = file.lock();
-        (locked_file.get_attr().unwrap(), locked_file.sticky(), locked_file.ino)
+        (locked_file.get_attr().unwrap(), locked_file.sticky(), locked_file.get_ino())
     };
 
     let ty = metadata.file_type() as u8;
@@ -389,7 +397,7 @@ pub fn ioctl(fd: usize, request: usize, udata: usize) -> usize {
 }
 
 pub fn mknodat(dfd: usize, filename: &str, mode: usize, dev: usize) -> usize {
-    debug!(
+    info!(
         "mknodat: dfd {:#x}, filename {}, mode {:#o}, dev {:#x}",
         dfd, filename, mode, dev
     );
@@ -534,6 +542,7 @@ pub fn filetype(fname: &str) -> LinuxResult<VfsNodeType> {
 
     let current = task::current();
     let fs = current.fs.lock();
+    // Todo: replace File::open with lookup
     let file = File::open(fname, &opts, &fs)?;
     let metadata = file.get_attr()?;
     Ok(metadata.file_type())
