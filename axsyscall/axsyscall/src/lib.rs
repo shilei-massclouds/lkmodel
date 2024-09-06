@@ -24,6 +24,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_MKNODAT => linux_syscall_mknodat(args),
         LINUX_SYSCALL_MKDIRAT => linux_syscall_mkdirat(args),
         LINUX_SYSCALL_UNLINKAT => linux_syscall_unlinkat(args),
+        LINUX_SYSCALL_STATFS => linux_syscall_statfs(args),
         LINUX_SYSCALL_DUP => linux_syscall_dup(args),
         LINUX_SYSCALL_DUP3 => linux_syscall_dup3(args),
         LINUX_SYSCALL_OPENAT => linux_syscall_openat(args),
@@ -164,6 +165,12 @@ fn linux_syscall_unlinkat(args: SyscallArgs) -> usize {
     let [dfd, path, flags, ..] = args;
     let path = get_user_str(path);
     fileops::unlinkat(dfd, &path, flags)
+}
+
+fn linux_syscall_statfs(args: SyscallArgs) -> usize {
+    let [path, buf, ..] = args;
+    let path = get_user_str(path);
+    fileops::statfs(&path, buf)
 }
 
 fn linux_syscall_openat(args: SyscallArgs) -> usize {

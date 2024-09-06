@@ -10,6 +10,7 @@ pub const LINUX_SYSCALL_IOCTL: usize = 0x1d;
 pub const LINUX_SYSCALL_MKNODAT: usize = 0x21;
 pub const LINUX_SYSCALL_MKDIRAT: usize = 0x22;
 pub const LINUX_SYSCALL_UNLINKAT: usize = 0x23;
+pub const LINUX_SYSCALL_STATFS: usize = 0x2b;
 pub const LINUX_SYSCALL_FTRUNCATE: usize = 0x2e;
 pub const LINUX_SYSCALL_FACCESSAT: usize = 0x30;
 pub const LINUX_SYSCALL_CHDIR: usize = 0x31;

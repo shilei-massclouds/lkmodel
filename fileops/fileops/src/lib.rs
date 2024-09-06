@@ -630,6 +630,10 @@ pub fn sendfile(out_fd: usize, in_fd: usize, offset: usize, count: usize) -> usi
     pos
 }
 
+pub fn statfs(path: &str, buf: usize) -> usize {
+    unimplemented!("statfs: path {}, buf {:#x}", path, buf);
+}
+
 pub fn utimensat(dfd: usize, filename: &str, times: usize, flags: usize) -> usize {
     let path = handle_path(dfd, filename);
     error!("utimensat: dfd {:#x} path {} times {} flags {}",

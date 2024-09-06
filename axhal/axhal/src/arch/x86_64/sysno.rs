@@ -77,3 +77,4 @@ pub const LINUX_SYSCALL_FUTEX: usize = 202;
 pub const LINUX_SYSCALL_MKNODAT: usize = 259;
 pub const LINUX_SYSCALL_UTIMENSAT: usize = 280;
 pub const LINUX_SYSCALL_PIPE2: usize = 293;
+pub const LINUX_SYSCALL_STATFS: usize = 137;
