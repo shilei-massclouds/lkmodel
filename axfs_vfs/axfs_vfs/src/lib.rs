@@ -292,6 +292,12 @@ impl RootDirectory {
         self.mounts.iter().any(|mp| mp.path == path)
     }
 
+    pub fn statfs(&self, path: &str) -> AxResult<FileSystemInfo> {
+        self.lookup_mounted_fs(path, |fs, _| {
+            fs.statfs()
+        })
+    }
+
     fn lookup_mounted_fs<F, T>(&self, path: &str, f: F) -> AxResult<T>
     where
         F: FnOnce(Arc<dyn VfsOps>, &str) -> AxResult<T>,

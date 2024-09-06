@@ -20,8 +20,11 @@ pub use self::file::FileNode;
 pub use self::file::PipeNode;
 
 use alloc::sync::Arc;
-use axfs_vfs::{VfsNodeRef, VfsOps, VfsResult};
+use axfs_vfs::{VfsNodeRef, VfsOps, VfsResult, FileSystemInfo};
 use spin::once::Once;
+use axtype::PAGE_SIZE;
+
+const RAMFS_MAGIC: u64 = 0x858458f6;
 
 /// A RAM filesystem that implements [`axfs_vfs::VfsOps`].
 pub struct RamFileSystem {
@@ -56,6 +59,15 @@ impl VfsOps for RamFileSystem {
 
     fn root_dir(&self) -> VfsNodeRef {
         self.root.clone()
+    }
+
+    fn statfs(&self) -> VfsResult<FileSystemInfo> {
+        let info = FileSystemInfo {
+            f_type: RAMFS_MAGIC,
+            f_bsize: PAGE_SIZE as u64,
+            ..Default::default()
+        };
+        Ok(info)
     }
 }
 

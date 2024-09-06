@@ -1,8 +1,37 @@
 /// Filesystem attributes.
-///
-/// Currently not used.
-#[non_exhaustive]
-pub struct FileSystemInfo;
+#[derive(Default, Clone, Copy)]
+#[repr(C)]
+pub struct FileSystemInfo {
+    /// Type of filesystem
+    pub f_type: u64,
+    /// Optimal transfer block size
+    pub f_bsize: u64,
+    /// Total data blocks in filesystem
+    pub f_blocks: u64,
+    /// Free blocks in filesystem
+    pub f_bfree: u64,
+    /// Free blocks available to unprivileged user
+    pub f_bavail: u64,
+    /// Total inodes in filesystem
+    pub f_files: u64,
+    /// Free inodes in filesystem
+    pub f_ffree: u64,
+    /// Filesystem ID
+    pub f_fsid: KernelFsid,
+    /// Maximum length of filenames
+    pub f_namelen: u64,
+    /// Fragment size (since Linux 2.6)
+    pub f_frsize: u64,
+    /// Mount flags of filesystem (since Linux 2.6.36)
+    pub f_flags: u64,
+    /// Padding bytes reserved for future use
+    pub f_spare: [u64; 4],
+}
+
+#[derive(Default, Debug, Clone, Copy)]
+pub struct KernelFsid {
+    _val: [i32; 2],
+}
 
 /// Node (file/directory) attributes.
 #[allow(dead_code)]

@@ -16,6 +16,8 @@ use capability::Cap;
 use axfs_ramfs::PipeNode;
 use signal::force_sig_fault;
 use axfs_vfs::VfsNodeRef;
+use axmount::init_root;
+use axfs_vfs::FileSystemInfo;
 
 mod proc_ops;
 
@@ -631,7 +633,16 @@ pub fn sendfile(out_fd: usize, in_fd: usize, offset: usize, count: usize) -> usi
 }
 
 pub fn statfs(path: &str, buf: usize) -> usize {
-    unimplemented!("statfs: path {}, buf {:#x}", path, buf);
+    error!("statfs: path {}...", path);
+    let current = task::current();
+    let fs = current.fs.lock();
+    let path = fs.absolute_path(path).unwrap();
+    let root = init_root();
+    let statbuf = buf as *mut FileSystemInfo;
+    unsafe {
+        *statbuf = root.statfs(&path).unwrap();
+    }
+    0
 }
 
 pub fn utimensat(dfd: usize, filename: &str, times: usize, flags: usize) -> usize {
