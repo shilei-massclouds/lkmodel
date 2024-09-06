@@ -119,7 +119,7 @@ pub fn register_file(file: AxResult<File>, flags: usize) -> usize {
     let nofile = current.rlim[RLIMIT_NOFILE].rlim_cur;
     let fd = current.filetable
         .lock().insert(Arc::new(Mutex::new(file)), flags);
-    info!("openat fd {}", fd);
+    info!("register fd {}", fd);
     if fd >= nofile as usize {
         return linux_err!(EMFILE);
     }
@@ -252,7 +252,7 @@ pub struct KernelStat {
 }
 
 pub fn faccessat(dfd: usize, path: &String) -> usize {
-    match openat(dfd, path, 0, 0) {
+    match lookup_node(dfd, &path) {
         Ok(_) => {
             return 0;
         },
@@ -273,7 +273,6 @@ pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usi
     info!("fstatat dfd {:#x} flags {:#x}", dfd, flags);
     let (metadata, sticky, ino) = if (flags & AT_EMPTY_PATH) == 0 {
         let path = get_user_str(path);
-        //match openat(dfd, &path, flags, 0) {
         match lookup_node(dfd, &path) {
             Ok(node) => {
                 (node.get_attr().unwrap(), false, node.get_ino())
@@ -543,8 +542,8 @@ pub fn filetype(fname: &str) -> LinuxResult<VfsNodeType> {
     let current = task::current();
     let fs = current.fs.lock();
     // Todo: replace File::open with lookup
-    let file = File::open(fname, &opts, &fs)?;
-    let metadata = file.get_attr()?;
+    let node = fs.lookup(None, fname);
+    let metadata = node?.get_attr()?;
     Ok(metadata.file_type())
 }
 
