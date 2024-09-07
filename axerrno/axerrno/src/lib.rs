@@ -87,6 +87,8 @@ pub enum AxError {
     WriteZero,
     /// Broken pipe.
     BrokenPipe,
+    /// No such device or address
+    NoDevOrAddr,
 }
 
 /// A specialized [`Result`] type with [`AxError`] as the error type.
@@ -227,6 +229,7 @@ impl AxError {
             WouldBlock => "Operation would block",
             WriteZero => "Write zero",
             BrokenPipe => "Broken pipe",
+            NoDevOrAddr => "No such device or address",
         }
     }
 
@@ -289,6 +292,7 @@ impl From<AxError> for LinuxError {
             UnexpectedEof | WriteZero => LinuxError::EIO,
             WouldBlock => LinuxError::EAGAIN,
             BrokenPipe => LinuxError::EPIPE,
+            NoDevOrAddr => LinuxError::ENXIO,
         }
     }
 }

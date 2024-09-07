@@ -70,9 +70,15 @@ impl PipeNode {
         info!("open_for_write ...");
         let _ = self.writers.fetch_add(1, Ordering::Relaxed);
         if self.write_nonblock.load(Ordering::Relaxed) {
+            if self.readers.load(Ordering::Relaxed) == 0 {
+                return Err(VfsError::NoDevOrAddr);
+            }
             return Ok(());
         }
         if !block {
+            if self.readers.load(Ordering::Relaxed) == 0 {
+                return Err(VfsError::NoDevOrAddr);
+            }
             self.write_nonblock.store(true, Ordering::Relaxed);
             return Ok(());
         }
