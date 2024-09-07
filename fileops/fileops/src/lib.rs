@@ -595,7 +595,7 @@ pub fn getdents64(fd: usize, dirp: usize, count: usize) -> usize {
     let mut locked_file = file.lock();
 
     let mut kbuf = vec![0u8; count];
-    let ret = locked_file.read(&mut kbuf[..]).unwrap();
+    let ret = locked_file.getdents(&mut kbuf[..]).unwrap();
 
     let ubuf: &mut [u8] = unsafe {
         core::slice::from_raw_parts_mut(dirp as *mut _, count)

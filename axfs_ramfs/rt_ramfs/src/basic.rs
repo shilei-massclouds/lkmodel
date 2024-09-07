@@ -86,7 +86,7 @@ fn test_ops(devfs: &RamFileSystem) -> VfsResult {
     let foo = devfs.root_dir().lookup(".///.//././/.////foo")?;
     assert!(foo.get_attr()?.is_dir());
     assert_eq!(
-        foo.read_at(10, &mut buf).err(),
+        foo.getdents(10, &mut buf).err(),
         None
     );
     assert!(Arc::ptr_eq(

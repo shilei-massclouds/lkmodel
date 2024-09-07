@@ -1702,16 +1702,19 @@ impl VfsNodeOps for Ext2Inode {
         Ok(VfsNodeAttr::new(perm, node_type, inode.low_size as u64, inode.nbr_disk_sectors as u64))
     }
 
-    fn read_at(&self, mut offset: u64, buf: &mut [u8]) -> VfsResult<usize> {
+    fn getdents(&self, offset: u64, buf: &mut [u8]) -> VfsResult<usize> {
+        assert!(self.entry.inode.type_and_perm.is_directory());
         let ino = self.entry.directory.get_inode();
-        if self.entry.inode.type_and_perm.is_directory() {
-            Ok(Ext2Fs::get().read_dir(ino, offset, buf).unwrap() as usize)
-        } else {
-            let ret = Ext2Fs::get().read_at(ino, &mut offset, buf).unwrap();
-            self.curr_offset.store(offset, Ordering::Relaxed);
-            info!("read_at[file]: ret {} offset {}", ret, offset);
-            Ok(ret as usize)
-        }
+        Ok(Ext2Fs::get().read_dir(ino, offset, buf).unwrap() as usize)
+    }
+
+    fn read_at(&self, mut offset: u64, buf: &mut [u8]) -> VfsResult<usize> {
+        assert!(!self.entry.inode.type_and_perm.is_directory());
+        let ino = self.entry.directory.get_inode();
+        let ret = Ext2Fs::get().read_at(ino, &mut offset, buf).unwrap();
+        self.curr_offset.store(offset, Ordering::Relaxed);
+        info!("read_at[file]: ret {} offset {}", ret, offset);
+        Ok(ret as usize)
     }
 
     fn write_at(&self, mut offset: u64, buf: &[u8]) -> VfsResult<usize> {

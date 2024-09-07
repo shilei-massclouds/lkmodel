@@ -279,12 +279,26 @@ impl File {
         Ok(())
     }
 
+    /// Gets all entries from dir.
+    pub fn getdents(&mut self, buf: &mut [u8]) -> AxResult<usize> {
+        let node = self.node.access(Cap::READ)?;
+        if !node.get_attr()?.is_dir() {
+            return ax_err!(NotADirectory);
+        }
+        let read_len = node.getdents(self.offset, buf)?;
+        self.offset += read_len as u64;
+        Ok(read_len)
+    }
+
     /// Reads the file at the current position. Returns the number of bytes
     /// read.
     ///
     /// After the read, the cursor will be advanced by the number of bytes read.
     pub fn read(&mut self, buf: &mut [u8]) -> AxResult<usize> {
         let node = self.node.access(Cap::READ)?;
+        if node.get_attr()?.is_dir() {
+            return ax_err!(IsADirectory);
+        }
         let read_len = node.read_at(self.offset, buf)?;
         self.offset += read_len as u64;
         Ok(read_len)
@@ -295,8 +309,10 @@ impl File {
     /// It does not update the file cursor.
     pub fn read_at(&self, offset: u64, buf: &mut [u8]) -> AxResult<usize> {
         let node = self.node.access(Cap::READ)?;
-        let read_len = node.read_at(offset, buf)?;
-        Ok(read_len)
+        if node.get_attr()?.is_dir() {
+            return ax_err!(IsADirectory);
+        }
+        node.read_at(offset, buf)
     }
 
     /// Writes the file at the current position. Returns the number of bytes

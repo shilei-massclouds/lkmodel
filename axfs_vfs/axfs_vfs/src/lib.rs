@@ -113,6 +113,11 @@ pub trait VfsNodeOps: Send + Sync {
 
     // file operations:
 
+    /// Get dir entries from dir node.
+    fn getdents(&self, _offset: u64, _buf: &mut [u8]) -> VfsResult<usize> {
+        ax_err!(InvalidInput)
+    }
+
     /// Read data from the file at the given offset.
     fn read_at(&self, _offset: u64, _buf: &mut [u8]) -> VfsResult<usize> {
         ax_err!(InvalidInput)
