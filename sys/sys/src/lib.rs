@@ -103,6 +103,13 @@ pub fn arch_prctl(code: usize, addr: usize) -> usize {
     }
 }
 
+pub fn setuid(uid: usize) -> usize {
+    let task = task::current();
+    let mut cred = task.cred.lock();
+    cred.uid = uid as u32;
+    0
+}
+
 pub fn setresuid(ruid: usize, euid: usize, suid: usize) -> usize {
     info!("setresuid: {:#x}, {:#x}, {:#x}", ruid, euid, suid);
     let ruid = ruid as u32;
@@ -114,6 +121,13 @@ pub fn setresuid(ruid: usize, euid: usize, suid: usize) -> usize {
     cred.uid = ruid;
     cred.euid = euid;
     cred.suid = suid;
+    0
+}
+
+pub fn setgid(gid: usize) -> usize {
+    let task = task::current();
+    let mut cred = task.cred.lock();
+    cred.gid = gid as u32;
     0
 }
 
@@ -269,6 +283,15 @@ pub fn exit_group(exit_code: u32) -> ! {
 pub fn do_group_exit(exit_code: u32) -> ! {
     debug!("do_exit_group ... [{}]", exit_code);
     do_exit(exit_code)
+}
+
+pub fn do_umask(mode: u32) -> usize {
+    // Todo: use umask for mknot & open(create)
+    assert_eq!(mode, 0);
+    let current = task::current();
+    let mut fs = current.fs.lock();
+    fs.set_umask(mode);
+    0
 }
 
 fn do_exit(exit_code: u32) -> ! {

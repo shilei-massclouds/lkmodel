@@ -78,3 +78,6 @@ pub const LINUX_SYSCALL_MKNODAT: usize = 259;
 pub const LINUX_SYSCALL_UTIMENSAT: usize = 280;
 pub const LINUX_SYSCALL_PIPE2: usize = 293;
 pub const LINUX_SYSCALL_STATFS: usize = 137;
+pub const LINUX_SYSCALL_UMASK: usize = 95;
+pub const LINUX_SYSCALL_SETUID: usize = 105;
+pub const LINUX_SYSCALL_SETGID:usize = 106;

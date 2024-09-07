@@ -41,6 +41,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_FTRUNCATE => linux_syscall_ftruncate(args),
         LINUX_SYSCALL_FSTATAT => linux_syscall_fstatat(args),
         LINUX_SYSCALL_UNAME => linux_syscall_uname(args),
+        LINUX_SYSCALL_UMASK => linux_syscall_umask(args),
         LINUX_SYSCALL_BRK => linux_syscall_brk(args),
         LINUX_SYSCALL_RSEQ => linux_syscall_rseq(args),
         LINUX_SYSCALL_CLONE => linux_syscall_clone(args),
@@ -62,6 +63,8 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_RT_SIGRETURN => linux_syscall_rt_sigreturn(args),
         LINUX_SYSCALL_GETTID => linux_syscall_gettid(args),
         LINUX_SYSCALL_GETPID => linux_syscall_getpid(args),
+        LINUX_SYSCALL_SETUID => linux_syscall_setuid(args),
+        LINUX_SYSCALL_SETGID => linux_syscall_setgid(args),
         LINUX_SYSCALL_SETRESUID => linux_syscall_setresuid(args),
         LINUX_SYSCALL_GETPPID => linux_syscall_getppid(args),
         LINUX_SYSCALL_GETGID => linux_syscall_getgid(args),
@@ -423,9 +426,19 @@ fn linux_syscall_getppid(_args: SyscallArgs) -> usize {
     sys::getppid()
 }
 
+fn linux_syscall_setuid(args: SyscallArgs) -> usize {
+    let uid = args[0];
+    sys::setuid(uid)
+}
+
 fn linux_syscall_setresuid(args: SyscallArgs) -> usize {
     let [ruid, euid, suid, ..] = args;
     sys::setresuid(ruid, euid, suid)
+}
+
+fn linux_syscall_setgid(args: SyscallArgs) -> usize {
+    let gid = args[0];
+    sys::setgid(gid)
 }
 
 fn linux_syscall_getgid(_args: SyscallArgs) -> usize {
@@ -495,6 +508,11 @@ fn linux_syscall_uname(args: SyscallArgs) -> usize {
     init_bytes_from_str(&mut uname.domainname[..], "(none)");
 
     return 0;
+}
+
+fn linux_syscall_umask(args: SyscallArgs) -> usize {
+    let mode = args[0] as u32;
+    sys::do_umask(mode)
 }
 
 fn init_bytes_from_str(dst: &mut [u8], src: &str) {

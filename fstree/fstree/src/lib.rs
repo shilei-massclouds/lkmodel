@@ -17,6 +17,7 @@ pub struct FsStruct {
     curr_path: String,
     curr_dir: Option<VfsNodeRef>,
     root_dir: Option<Arc<RootDirectory>>,
+    umask: u32,
 }
 
 impl FsStruct {
@@ -27,6 +28,7 @@ impl FsStruct {
             curr_path: String::from("/"),
             curr_dir: None,
             root_dir: None,
+            umask: 0,
         }
     }
 
@@ -34,6 +36,10 @@ impl FsStruct {
         self.root_dir = Some(root_dir);
         self.curr_dir = Some(self.root_dir.as_ref().unwrap().clone());
         self.curr_path = "/".into();
+    }
+
+    pub fn set_umask(&mut self, mode: u32) {
+        self.umask = mode;
     }
 
     pub fn copy_fs_struct(&mut self, fs: Arc<SpinLock<FsStruct>>) {
