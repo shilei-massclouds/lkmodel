@@ -34,7 +34,6 @@ percpu2 = { git = "ssh://git@github.com/shilei-massclouds/percpu2" }
 memory_addr = { git = "ssh://git@github.com/shilei-massclouds/memory_addr" }
 early_console = { git = "ssh://git@github.com/shilei-massclouds/early_console" }
 axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno" }
-axtype = { git = "ssh://git@github.com/shilei-massclouds/axtype" }
 
 [target.'cfg(target_arch = "x86_64")'.dependencies]
 x86 = "0.52"

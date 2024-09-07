@@ -11,8 +11,6 @@ use memory_addr::{PhysAddr, VirtAddr};
 use riscv::asm;
 use riscv::register::{satp, sstatus, stvec};
 use axerrno::{LinuxError, linux_err};
-use axtype::{get_user_str, FS_NAME_LEN};
-use alloc::string::String;
 
 pub use self::context::{start_thread, GeneralRegisters, TaskContext, TrapFrame};
 
@@ -269,14 +267,6 @@ pub fn fault_in_writeable(addr: usize, size: usize) -> usize {
         return err;
     }
     0
-}
-
-pub fn getname(filename: usize) -> Result<String, usize> {
-    let err = fault_in_readable(filename, FS_NAME_LEN);
-    if err != 0 {
-        return Err(err);
-    }
-    Ok(get_user_str(filename))
 }
 
 pub const EXC_INST_PAGE_FAULT: usize = 12;

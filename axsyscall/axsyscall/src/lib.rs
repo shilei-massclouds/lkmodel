@@ -6,9 +6,10 @@ use axtype::get_user_str;
 use fileops::iovec;
 use axtype::{align_up_4k, is_aligned_4k};
 use axhal::arch::sysno::*;
-use axhal::arch::getname;
 use axerrno::{linux_err_from, LinuxError, linux_err};
 use axtype::FS_NAME_LEN;
+use alloc::string::String;
+use axhal::arch::fault_in_readable;
 
 #[macro_use]
 extern crate log;
@@ -580,6 +581,14 @@ fn linux_syscall_mount(_args: SyscallArgs) -> usize {
 fn linux_syscall_socket(_args: SyscallArgs) -> usize {
     error!("linux_syscall_socket: unimplemented!");
     linux_err!(EINVAL)
+}
+
+pub fn getname(filename: usize) -> Result<String, usize> {
+    let err = fault_in_readable(filename, FS_NAME_LEN);
+    if err != 0 {
+        return Err(err);
+    }
+    Ok(get_user_str(filename))
 }
 
 pub fn init() {

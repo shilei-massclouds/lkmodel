@@ -33,7 +33,6 @@
 #[allow(unused_imports)]
 #[macro_use]
 extern crate log;
-extern crate alloc;
 
 pub mod platform;
 
