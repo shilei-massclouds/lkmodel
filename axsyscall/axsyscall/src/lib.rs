@@ -220,6 +220,12 @@ fn linux_syscall_lseek(args: SyscallArgs) -> usize {
 
 fn linux_syscall_read(args: SyscallArgs) -> usize {
     let [fd, buf, count, ..] = args;
+
+    let err = axhal::arch::fault_in_writeable(buf, count);
+    if err != 0 {
+        return err;
+    }
+
     let ubuf = unsafe { core::slice::from_raw_parts_mut(buf as *mut u8, count) };
     fileops::read(fd, ubuf).unwrap_or_else(|e| {
         linux_err_from!(e)

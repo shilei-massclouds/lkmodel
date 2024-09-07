@@ -193,6 +193,33 @@ pub fn __get_user_asm(ptr: usize) -> (u8, usize) {
     (x, err)
 }
 
+#[inline]
+pub fn __put_user_asm(x: u8, ptr: usize) -> usize {
+    let mut _tmp = 0;
+    let mut err: usize = 0;
+    unsafe { core::arch::asm!(
+        "1:",
+        "   sb {x}, ({ptr})",
+        "2:",
+        "   .section .fixup,\"ax\"",
+        "   .balign 4",
+        "3:",
+        "   li {err}, {err_val}",
+        "   jump 2b, {_tmp}",
+        "   .previous",
+        "   .section __ex_table,\"a\"",
+        "   .balign 8",
+        "   .dword 1b, 3b",
+        "   .previous",
+        err = inout(reg) err,
+        x = in(reg) x,
+        ptr = in(reg) ptr,
+        err_val = const (-(LinuxError::EFAULT as isize)),
+        _tmp = out(reg) _tmp,
+    )}
+    err
+}
+
 //
 // access_ok: - Checks if a user space pointer is valid
 // @addr: User space pointer to start of block to check
@@ -223,6 +250,20 @@ pub fn fault_in_readable(addr: usize, size: usize) -> usize {
     let (_, err) = __get_user_asm(addr);
     if err != 0 {
         error!("__get_user_asm: err = {:#x}", err);
+        return err;
+    }
+    0
+}
+
+#[inline]
+pub fn fault_in_writeable(addr: usize, size: usize) -> usize {
+    if !access_ok(addr, size) {
+        return linux_err!(EFAULT);
+    }
+
+    let err = __put_user_asm(0u8, addr);
+    if err != 0 {
+        error!("__put_user_asm: err = {:#x}", err);
         return err;
     }
     0

@@ -180,8 +180,6 @@ pub fn pread64(fd: usize, ubuf: &mut [u8], offset: usize) -> LinuxResult<usize> 
     read(fd, ubuf)
 }
 
-/*
-*/
 pub fn write(fd: usize, ubuf: &[u8]) -> LinuxResult<usize> {
     let count = ubuf.len();
     debug!("write: fd {}, count {} ..", fd as i32, count);
@@ -204,11 +202,6 @@ pub fn write(fd: usize, ubuf: &[u8]) -> LinuxResult<usize> {
         },
         Err(e) => Err(e.into()),
     }
-    /*
-    let pos = file.lock().write(&kbuf)?;
-    info!("write: fd {}, count {}, ret {}", fd, count, pos);
-    Ok(pos)
-    */
 }
 
 #[derive(Debug)]
@@ -633,7 +626,7 @@ pub fn sendfile(out_fd: usize, in_fd: usize, offset: usize, count: usize) -> usi
 }
 
 pub fn statfs(path: &str, buf: usize) -> usize {
-    error!("statfs: path {}...", path);
+    info!("statfs: path {}...", path);
     let current = task::current();
     let fs = current.fs.lock();
     let path = fs.absolute_path(path).unwrap();
