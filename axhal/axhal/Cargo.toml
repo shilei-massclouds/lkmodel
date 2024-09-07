@@ -26,20 +26,15 @@ bitflags = "2.2"
 static_assertions = "1.1.0"
 axlog2 = { git = "ssh://git@github.com/shilei-massclouds/axlog2" }
 axconfig = { git = "ssh://git@github.com/shilei-massclouds/axconfig" }
-#axalloc = { git = "ssh://git@github.com/shilei-massclouds/axalloc" }
 kernel_guard_base = { git = "ssh://git@github.com/shilei-massclouds/kernel_guard_base" }
 spinbase = { git = "ssh://git@github.com/shilei-massclouds/spinbase" }
-#spinlock = { path = "../../crates/spinlock" }
-#ratio = { path = "../../crates/ratio" }
 ratio = { git = "ssh://git@github.com/shilei-massclouds/ratio" }
 lazy_init = { git = "ssh://git@github.com/shilei-massclouds/lazy_init" }
-#page_table = { git = "ssh://git@github.com/shilei-massclouds/page_table" }
-#page_table_entry = { path = "../../crates/page_table_entry" }
 percpu2 = { git = "ssh://git@github.com/shilei-massclouds/percpu2" }
 memory_addr = { git = "ssh://git@github.com/shilei-massclouds/memory_addr" }
-#handler_table = { path = "../../crates/handler_table" }
 early_console = { git = "ssh://git@github.com/shilei-massclouds/early_console" }
 axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno" }
+axtype = { git = "ssh://git@github.com/shilei-massclouds/axtype" }
 
 [target.'cfg(target_arch = "x86_64")'.dependencies]
 x86 = "0.52"

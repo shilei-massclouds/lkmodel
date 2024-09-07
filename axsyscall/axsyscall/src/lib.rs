@@ -6,7 +6,9 @@ use axtype::get_user_str;
 use fileops::iovec;
 use axtype::{align_up_4k, is_aligned_4k};
 use axhal::arch::sysno::*;
+use axhal::arch::getname;
 use axerrno::{linux_err_from, LinuxError, linux_err};
+use axtype::FS_NAME_LEN;
 
 #[macro_use]
 extern crate log;
@@ -178,8 +180,15 @@ fn linux_syscall_statfs(args: SyscallArgs) -> usize {
 
 fn linux_syscall_openat(args: SyscallArgs) -> usize {
     let [dfd, filename, flags, mode, ..] = args;
-
-    let filename = get_user_str(filename);
+    let filename = match getname(filename) {
+        Ok(fname) => fname,
+        Err(e) => {
+            return e;
+        },
+    };
+    if filename.len() > FS_NAME_LEN {
+        return linux_err!(ENAMETOOLONG);
+    }
     info!("filename: {} flags {:#o}\n", filename, flags);
     fileops::register_file(
         fileops::openat(dfd, &filename, flags, mode), flags

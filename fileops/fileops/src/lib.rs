@@ -32,7 +32,7 @@ use axtype::get_user_str;
 use axio::SeekFrom;
 use axfs_vfs::VfsNodeType;
 use axfs_vfs::path::canonicalize;
-use axtype::{O_CREAT, O_TRUNC, O_APPEND, O_WRONLY, O_RDWR};
+use axtype::{O_CREAT, O_TRUNC, O_APPEND, O_WRONLY, O_RDWR, O_EXCL};
 
 pub type FileRef = Arc<Mutex<File>>;
 
@@ -64,8 +64,12 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
     opts.read(true);
     if (flags as i32 & O_CREAT) != 0 {
         opts.write(true);
-        opts.create(true);
         opts.truncate(true);
+        if (flags as i32 & O_EXCL) != 0 {
+            opts.create_new(true);
+        } else {
+            opts.create(true);
+        }
     }
     if (flags as i32 & (O_WRONLY|O_RDWR|O_TRUNC|O_APPEND)) != 0 {
         opts.write(true);
