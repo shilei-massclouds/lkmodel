@@ -157,7 +157,7 @@ pub trait VfsNodeOps: Send + Sync {
     /// Create a new node with the given `path` in the directory
     ///
     /// Return [`Ok(())`](Ok) if it already exists.
-    fn create(&self, _path: &str, _ty: VfsNodeType, _uid: u32, _gid: u32) -> VfsResult {
+    fn create(&self, _path: &str, _ty: VfsNodeType, _uid: u32, _gid: u32, _mode: i32) -> VfsResult {
         ax_err!(Unsupported)
     }
 
@@ -228,12 +228,12 @@ impl VfsNodeOps for RootDirectory {
         self.lookup_mounted_fs(path, |fs, rest_path| fs.root_dir().lookup(rest_path))
     }
 
-    fn create(&self, path: &str, ty: VfsNodeType, uid: u32, gid: u32) -> VfsResult {
+    fn create(&self, path: &str, ty: VfsNodeType, uid: u32, gid: u32, mode: i32) -> VfsResult {
         self.lookup_mounted_fs(path, |fs, rest_path| {
             if rest_path.is_empty() {
                 Ok(()) // already exists
             } else {
-                fs.root_dir().create(rest_path, ty, uid, gid)
+                fs.root_dir().create(rest_path, ty, uid, gid, mode)
             }
         })
     }
@@ -283,7 +283,7 @@ impl RootDirectory {
             return ax_err!(InvalidInput, "mount point already exists");
         }
         // create the mount point in the main filesystem if it does not exist
-        self.main_fs.root_dir().create(path, FileType::Dir, uid, gid)?;
+        self.main_fs.root_dir().create(path, FileType::Dir, uid, gid, 0o777)?;
         fs.mount(path, self.main_fs.root_dir().lookup(path)?)?;
         self.mounts.push(MountPoint::new(path, fs));
         Ok(())

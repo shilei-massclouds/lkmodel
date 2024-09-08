@@ -134,6 +134,10 @@ impl VfsNodePerm {
         Self::from_bits_truncate(0o755)
     }
 
+    pub fn init_mode(mode: u16) -> Self {
+        Self::from_bits_truncate(mode)
+    }
+
     /// Returns the underlying raw `st_mode` bits that contain the standard
     /// Unix permissions for this file.
     pub const fn mode(&self) -> u32 {
@@ -280,9 +284,9 @@ impl VfsNodeAttr {
     }
 
     /// Creates a new `VfsNodeAttr` for a file, with the default file permission.
-    pub const fn new_file(size: u64, blocks: u64, uid: u32, gid: u32) -> Self {
+    pub fn new_file(size: u64, blocks: u64, uid: u32, gid: u32, mode: i32) -> Self {
         Self {
-            mode: VfsNodePerm::default_file(),
+            mode: VfsNodePerm::init_mode(mode as u16),
             ty: VfsNodeType::File,
             size,
             blocks,

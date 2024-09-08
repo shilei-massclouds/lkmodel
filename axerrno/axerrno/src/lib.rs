@@ -91,6 +91,8 @@ pub enum AxError {
     NoDevOrAddr,
     /// Operation not permitted
     NoPermission,
+    /// Permission denied
+    PermDenied,
 }
 
 /// A specialized [`Result`] type with [`AxError`] as the error type.
@@ -233,6 +235,7 @@ impl AxError {
             BrokenPipe => "Broken pipe",
             NoDevOrAddr => "No such device or address",
             NoPermission => "Operation not permitted",
+            PermDenied => "Permission denied",
         }
     }
 
@@ -297,6 +300,7 @@ impl From<AxError> for LinuxError {
             BrokenPipe => LinuxError::EPIPE,
             NoDevOrAddr => LinuxError::ENXIO,
             NoPermission => LinuxError::EPERM,
+            PermDenied => LinuxError::EACCES,
         }
     }
 }

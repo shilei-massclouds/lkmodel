@@ -138,7 +138,7 @@ impl DirBuilder {
         if self.recursive {
             self.create_dir_all(path)
         } else {
-            fs.create_dir(None, path, uid, gid)
+            fs.create_dir(None, path, uid, gid, 0o777)
         }
     }
 

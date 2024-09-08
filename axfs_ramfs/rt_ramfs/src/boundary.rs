@@ -11,7 +11,7 @@ pub fn test_boundary() -> VfsResult {
 
     let ramfs = RamFileSystem::new(0, 0);
     let root = ramfs.root_dir();
-    root.create("testfile", VfsNodeType::File, 0, 0).unwrap();
+    root.create("testfile", VfsNodeType::File, 0, 0, 0o777).unwrap();
     let node = root.lookup("testfile")?;
 
     write_buf(1, node.clone())?;

@@ -107,6 +107,9 @@ pub fn setuid(uid: usize) -> usize {
     let task = task::current();
     let mut cred = task.cred.lock();
     cred.uid = uid as u32;
+    cred.euid = uid as u32;
+    cred.fsuid = uid as u32;
+    // Todo: handle [suid] according to capability
     0
 }
 
@@ -129,6 +132,9 @@ pub fn setgid(gid: usize) -> usize {
     let task = task::current();
     let mut cred = task.cred.lock();
     cred.gid = gid as u32;
+    cred.egid = gid as u32;
+    cred.fsgid = gid as u32;
+    // Todo: handle [sgid] according to capability
     0
 }
 

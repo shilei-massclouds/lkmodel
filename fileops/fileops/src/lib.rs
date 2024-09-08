@@ -419,7 +419,7 @@ pub fn mknodat(dfd: usize, filename: &str, mode: usize, dev: usize) -> usize {
             error!("create empty file!");
         },
         S_IFIFO => {
-            fs.create_file(None, &path, VfsNodeType::Fifo, fsuid, fsgid).unwrap();
+            fs.create_file(None, &path, VfsNodeType::Fifo, fsuid, fsgid, mode).unwrap();
         },
         _ => panic!("unknown mode {:#o}", mode & S_IFMT),
     }

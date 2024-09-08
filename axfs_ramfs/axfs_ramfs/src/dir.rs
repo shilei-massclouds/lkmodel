@@ -50,13 +50,13 @@ impl DirNode {
     }
 
     /// Creates a new node with the given name and type in this directory.
-    pub fn create_node(&self, name: &str, ty: VfsNodeType, uid: u32, gid: u32) -> VfsResult {
+    pub fn create_node(&self, name: &str, ty: VfsNodeType, uid: u32, gid: u32, mode: i32) -> VfsResult {
         if self.exist(name) {
             log::error!("AlreadyExists {}", name);
             return Err(VfsError::AlreadyExists);
         }
         let node: VfsNodeRef = match ty {
-            VfsNodeType::File => Arc::new(FileNode::new(uid, gid)),
+            VfsNodeType::File => Arc::new(FileNode::new(uid, gid, mode)),
             VfsNodeType::Dir => Self::new(Some(self.this.clone()), uid, gid),
             VfsNodeType::Fifo => Arc::new(PipeNode::new(uid, gid)),
             _ => return Err(VfsError::Unsupported),
@@ -131,13 +131,13 @@ impl VfsNodeOps for DirNode {
         Ok(dirents.len())
     }
 
-    fn create(&self, path: &str, ty: VfsNodeType, uid: u32, gid: u32) -> VfsResult {
+    fn create(&self, path: &str, ty: VfsNodeType, uid: u32, gid: u32, mode: i32) -> VfsResult {
         log::debug!("create {:?} at ramfs: {}", ty, path);
         let (name, rest) = split_path(path);
         if let Some(rest) = rest {
             match name {
-                "" | "." => self.create(rest, ty, uid, gid),
-                ".." => self.parent().ok_or(VfsError::NotFound)?.create(rest, ty, uid, gid),
+                "" | "." => self.create(rest, ty, uid, gid, mode),
+                ".." => self.parent().ok_or(VfsError::NotFound)?.create(rest, ty, uid, gid, mode),
                 _ => {
                     let subdir = self
                         .children
@@ -145,13 +145,13 @@ impl VfsNodeOps for DirNode {
                         .get(name)
                         .ok_or(VfsError::NotFound)?
                         .clone();
-                    subdir.create(rest, ty, uid, gid)
+                    subdir.create(rest, ty, uid, gid, mode)
                 }
             }
         } else if name.is_empty() || name == "." || name == ".." {
             Ok(()) // already exists
         } else {
-            self.create_node(name, ty, uid, gid)
+            self.create_node(name, ty, uid, gid, mode)
         }
     }
 

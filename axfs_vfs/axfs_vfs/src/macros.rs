@@ -44,7 +44,7 @@ macro_rules! impl_vfs_non_dir_default {
             $crate::__priv::ax_err!(NotADirectory)
         }
 
-        fn create(&self, _path: &str, _ty: $crate::VfsNodeType, _uid: u32, _gid: u32) -> $crate::VfsResult {
+        fn create(&self, _path: &str, _ty: $crate::VfsNodeType, _uid: u32, _gid: u32, _mode: i32) -> $crate::VfsResult {
             $crate::__priv::ax_err!(NotADirectory)
         }
 

@@ -194,10 +194,11 @@ pub struct FileNode {
     ino: usize,
     uid: u32,
     gid: u32,
+    mode: i32,
 }
 
 impl FileNode {
-    pub(super) fn new(uid: u32, gid: u32) -> Self {
+    pub(super) fn new(uid: u32, gid: u32, mode: i32) -> Self {
         Self {
             content: RwLock::new(BTreeMap::new()),
             index: AtomicUsize::new(0),
@@ -205,6 +206,7 @@ impl FileNode {
             ino: alloc_ino(),
             uid,
             gid,
+            mode,
         }
     }
 
@@ -228,7 +230,7 @@ impl VfsNodeOps for FileNode {
     }
 
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
-        Ok(VfsNodeAttr::new_file(self.size() as u64, 0, self.uid, self.gid))
+        Ok(VfsNodeAttr::new_file(self.size() as u64, 0, self.uid, self.gid, self.mode))
     }
 
     fn truncate(&self, size: u64) -> VfsResult {

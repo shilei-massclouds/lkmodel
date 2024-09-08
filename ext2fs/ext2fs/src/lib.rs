@@ -82,8 +82,8 @@ impl Ext2Fs {
         self.inner.lock().remove(ino, path)
     }
 
-    pub fn create_file(&self, ino: u32, path: &str, uid: u32, gid: u32) -> LinuxResult<()> {
-        self.inner.lock().create_file(ino, path, uid, gid)
+    pub fn create_file(&self, ino: u32, path: &str, uid: u32, gid: u32, mode: i32) -> LinuxResult<()> {
+        self.inner.lock().create_file(ino, path, uid, gid, mode)
     }
 
     pub fn lookup(self: Arc<Self>, ino: u32, path: &str) -> LinuxResult<VfsNodeRef> {
@@ -467,7 +467,7 @@ impl Ext2Filesystem {
         })
     }
 
-    pub fn create_file(&mut self, ino: u32, path: &str, uid: u32, gid: u32) -> LinuxResult<()> {
+    pub fn create_file(&mut self, ino: u32, path: &str, uid: u32, gid: u32, mode: i32) -> LinuxResult<()> {
         let timestamp = axhal::time::current_time();
         let path = Path::new(path);
         let parent = Path::new(path.parent().unwrap_or("/"));
@@ -495,7 +495,7 @@ impl Ext2Filesystem {
             filename,
             parent_inode_nbr,
             timestamp.as_secs() as u32,
-            (def_mode().bits(), SFlag::S_IFREG).try_into().unwrap(),
+            (mode as u32, SFlag::S_IFREG).try_into().unwrap(),
             (uid, gid),
         )?;
         Ok(())
@@ -1658,13 +1658,13 @@ impl VfsNodeOps for Ext2Inode {
         self.entry.directory.get_inode() as usize
     }
 
-    fn create(&self, path: &str, ty: VfsNodeType, uid: u32, gid: u32) -> VfsResult {
+    fn create(&self, path: &str, ty: VfsNodeType, uid: u32, gid: u32, mode: i32) -> VfsResult {
         info!("create path: {} {:?}", path, ty);
 
         match ty {
             VfsNodeType::File => {
                 let ino = self.entry.directory.get_inode();
-                let _ = Ext2Fs::get().create_file(ino, path, uid, gid);
+                let _ = Ext2Fs::get().create_file(ino, path, uid, gid, mode);
                 Ok(())
             }
             VfsNodeType::Dir => {

@@ -98,19 +98,19 @@ impl VfsNodeOps for DirNode {
         Ok(dirents.len())
     }
 
-    fn create(&self, path: &str, ty: VfsNodeType, uid: u32, gid: u32) -> VfsResult {
+    fn create(&self, path: &str, ty: VfsNodeType, uid: u32, gid: u32, mode: i32) -> VfsResult {
         log::debug!("create {:?} at devfs: {}", ty, path);
         let (name, rest) = split_path(path);
         if let Some(rest) = rest {
             match name {
-                "" | "." => self.create(rest, ty, uid, gid),
-                ".." => self.parent().ok_or(VfsError::NotFound)?.create(rest, ty, uid, gid),
+                "" | "." => self.create(rest, ty, uid, gid, mode),
+                ".." => self.parent().ok_or(VfsError::NotFound)?.create(rest, ty, uid, gid, mode),
                 _ => self
                     .children
                     .read()
                     .get(name)
                     .ok_or(VfsError::NotFound)?
-                    .create(rest, ty, uid, gid),
+                    .create(rest, ty, uid, gid, mode),
             }
         } else if name.is_empty() || name == "." || name == ".." {
             Ok(()) // already exists

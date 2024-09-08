@@ -16,16 +16,16 @@ pub fn test_basic() {
 
     let ramfs = RamFileSystem::new(0, 0);
     let root = ramfs.root_dir();
-    root.create("f1", VfsNodeType::File, 0, 0).unwrap();
-    root.create("f2", VfsNodeType::File, 0, 0).unwrap();
-    root.create("foo", VfsNodeType::Dir, 0, 0).unwrap();
+    root.create("f1", VfsNodeType::File, 0, 0, 0o777).unwrap();
+    root.create("f2", VfsNodeType::File, 0, 0, 0o777).unwrap();
+    root.create("foo", VfsNodeType::Dir, 0, 0, 0o777).unwrap();
 
     let dir_foo = root.lookup("foo").unwrap();
-    dir_foo.create("f3", VfsNodeType::File, 0, 0).unwrap();
-    dir_foo.create("bar", VfsNodeType::Dir, 0, 0).unwrap();
+    dir_foo.create("f3", VfsNodeType::File, 0, 0, 0o777).unwrap();
+    dir_foo.create("bar", VfsNodeType::Dir, 0, 0, 0o777).unwrap();
 
     let dir_bar = dir_foo.lookup("bar").unwrap();
-    dir_bar.create("f4", VfsNodeType::File, 0, 0).unwrap();
+    dir_bar.create("f4", VfsNodeType::File, 0, 0, 0o777).unwrap();
 
     let mut entries = ramfs.root_dir_node().get_entries();
     entries.sort();

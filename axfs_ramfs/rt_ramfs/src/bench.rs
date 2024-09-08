@@ -12,7 +12,7 @@ pub fn test_write() {
 fn cycle_write() -> VfsResult {
     let ramfs = RamFileSystem::new(0, 0);
     let root = ramfs.root_dir();
-    root.create("test_file", VfsNodeType::File, 0, 0).unwrap();
+    root.create("test_file", VfsNodeType::File, 0, 0, 0o777).unwrap();
     let node = root.lookup("test_file")?;
     assert_eq!(node.get_attr()?.file_type(), VfsNodeType::File);
 

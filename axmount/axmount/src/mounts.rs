@@ -32,29 +32,30 @@ pub(crate) fn ramfs() -> Arc<fs::ramfs::RamFileSystem> {
 pub(crate) fn procfs() -> VfsResult<Arc<fs::ramfs::RamFileSystem>> {
     let uid = 0;
     let gid = 0;
+    let mode = 0o777;
     let procfs = fs::ramfs::RamFileSystem::new(uid, gid);
     let proc_root = procfs.root_dir();
 
     // Create /proc/sys/net/core/somaxconn
-    proc_root.create("sys", VfsNodeType::Dir, uid, gid)?;
-    proc_root.create("sys/net", VfsNodeType::Dir, uid, gid)?;
-    proc_root.create("sys/net/core", VfsNodeType::Dir, uid, gid)?;
-    proc_root.create("sys/net/core/somaxconn", VfsNodeType::File, uid, gid)?;
+    proc_root.create("sys", VfsNodeType::Dir, uid, gid, mode)?;
+    proc_root.create("sys/net", VfsNodeType::Dir, uid, gid, mode)?;
+    proc_root.create("sys/net/core", VfsNodeType::Dir, uid, gid, mode)?;
+    proc_root.create("sys/net/core/somaxconn", VfsNodeType::File, uid, gid, mode)?;
     let file_somaxconn = proc_root.clone().lookup("./sys/net/core/somaxconn")?;
     file_somaxconn.write_at(0, b"4096\n")?;
 
     // Create /proc/sys/vm/overcommit_memory
-    proc_root.create("sys/vm", VfsNodeType::Dir, uid, gid)?;
-    proc_root.create("sys/vm/overcommit_memory", VfsNodeType::File, uid, gid)?;
+    proc_root.create("sys/vm", VfsNodeType::Dir, uid, gid, mode)?;
+    proc_root.create("sys/vm/overcommit_memory", VfsNodeType::File, uid, gid, mode)?;
     let file_over = proc_root.clone().lookup("./sys/vm/overcommit_memory")?;
     file_over.write_at(0, b"0\n")?;
 
     // Create /proc/self/stat
-    proc_root.create("self", VfsNodeType::Dir, uid, gid)?;
-    proc_root.create("self/stat", VfsNodeType::File, uid, gid)?;
+    proc_root.create("self", VfsNodeType::Dir, uid, gid, mode)?;
+    proc_root.create("self/stat", VfsNodeType::File, uid, gid, mode)?;
 
     // Create /proc/meminfo
-    proc_root.create("meminfo", VfsNodeType::File, uid, gid)?;
+    proc_root.create("meminfo", VfsNodeType::File, uid, gid, mode)?;
     let file_meminfo = proc_root.clone().lookup("./meminfo")?;
     file_meminfo.write_at(0, b"MemAvailable: 100000 kB\nSwapFree: 100000 kB\n")?;
 
@@ -65,27 +66,28 @@ pub(crate) fn procfs() -> VfsResult<Arc<fs::ramfs::RamFileSystem>> {
 pub(crate) fn sysfs() -> VfsResult<Arc<fs::ramfs::RamFileSystem>> {
     let uid = 0;
     let gid = 0;
+    let mode = 0o777;
     let sysfs = fs::ramfs::RamFileSystem::new(uid, gid);
     let sys_root = sysfs.root_dir();
 
     // Create /sys/kernel/mm/transparent_hugepage/enabled
-    sys_root.create("kernel", VfsNodeType::Dir, uid, gid)?;
-    sys_root.create("kernel/mm", VfsNodeType::Dir, uid, gid)?;
-    sys_root.create("kernel/mm/transparent_hugepage", VfsNodeType::Dir, uid, gid)?;
-    sys_root.create("kernel/mm/transparent_hugepage/enabled", VfsNodeType::File, uid, gid)?;
+    sys_root.create("kernel", VfsNodeType::Dir, uid, gid, mode)?;
+    sys_root.create("kernel/mm", VfsNodeType::Dir, uid, gid, mode)?;
+    sys_root.create("kernel/mm/transparent_hugepage", VfsNodeType::Dir, uid, gid, mode)?;
+    sys_root.create("kernel/mm/transparent_hugepage/enabled", VfsNodeType::File, uid, gid, mode)?;
     let file_hp = sys_root
         .clone()
         .lookup("./kernel/mm/transparent_hugepage/enabled")?;
     file_hp.write_at(0, b"always [madvise] never\n")?;
 
     // Create /sys/devices/system/clocksource/clocksource0/current_clocksource
-    sys_root.create("devices", VfsNodeType::Dir, uid, gid)?;
-    sys_root.create("devices/system", VfsNodeType::Dir, uid, gid)?;
-    sys_root.create("devices/system/clocksource", VfsNodeType::Dir, uid, gid)?;
-    sys_root.create("devices/system/clocksource/clocksource0", VfsNodeType::Dir, uid, gid)?;
+    sys_root.create("devices", VfsNodeType::Dir, uid, gid, mode)?;
+    sys_root.create("devices/system", VfsNodeType::Dir, uid, gid, mode)?;
+    sys_root.create("devices/system/clocksource", VfsNodeType::Dir, uid, gid, mode)?;
+    sys_root.create("devices/system/clocksource/clocksource0", VfsNodeType::Dir, uid, gid, mode)?;
     sys_root.create(
         "devices/system/clocksource/clocksource0/current_clocksource",
-        VfsNodeType::File, uid, gid
+        VfsNodeType::File, uid, gid, mode
     )?;
     let file_cc = sys_root
         .clone()

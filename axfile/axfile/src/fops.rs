@@ -221,6 +221,7 @@ impl File {
 
         let node_option = fs.lookup(dir, path);
         let node = if opts.create || opts.create_new {
+            error!("create: opts.mode {} {:#o}", path, opts._mode);
             match node_option {
                 Ok(node) => {
                     // already exists
@@ -230,7 +231,7 @@ impl File {
                     node
                 }
                 // not exists, create new
-                Err(VfsError::NotFound) => fs.create_file(dir, path, VfsNodeType::File, uid, gid)?,
+                Err(VfsError::NotFound) => fs.create_file(dir, path, VfsNodeType::File, uid, gid, opts._mode)?,
                 Err(e) => return Err(e),
             }
         } else {
@@ -238,7 +239,9 @@ impl File {
             node_option?
         };
 
+        let access_cap = opts.into();
         let attr = node.get_attr()?;
+
         if (opts._custom_flags & O_NOATIME) != 0 {
             if attr.uid() != uid {
                 return ax_err!(NoPermission);
@@ -254,22 +257,69 @@ impl File {
         {
             return ax_err!(IsADirectory);
         }
-        let access_cap = opts.into();
+
         if !perm_to_cap(attr.perm()).contains(access_cap) {
             return ax_err!(PermissionDenied);
         }
-        let sticky = (opts._mode & S_ISVTX) != 0;
+        Self::may_open(
+            Self::cap_to_linux_mask(access_cap),
+            uid, gid, attr.uid(), attr.gid(),
+            attr.perm().mode()
+        )?;
 
         node.open(opts._custom_flags)?;
         if opts.truncate {
             node.truncate(0)?;
         }
+        let sticky = (opts._mode & S_ISVTX) != 0;
         Ok(Self {
             node: WithCap::new(node, access_cap, sticky),
             is_append: opts.append,
             offset: 0,
             shared_map: BTreeMap::new(),
         })
+    }
+
+    fn cap_to_linux_mask(cap: Cap) -> u32 {
+        let mut ret: u32 = 0;
+        if cap.contains(Cap::READ) {
+            ret |= 0o4;
+        }
+        if cap.contains(Cap::WRITE) {
+            ret |= 0o2;
+        }
+        if cap.contains(Cap::EXECUTE) {
+            ret |= 0o1;
+        }
+        ret
+    }
+
+    fn may_open(mask: u32, uid: u32, gid: u32, fsuid:u32, fsgid: u32, mut mode: u32) -> AxResult {
+        error!("may_open: mask {:#o} uid {:#x}, gid {:#x}, fsuid {:#x} fsgid {:#x} mode {:#o}",
+            mask, uid, gid, fsuid, fsgid, mode);
+        // Are we the owner? If so, ACL's don't matter.
+        if uid == fsuid {
+            mode >>= 6;
+            if (mask & !mode) != 0 {
+                return ax_err!(PermDenied);
+            }
+            return Ok(());
+        }
+
+        //
+        // Are the group permissions different from
+        // the other permissions in the bits we care
+        // about? Need to check group ownership if so.
+        //
+        if (mask & (mode ^ (mode >> 3))) != 0 {
+            mode >>= 3;
+        }
+
+        // Bits in 'mode' clear that we require?
+        if (mask & !mode) != 0 {
+            return ax_err!(PermDenied);
+        }
+        return Ok(());
     }
 
     /// Opens a file at the path relative to the current directory. Returns a
@@ -435,13 +485,13 @@ impl Directory {
     }
 
     /// Creates an empty file at the path relative to this directory.
-    pub fn create_file(&self, path: &str, fs: &FsStruct, uid: u32, gid: u32) -> AxResult<VfsNodeRef> {
-        fs.create_file(self.access_at(path)?, path, VfsNodeType::File, uid, gid)
+    pub fn create_file(&self, path: &str, fs: &FsStruct, uid: u32, gid: u32, mode: i32) -> AxResult<VfsNodeRef> {
+        fs.create_file(self.access_at(path)?, path, VfsNodeType::File, uid, gid, mode)
     }
 
     /// Creates an empty directory at the path relative to this directory.
     pub fn create_dir(&self, path: &str, fs: &FsStruct, uid: u32, gid: u32) -> AxResult {
-        fs.create_dir(self.access_at(path)?, path, uid, gid)
+        fs.create_dir(self.access_at(path)?, path, uid, gid, 0o777)
     }
 
     /// Removes a file at the path relative to this directory.

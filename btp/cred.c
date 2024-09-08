@@ -9,7 +9,7 @@
 
 #define TEST_FILE   "test_file"
 
-int main()
+static int test_noatime()
 {
     int fd;
     struct passwd *ltpuser;
@@ -43,6 +43,42 @@ int main()
     assert(fd == -1);
 
     seteuid(0);
+    return 0;
+}
+
+static int test_open_for_write()
+{
+    int fd;
+    struct passwd *ltpuser;
+    char *user2_fname = "user2_0600";
+
+    remove(user2_fname);
+
+    fd = creat(user2_fname, 0600);
+    if (creat(user2_fname, 0600) < 0) {
+        perror("create user2_fname error");
+        exit(-1);
+    }
+    close(fd);
+
+    /* Switch to nobody user for correct error code collection */
+    ltpuser = getpwnam("nobody");
+    setgid(ltpuser->pw_gid);
+    setuid(ltpuser->pw_uid);
+
+    printf("expect error for (O_WRONLY) ...\n");
+    fd = open(user2_fname, O_WRONLY, 0644);
+    assert(fd == -1);
+
+    return 0;
+}
+
+int main()
+{
+    printf("cred: test ..\n");
+
+    test_noatime();
+    test_open_for_write();
 
     printf("cred: test ok!\n");
     return 0;
