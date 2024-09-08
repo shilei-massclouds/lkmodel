@@ -584,7 +584,8 @@ fn linux_syscall_socket(_args: SyscallArgs) -> usize {
 }
 
 pub fn getname(filename: usize) -> Result<String, usize> {
-    let err = fault_in_readable(filename, FS_NAME_LEN);
+    // Todo: check the full filename. Now just the first byte.
+    let err = fault_in_readable(filename, 1);
     if err != 0 {
         return Err(err);
     }
