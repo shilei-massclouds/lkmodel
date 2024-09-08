@@ -257,6 +257,16 @@ impl VfsNodeAttr {
         }
     }
 
+    #[inline]
+    pub const fn uid(&self) -> u32 {
+        self.uid
+    }
+
+    #[inline]
+    pub const fn gid(&self) -> u32 {
+        self.gid
+    }
+
     /// Creates a new `VfsNodeAttr` for a file, with the default file permission.
     pub const fn new_pipe(size: u64, blocks: u64, uid: u32, gid: u32) -> Self {
         Self {

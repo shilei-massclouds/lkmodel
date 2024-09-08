@@ -7,7 +7,7 @@ use capability::{Cap, WithCap};
 use core::fmt;
 use fstree::FsStruct;
 use alloc::collections::BTreeMap;
-use axtype::O_DIRECTORY;
+use axtype::{O_DIRECTORY, O_NOATIME};
 
 #[cfg(feature = "myfs")]
 pub use crate::dev::Disk;
@@ -239,6 +239,11 @@ impl File {
         };
 
         let attr = node.get_attr()?;
+        if (opts._custom_flags & O_NOATIME) != 0 {
+            if attr.uid() != uid {
+                return ax_err!(NoPermission);
+            }
+        }
         if (opts._custom_flags & O_DIRECTORY) != 0 {
             if !attr.is_dir() {
                 return ax_err!(NotADirectory);

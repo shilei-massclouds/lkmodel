@@ -89,6 +89,8 @@ pub enum AxError {
     BrokenPipe,
     /// No such device or address
     NoDevOrAddr,
+    /// Operation not permitted
+    NoPermission,
 }
 
 /// A specialized [`Result`] type with [`AxError`] as the error type.
@@ -230,6 +232,7 @@ impl AxError {
             WriteZero => "Write zero",
             BrokenPipe => "Broken pipe",
             NoDevOrAddr => "No such device or address",
+            NoPermission => "Operation not permitted",
         }
     }
 
@@ -293,6 +296,7 @@ impl From<AxError> for LinuxError {
             WouldBlock => LinuxError::EAGAIN,
             BrokenPipe => LinuxError::EPIPE,
             NoDevOrAddr => LinuxError::ENXIO,
+            NoPermission => LinuxError::EPERM,
         }
     }
 }

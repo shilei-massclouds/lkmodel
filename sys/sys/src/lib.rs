@@ -121,6 +121,7 @@ pub fn setresuid(ruid: usize, euid: usize, suid: usize) -> usize {
     cred.uid = ruid;
     cred.euid = euid;
     cred.suid = suid;
+    cred.fsuid = euid;
     0
 }
 

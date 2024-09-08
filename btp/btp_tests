@@ -9,3 +9,4 @@ devfs
 pthread
 named_pipe
 pipe
+cred
