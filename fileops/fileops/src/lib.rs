@@ -87,9 +87,12 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
     let current = task::current();
     let fs = current.fs.lock();
 
+    let fsuid = current.fsuid();
+    let fsgid = current.fsgid();
+
     let path = handle_path(dfd, filename);
     info!("openat path {}", path);
-    File::open(&path, &opts, &fs).or_else(|e| {
+    File::open(&path, &opts, &fs, fsuid, fsgid).or_else(|e| {
         if e == NotFound {
             // Handle special filesystem, e.g., procfs, sysfs ..
             special_open(&path, &opts)
@@ -407,13 +410,16 @@ pub fn mknodat(dfd: usize, filename: &str, mode: usize, dev: usize) -> usize {
     let current = task::current();
     let fs = current.fs.lock();
 
+    let fsuid = current.fsuid();
+    let fsgid = current.fsgid();
+
     let mode = mode as i32;
     match mode & S_IFMT {
         S_IFREG => {
             error!("create empty file!");
         },
         S_IFIFO => {
-            fs.create_file(None, &path, VfsNodeType::Fifo).unwrap();
+            fs.create_file(None, &path, VfsNodeType::Fifo, fsuid, fsgid).unwrap();
         },
         _ => panic!("unknown mode {:#o}", mode & S_IFMT),
     }
@@ -429,7 +435,9 @@ pub fn mkdirat(dfd: usize, pathname: &str, mode: usize) -> usize {
 
     let current = task::current();
     let fs = current.fs.lock();
-    match create_dir(pathname, &fs) {
+    let fsuid = current.fsuid();
+    let fsgid = current.fsgid();
+    match create_dir(pathname, &fs, fsuid, fsgid) {
         Ok(()) => 0,
         Err(e) => linux_err_from!(e),
     }
@@ -445,7 +453,12 @@ pub fn unlinkat(dfd: usize, path: &str, flags: usize) -> usize {
     let current = task::current();
     let fs = current.fs.lock();
     // Todo: distinguish dir&file
-    let ty = filetype(path).unwrap();
+    let ty = match filetype(path) {
+        Ok(t) => t,
+        Err(e) => {
+            return linux_err_from!(e);
+        }
+    };
     if (flags & AT_REMOVEDIR) != 0 {
         if !ty.is_dir() {
             return linux_err!(ENOTDIR);
@@ -530,7 +543,9 @@ pub fn do_open(filename: &str, _flags: usize) -> LinuxResult<FileRef> {
 
     let current = task::current();
     let fs = current.fs.lock();
-    let file = File::open(filename, &opts, &fs)?;
+    let fsuid = current.fsuid();
+    let fsgid = current.fsgid();
+    let file = File::open(filename, &opts, &fs, fsuid, fsgid)?;
     Ok(Arc::new(Mutex::new(file)))
 }
 
@@ -652,7 +667,10 @@ pub fn utimensat(dfd: usize, filename: &str, times: usize, flags: usize) -> usiz
 
 pub fn pipe2(fds: usize, flags: usize) -> LinuxResult {
     debug!("pipe2: fds {:#x} flags {:#x}", fds, flags);
-    let node = Arc::new(PipeNode::init_pipe_node());
+    let current = task::current();
+    let fsuid = current.fsuid();
+    let fsgid = current.fsgid();
+    let node = Arc::new(PipeNode::init_pipe_node(fsuid, fsgid));
     let rfile = File::new(node.clone(), Cap::READ);
     let wfile = File::new(node.clone(), Cap::WRITE);
     let rfd = register_file(Ok(rfile), 0) as i32;
@@ -680,7 +698,7 @@ pub fn console_on_rootfs() -> LinuxResult {
 
     let current = task::current();
     let fs = current.fs.lock();
-    let console = File::open("/dev/console", &opts, &fs)
+    let console = File::open("/dev/console", &opts, &fs, 0, 0)
         .expect("bad /dev/console");
     let console = Arc::new(Mutex::new(console));
 

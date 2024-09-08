@@ -38,7 +38,7 @@ impl VfsNodeOps for ProcNode {
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
         error!("VfsNode get_attr: {}", self.path);
         let perm = VfsNodePerm::from_bits_truncate(0o755);
-        Ok(VfsNodeAttr::new(perm, VfsNodeType::File, 0, 0))
+        Ok(VfsNodeAttr::new(perm, VfsNodeType::File, 0, 0, 0, 0))
     }
 
     fn read_at(&self, offset: u64, buf: &mut [u8]) -> VfsResult<usize> {

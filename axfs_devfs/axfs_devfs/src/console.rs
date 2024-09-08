@@ -16,6 +16,8 @@ impl VfsNodeOps for ConsoleDev {
             VfsNodeType::CharDevice,
             0,
             0,
+            0,
+            0,
         ))
     }
 

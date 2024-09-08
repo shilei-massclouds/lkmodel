@@ -34,13 +34,13 @@ impl DeviceFileSystem {
     pub fn new() -> Self {
         Self {
             parent: Once::new(),
-            root: DirNode::new(None),
+            root: DirNode::new(None, 0, 0),
         }
     }
 
     /// Create a subdirectory at the root directory.
-    pub fn mkdir(&self, name: &'static str) -> Arc<DirNode> {
-        self.root.mkdir(name)
+    pub fn mkdir(&self, name: &'static str, uid: u32, gid: u32) -> Arc<DirNode> {
+        self.root.mkdir(name, uid, gid)
     }
 
     /// Add a node to the root directory.

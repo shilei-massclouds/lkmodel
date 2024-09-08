@@ -20,15 +20,18 @@ pub struct DirNode {
     parent: RwLock<Weak<dyn VfsNodeOps>>,
     children: RwLock<BTreeMap<String, VfsNodeRef>>,
     ino: usize,
+    uid: u32,
+    gid: u32,
 }
 
 impl DirNode {
-    pub(super) fn new(parent: Option<Weak<dyn VfsNodeOps>>) -> Arc<Self> {
+    pub(super) fn new(parent: Option<Weak<dyn VfsNodeOps>>, uid: u32, gid: u32) -> Arc<Self> {
         Arc::new_cyclic(|this| Self {
             this: this.clone(),
             parent: RwLock::new(parent.unwrap_or_else(|| Weak::<Self>::new())),
             children: RwLock::new(BTreeMap::new()),
             ino: alloc_ino(),
+            uid, gid,
         })
     }
 
@@ -47,15 +50,15 @@ impl DirNode {
     }
 
     /// Creates a new node with the given name and type in this directory.
-    pub fn create_node(&self, name: &str, ty: VfsNodeType) -> VfsResult {
+    pub fn create_node(&self, name: &str, ty: VfsNodeType, uid: u32, gid: u32) -> VfsResult {
         if self.exist(name) {
             log::error!("AlreadyExists {}", name);
             return Err(VfsError::AlreadyExists);
         }
         let node: VfsNodeRef = match ty {
-            VfsNodeType::File => Arc::new(FileNode::new()),
-            VfsNodeType::Dir => Self::new(Some(self.this.clone())),
-            VfsNodeType::Fifo => Arc::new(PipeNode::new()),
+            VfsNodeType::File => Arc::new(FileNode::new(uid, gid)),
+            VfsNodeType::Dir => Self::new(Some(self.this.clone()), uid, gid),
+            VfsNodeType::Fifo => Arc::new(PipeNode::new(uid, gid)),
             _ => return Err(VfsError::Unsupported),
         };
         self.children.write().insert(name.into(), node);
@@ -82,7 +85,7 @@ impl VfsNodeOps for DirNode {
     }
 
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
-        Ok(VfsNodeAttr::new_dir(4096, 0))
+        Ok(VfsNodeAttr::new_dir(4096, 0, self.uid, self.gid))
     }
 
     fn parent(&self) -> Option<VfsNodeRef> {
@@ -128,13 +131,13 @@ impl VfsNodeOps for DirNode {
         Ok(dirents.len())
     }
 
-    fn create(&self, path: &str, ty: VfsNodeType) -> VfsResult {
+    fn create(&self, path: &str, ty: VfsNodeType, uid: u32, gid: u32) -> VfsResult {
         log::debug!("create {:?} at ramfs: {}", ty, path);
         let (name, rest) = split_path(path);
         if let Some(rest) = rest {
             match name {
-                "" | "." => self.create(rest, ty),
-                ".." => self.parent().ok_or(VfsError::NotFound)?.create(rest, ty),
+                "" | "." => self.create(rest, ty, uid, gid),
+                ".." => self.parent().ok_or(VfsError::NotFound)?.create(rest, ty, uid, gid),
                 _ => {
                     let subdir = self
                         .children
@@ -142,13 +145,13 @@ impl VfsNodeOps for DirNode {
                         .get(name)
                         .ok_or(VfsError::NotFound)?
                         .clone();
-                    subdir.create(rest, ty)
+                    subdir.create(rest, ty, uid, gid)
                 }
             }
         } else if name.is_empty() || name == "." || name == ".." {
             Ok(()) // already exists
         } else {
-            self.create_node(name, ty)
+            self.create_node(name, ty, uid, gid)
         }
     }
 

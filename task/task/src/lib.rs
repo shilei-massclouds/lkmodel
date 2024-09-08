@@ -108,6 +108,8 @@ pub struct Cred {
     pub sgid:   u32,    // saved GID of the task
     pub euid:   u32,    // effective UID of the task
     pub egid:   u32,    // effective GID of the task
+    pub fsuid:   u32,   // UID for filesystem
+    pub fsgid:   u32,   // GID for filesystem
 }
 
 pub struct TaskStruct {
@@ -146,6 +148,14 @@ impl TaskStruct {
             exit_code: AtomicU32::new(0),
             vfork_done: None,
         }
+    }
+
+    pub fn fsuid(&self) -> u32 {
+        self.cred.lock().fsuid
+    }
+
+    pub fn fsgid(&self) -> u32 {
+        self.cred.lock().fsgid
     }
 
     pub fn tid(&self) -> Tid {

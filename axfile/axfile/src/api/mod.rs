@@ -32,8 +32,8 @@ pub fn set_current_dir(path: &str, fs: &mut FsStruct) -> io::Result<()> {
 }
 
 /// Read the entire contents of a file into a bytes vector.
-pub fn read(path: &str, fs: &FsStruct) -> io::Result<Vec<u8>> {
-    let mut file = File::open(path, fs)?;
+pub fn read(path: &str, fs: &FsStruct, uid: u32, gid: u32) -> io::Result<Vec<u8>> {
+    let mut file = File::open(path, fs, uid, gid)?;
     let size = file.metadata().map(|m| m.len()).unwrap_or(0);
     let mut bytes = Vec::with_capacity(size as usize);
     file.read_to_end(&mut bytes)?;
@@ -41,8 +41,8 @@ pub fn read(path: &str, fs: &FsStruct) -> io::Result<Vec<u8>> {
 }
 
 /// Read the entire contents of a file into a string.
-pub fn read_to_string(path: &str, fs: &FsStruct) -> io::Result<String> {
-    let mut file = File::open(path, fs)?;
+pub fn read_to_string(path: &str, fs: &FsStruct, uid: u32, gid: u32) -> io::Result<String> {
+    let mut file = File::open(path, fs, uid, gid)?;
     let size = file.metadata().map(|m| m.len()).unwrap_or(0);
     let mut string = String::with_capacity(size as usize);
     file.read_to_string(&mut string)?;
@@ -50,25 +50,25 @@ pub fn read_to_string(path: &str, fs: &FsStruct) -> io::Result<String> {
 }
 
 /// Write a slice as the entire contents of a file.
-pub fn write<C: AsRef<[u8]>>(path: &str, contents: C, fs: &FsStruct) -> io::Result<()> {
-    File::create(path, fs)?.write_all(contents.as_ref())
+pub fn write<C: AsRef<[u8]>>(path: &str, contents: C, fs: &FsStruct, uid: u32, gid: u32) -> io::Result<()> {
+    File::create(path, fs, uid, gid)?.write_all(contents.as_ref())
 }
 
 /// Given a path, query the file system to get information about a file,
 /// directory, etc.
-pub fn metadata(path: &str, fs: &FsStruct) -> io::Result<Metadata> {
-    File::open(path, fs)?.metadata()
+pub fn metadata(path: &str, fs: &FsStruct, uid: u32, gid: u32) -> io::Result<Metadata> {
+    File::open(path, fs, uid, gid)?.metadata()
 }
 
 /// Creates a new, empty directory at the provided path.
-pub fn create_dir(path: &str, fs: &FsStruct) -> io::Result<()> {
-    DirBuilder::new().create(path, fs)
+pub fn create_dir(path: &str, fs: &FsStruct, uid: u32, gid: u32) -> io::Result<()> {
+    DirBuilder::new().create(path, fs, uid, gid)
 }
 
 /// Recursively create a directory and all of its parent components if they
 /// are missing.
-pub fn create_dir_all(path: &str, fs: &FsStruct) -> io::Result<()> {
-    DirBuilder::new().recursive(true).create(path, fs)
+pub fn create_dir_all(path: &str, fs: &FsStruct, uid: u32, gid: u32) -> io::Result<()> {
+    DirBuilder::new().recursive(true).create(path, fs, uid, gid)
 }
 
 /// Removes an empty directory.

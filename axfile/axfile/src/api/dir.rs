@@ -134,11 +134,11 @@ impl DirBuilder {
 
     /// Creates the specified directory with the options configured in this
     /// builder.
-    pub fn create(&self, path: &str, fs: &FsStruct) -> Result<()> {
+    pub fn create(&self, path: &str, fs: &FsStruct, uid: u32, gid: u32) -> Result<()> {
         if self.recursive {
             self.create_dir_all(path)
         } else {
-            fs.create_dir(None, path)
+            fs.create_dir(None, path, uid, gid)
         }
     }
 

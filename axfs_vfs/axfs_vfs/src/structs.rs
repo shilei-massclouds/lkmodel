@@ -45,6 +45,10 @@ pub struct VfsNodeAttr {
     size: u64,
     /// Number of 512B blocks allocated.
     blocks: u64,
+    /// uid
+    uid: u32,
+    /// gid
+    gid: u32,
 }
 
 bitflags::bitflags! {
@@ -242,43 +246,51 @@ impl VfsNodeType {
 impl VfsNodeAttr {
     /// Creates a new `VfsNodeAttr` with the given permission mode, type, size
     /// and number of blocks.
-    pub const fn new(mode: VfsNodePerm, ty: VfsNodeType, size: u64, blocks: u64) -> Self {
+    pub const fn new(mode: VfsNodePerm, ty: VfsNodeType, size: u64, blocks: u64, uid: u32, gid: u32) -> Self {
         Self {
             mode,
             ty,
             size,
             blocks,
+            uid,
+            gid,
         }
     }
 
     /// Creates a new `VfsNodeAttr` for a file, with the default file permission.
-    pub const fn new_pipe(size: u64, blocks: u64) -> Self {
+    pub const fn new_pipe(size: u64, blocks: u64, uid: u32, gid: u32) -> Self {
         Self {
             mode: VfsNodePerm::default_file(),
             ty: VfsNodeType::Fifo,
             size,
             blocks,
+            uid,
+            gid,
         }
     }
 
     /// Creates a new `VfsNodeAttr` for a file, with the default file permission.
-    pub const fn new_file(size: u64, blocks: u64) -> Self {
+    pub const fn new_file(size: u64, blocks: u64, uid: u32, gid: u32) -> Self {
         Self {
             mode: VfsNodePerm::default_file(),
             ty: VfsNodeType::File,
             size,
             blocks,
+            uid,
+            gid,
         }
     }
 
     /// Creates a new `VfsNodeAttr` for a directory, with the default directory
     /// permission.
-    pub const fn new_dir(size: u64, blocks: u64) -> Self {
+    pub const fn new_dir(size: u64, blocks: u64, uid: u32, gid: u32) -> Self {
         Self {
             mode: VfsNodePerm::default_dir(),
             ty: VfsNodeType::Dir,
             size,
             blocks,
+            uid,
+            gid,
         }
     }
 

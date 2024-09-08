@@ -12,15 +12,19 @@ pub struct DirNode {
     parent: RwLock<Weak<dyn VfsNodeOps>>,
     children: RwLock<BTreeMap<&'static str, VfsNodeRef>>,
     ino: usize,
+    uid: u32,
+    gid: u32,
 }
 
 impl DirNode {
-    pub(super) fn new(parent: Option<&VfsNodeRef>) -> Arc<Self> {
+    pub(super) fn new(parent: Option<&VfsNodeRef>, uid: u32, gid: u32) -> Arc<Self> {
         let parent = parent.map_or(Weak::<Self>::new() as _, Arc::downgrade);
         Arc::new(Self {
             parent: RwLock::new(parent),
             children: RwLock::new(BTreeMap::new()),
             ino: alloc_ino(),
+            uid,
+            gid,
         })
     }
 
@@ -29,9 +33,9 @@ impl DirNode {
     }
 
     /// Create a subdirectory at this directory.
-    pub fn mkdir(self: &Arc<Self>, name: &'static str) -> Arc<Self> {
+    pub fn mkdir(self: &Arc<Self>, name: &'static str, uid: u32, gid: u32) -> Arc<Self> {
         let parent = self.clone() as VfsNodeRef;
-        let node = Self::new(Some(&parent));
+        let node = Self::new(Some(&parent), uid, gid);
         self.children.write().insert(name, node.clone());
         node
     }
@@ -48,7 +52,7 @@ impl VfsNodeOps for DirNode {
     }
 
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
-        Ok(VfsNodeAttr::new_dir(4096, 0))
+        Ok(VfsNodeAttr::new_dir(4096, 0, self.uid, self.gid))
     }
 
     fn parent(&self) -> Option<VfsNodeRef> {
@@ -94,19 +98,19 @@ impl VfsNodeOps for DirNode {
         Ok(dirents.len())
     }
 
-    fn create(&self, path: &str, ty: VfsNodeType) -> VfsResult {
+    fn create(&self, path: &str, ty: VfsNodeType, uid: u32, gid: u32) -> VfsResult {
         log::debug!("create {:?} at devfs: {}", ty, path);
         let (name, rest) = split_path(path);
         if let Some(rest) = rest {
             match name {
-                "" | "." => self.create(rest, ty),
-                ".." => self.parent().ok_or(VfsError::NotFound)?.create(rest, ty),
+                "" | "." => self.create(rest, ty, uid, gid),
+                ".." => self.parent().ok_or(VfsError::NotFound)?.create(rest, ty, uid, gid),
                 _ => self
                     .children
                     .read()
                     .get(name)
                     .ok_or(VfsError::NotFound)?
-                    .create(rest, ty),
+                    .create(rest, ty, uid, gid),
             }
         } else if name.is_empty() || name == "." || name == ".." {
             Ok(()) // already exists

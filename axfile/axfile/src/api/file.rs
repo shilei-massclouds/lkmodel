@@ -66,8 +66,8 @@ impl OpenOptions {
     }
 
     /// Opens a file at `path` with the options specified by `self`.
-    pub fn open(&self, path: &str, fs: &FsStruct) -> Result<File> {
-        fops::File::open(path, &self.0, fs).map(|inner| File { inner })
+    pub fn open(&self, path: &str, fs: &FsStruct, uid: u32, gid: u32) -> Result<File> {
+        fops::File::open(path, &self.0, fs, uid, gid).map(|inner| File { inner })
     }
 }
 
@@ -126,26 +126,26 @@ impl fmt::Debug for Metadata {
 
 impl File {
     /// Attempts to open a file in read-only mode.
-    pub fn open(path: &str, fs: &FsStruct) -> Result<Self> {
-        OpenOptions::new().read(true).open(path, fs)
+    pub fn open(path: &str, fs: &FsStruct, uid: u32, gid: u32) -> Result<Self> {
+        OpenOptions::new().read(true).open(path, fs, uid, gid)
     }
 
     /// Opens a file in write-only mode.
-    pub fn create(path: &str, fs: &FsStruct) -> Result<Self> {
+    pub fn create(path: &str, fs: &FsStruct, uid: u32, gid: u32) -> Result<Self> {
         OpenOptions::new()
             .write(true)
             .create(true)
             .truncate(true)
-            .open(path, fs)
+            .open(path, fs, uid, gid)
     }
 
     /// Creates a new file in read-write mode; error if the file exists.
-    pub fn create_new(path: &str, fs: &FsStruct) -> Result<Self> {
+    pub fn create_new(path: &str, fs: &FsStruct, uid: u32, gid: u32) -> Result<Self> {
         OpenOptions::new()
             .read(true)
             .write(true)
             .create_new(true)
-            .open(path, fs)
+            .open(path, fs, uid, gid)
     }
 
     /// Returns a new OpenOptions object.

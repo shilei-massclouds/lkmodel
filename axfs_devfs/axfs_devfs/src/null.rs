@@ -16,6 +16,8 @@ impl VfsNodeOps for NullDev {
             VfsNodeType::CharDevice,
             0,
             0,
+            0,
+            0,
         ))
     }
 

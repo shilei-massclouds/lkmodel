@@ -9,9 +9,9 @@ const BUF_SIZE: usize = 32;
 pub fn test_boundary() -> VfsResult {
     info!("==============> boundary test ...");
 
-    let ramfs = RamFileSystem::new();
+    let ramfs = RamFileSystem::new(0, 0);
     let root = ramfs.root_dir();
-    root.create("testfile", VfsNodeType::File).unwrap();
+    root.create("testfile", VfsNodeType::File, 0, 0).unwrap();
     let node = root.lookup("testfile")?;
 
     write_buf(1, node.clone())?;

@@ -22,10 +22,12 @@ pub struct PipeNode {
     read_ready: AtomicBool,
     write_ready: AtomicBool,
     ino: usize,
+    uid: u32,
+    gid: u32,
 }
 
 impl PipeNode {
-    pub fn new() -> Self {
+    pub fn new(uid: u32, gid: u32) -> Self {
         Self {
             buf: RwLock::new(VecDeque::new()),
             readers: AtomicUsize::new(0),
@@ -35,11 +37,13 @@ impl PipeNode {
             read_ready: AtomicBool::new(false),
             write_ready: AtomicBool::new(false),
             ino: alloc_ino(),
+            uid,
+            gid,
         }
     }
 
-    pub fn init_pipe_node() -> Self {
-        let node = PipeNode::new();
+    pub fn init_pipe_node(uid: u32, gid: u32) -> Self {
+        let node = PipeNode::new(uid, gid);
         let _ = node.readers.fetch_add(1, Ordering::Relaxed);
         let _ = node.writers.fetch_add(1, Ordering::Relaxed);
         node.read_ready.store(true, Ordering::Relaxed);
@@ -118,7 +122,7 @@ impl VfsNodeOps for PipeNode {
     }
 
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
-        Ok(VfsNodeAttr::new_pipe(0, 0))
+        Ok(VfsNodeAttr::new_pipe(0, 0, self.uid, self.gid))
     }
 
     fn read_at(&self, pos: u64, buf: &mut [u8]) -> VfsResult<usize> {
@@ -188,15 +192,19 @@ pub struct FileNode {
     index: AtomicUsize,
     offset: AtomicUsize,
     ino: usize,
+    uid: u32,
+    gid: u32,
 }
 
 impl FileNode {
-    pub(super) fn new() -> Self {
+    pub(super) fn new(uid: u32, gid: u32) -> Self {
         Self {
             content: RwLock::new(BTreeMap::new()),
             index: AtomicUsize::new(0),
             offset: AtomicUsize::new(0),
             ino: alloc_ino(),
+            uid,
+            gid,
         }
     }
 
@@ -220,7 +228,7 @@ impl VfsNodeOps for FileNode {
     }
 
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
-        Ok(VfsNodeAttr::new_file(self.size() as u64, 0))
+        Ok(VfsNodeAttr::new_file(self.size() as u64, 0, self.uid, self.gid))
     }
 
     fn truncate(&self, size: u64) -> VfsResult {

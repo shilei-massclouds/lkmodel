@@ -213,7 +213,7 @@ impl File {
         self.node.access(Cap::empty()).unwrap().get_ino()
     }
 
-    fn _open_at(dir: Option<&VfsNodeRef>, path: &str, opts: &OpenOptions, fs: &FsStruct) -> AxResult<Self> {
+    fn _open_at(dir: Option<&VfsNodeRef>, path: &str, opts: &OpenOptions, fs: &FsStruct, uid: u32, gid: u32) -> AxResult<Self> {
         debug!("open file: {} {:?}", path, opts);
         if !opts.is_valid() {
             return ax_err!(InvalidInput);
@@ -230,7 +230,7 @@ impl File {
                     node
                 }
                 // not exists, create new
-                Err(VfsError::NotFound) => fs.create_file(dir, path, VfsNodeType::File)?,
+                Err(VfsError::NotFound) => fs.create_file(dir, path, VfsNodeType::File, uid, gid)?,
                 Err(e) => return Err(e),
             }
         } else {
@@ -269,8 +269,8 @@ impl File {
 
     /// Opens a file at the path relative to the current directory. Returns a
     /// [`File`] object.
-    pub fn open(path: &str, opts: &OpenOptions, fs: &FsStruct) -> AxResult<Self> {
-        Self::_open_at(None, path, opts, fs)
+    pub fn open(path: &str, opts: &OpenOptions, fs: &FsStruct, uid: u32, gid: u32) -> AxResult<Self> {
+        Self::_open_at(None, path, opts, fs, uid, gid)
     }
 
     /// Truncates the file to the specified size.
@@ -425,18 +425,18 @@ impl Directory {
 
     /// Opens a file at the path relative to this directory. Returns a [`File`]
     /// object.
-    pub fn open_file_at(&self, path: &str, opts: &OpenOptions, fs: &FsStruct) -> AxResult<File> {
-        File::_open_at(self.access_at(path)?, path, opts, fs)
+    pub fn open_file_at(&self, path: &str, opts: &OpenOptions, fs: &FsStruct, uid: u32, gid: u32) -> AxResult<File> {
+        File::_open_at(self.access_at(path)?, path, opts, fs, uid, gid)
     }
 
     /// Creates an empty file at the path relative to this directory.
-    pub fn create_file(&self, path: &str, fs: &FsStruct) -> AxResult<VfsNodeRef> {
-        fs.create_file(self.access_at(path)?, path, VfsNodeType::File)
+    pub fn create_file(&self, path: &str, fs: &FsStruct, uid: u32, gid: u32) -> AxResult<VfsNodeRef> {
+        fs.create_file(self.access_at(path)?, path, VfsNodeType::File, uid, gid)
     }
 
     /// Creates an empty directory at the path relative to this directory.
-    pub fn create_dir(&self, path: &str, fs: &FsStruct) -> AxResult {
-        fs.create_dir(self.access_at(path)?, path)
+    pub fn create_dir(&self, path: &str, fs: &FsStruct, uid: u32, gid: u32) -> AxResult {
+        fs.create_dir(self.access_at(path)?, path, uid, gid)
     }
 
     /// Removes a file at the path relative to this directory.

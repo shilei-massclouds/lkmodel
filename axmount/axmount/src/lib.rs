@@ -52,32 +52,34 @@ pub fn init_filesystems(mut blk_devs: AxDeviceContainer<AxBlockDevice>, _need_fm
 }
 
 pub fn init_rootfs(main_fs: Arc<dyn VfsOps>) -> Arc<RootDirectory> {
+    let uid = 0;
+    let gid = 0;
     let mut root_dir = RootDirectory::new(main_fs);
 
     #[cfg(feature = "devfs")]
     root_dir
-        .mount("/dev", mounts::devfs())
+        .mount("/dev", mounts::devfs(), uid, gid)
         .expect("failed to mount devfs at /dev");
 
     root_dir
-        .mount("/dev/shm", mounts::ramfs())
+        .mount("/dev/shm", mounts::ramfs(), uid, gid)
         .expect("failed to mount ramfs at /dev/shm");
 
     #[cfg(feature = "ramfs")]
     root_dir
-        .mount("/tmp", mounts::ramfs())
+        .mount("/tmp", mounts::ramfs(), uid, gid)
         .expect("failed to mount ramfs at /tmp");
 
     // Mount another ramfs as procfs
     #[cfg(feature = "procfs")]
     root_dir // should not fail
-        .mount("/proc", mounts::procfs().unwrap())
+        .mount("/proc", mounts::procfs().unwrap(), uid, gid)
         .expect("fail to mount procfs at /proc");
 
     // Mount another ramfs as sysfs
     #[cfg(feature = "sysfs")]
     root_dir // should not fail
-        .mount("/sys", mounts::sysfs().unwrap())
+        .mount("/sys", mounts::sysfs().unwrap(), uid, gid)
         .expect("fail to mount sysfs at /sys");
 
     Arc::new(root_dir)

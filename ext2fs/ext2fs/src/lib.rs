@@ -74,16 +74,16 @@ impl Ext2Fs {
         EXT2_FS.clone()
     }
 
-    pub fn create_dir(&self, ino: u32, path: &str) -> LinuxResult<()> {
-        self.inner.lock().create_dir(ino, path)
+    pub fn create_dir(&self, ino: u32, path: &str, uid: u32, gid: u32) -> LinuxResult<()> {
+        self.inner.lock().create_dir(ino, path, uid, gid)
     }
 
     pub fn remove(&self, ino: u32, path: &str) -> LinuxResult<()> {
         self.inner.lock().remove(ino, path)
     }
 
-    pub fn create_file(&self, ino: u32, path: &str) -> LinuxResult<()> {
-        self.inner.lock().create_file(ino, path)
+    pub fn create_file(&self, ino: u32, path: &str, uid: u32, gid: u32) -> LinuxResult<()> {
+        self.inner.lock().create_file(ino, path, uid, gid)
     }
 
     pub fn lookup(self: Arc<Self>, ino: u32, path: &str) -> LinuxResult<VfsNodeRef> {
@@ -467,7 +467,7 @@ impl Ext2Filesystem {
         })
     }
 
-    pub fn create_file(&mut self, ino: u32, path: &str) -> LinuxResult<()> {
+    pub fn create_file(&mut self, ino: u32, path: &str, uid: u32, gid: u32) -> LinuxResult<()> {
         let timestamp = axhal::time::current_time();
         let path = Path::new(path);
         let parent = Path::new(path.parent().unwrap_or("/"));
@@ -496,12 +496,12 @@ impl Ext2Filesystem {
             parent_inode_nbr,
             timestamp.as_secs() as u32,
             (def_mode().bits(), SFlag::S_IFREG).try_into().unwrap(),
-            (0, 0),
+            (uid, gid),
         )?;
         Ok(())
     }
 
-    pub fn create_dir(&mut self, ino: u32, path: &str) -> LinuxResult<()> {
+    pub fn create_dir(&mut self, ino: u32, path: &str, uid: u32, gid: u32) -> LinuxResult<()> {
         let timestamp = axhal::time::current_time();
         let path = Path::new(path);
         let parent = Path::new(path.parent().unwrap_or("/"));
@@ -530,7 +530,7 @@ impl Ext2Filesystem {
             filename,
             timestamp.as_secs() as u32,
             def_mode() | Mode::S_IXUSR | Mode::S_IXOTH | Mode::S_IXGRP,
-            (0, 0),
+            (uid, gid),
         )?;
         Ok(())
     }
@@ -1658,18 +1658,18 @@ impl VfsNodeOps for Ext2Inode {
         self.entry.directory.get_inode() as usize
     }
 
-    fn create(&self, path: &str, ty: VfsNodeType) -> VfsResult {
+    fn create(&self, path: &str, ty: VfsNodeType, uid: u32, gid: u32) -> VfsResult {
         info!("create path: {} {:?}", path, ty);
 
         match ty {
             VfsNodeType::File => {
                 let ino = self.entry.directory.get_inode();
-                let _ = Ext2Fs::get().create_file(ino, path);
+                let _ = Ext2Fs::get().create_file(ino, path, uid, gid);
                 Ok(())
             }
             VfsNodeType::Dir => {
                 let ino = self.entry.directory.get_inode();
-                let _ = Ext2Fs::get().create_dir(ino, path);
+                let _ = Ext2Fs::get().create_dir(ino, path, uid, gid);
                 Ok(())
             }
             _ => Err(VfsError::Unsupported),
@@ -1699,7 +1699,10 @@ impl VfsNodeOps for Ext2Inode {
             SFlag::S_IFLNK => VfsNodeType::SymLink,
             _ => panic!("unsupport type {:#x}", inode.type_and_perm.0),
         };
-        Ok(VfsNodeAttr::new(perm, node_type, inode.low_size as u64, inode.nbr_disk_sectors as u64))
+        Ok(VfsNodeAttr::new(
+            perm, node_type, inode.low_size as u64, inode.nbr_disk_sectors as u64,
+            inode.user_id.into(), inode.group_id.into()
+        ))
     }
 
     fn getdents(&self, offset: u64, buf: &mut [u8]) -> VfsResult<usize> {
