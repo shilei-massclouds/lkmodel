@@ -221,7 +221,7 @@ impl File {
 
         let node_option = fs.lookup(dir, path);
         let node = if opts.create || opts.create_new {
-            error!("create: opts.mode {} {:#o}", path, opts._mode);
+            debug!("create: opts.mode {} {:#o}", path, opts._mode);
             match node_option {
                 Ok(node) => {
                     // already exists
@@ -294,7 +294,7 @@ impl File {
     }
 
     fn may_open(mask: u32, uid: u32, gid: u32, fsuid:u32, fsgid: u32, mut mode: u32) -> AxResult {
-        error!("may_open: mask {:#o} uid {:#x}, gid {:#x}, fsuid {:#x} fsgid {:#x} mode {:#o}",
+        info!("may_open: mask {:#o} uid {:#x}, gid {:#x}, fsuid {:#x} fsgid {:#x} mode {:#o}",
             mask, uid, gid, fsuid, fsgid, mode);
         // Are we the owner? If so, ACL's don't matter.
         if uid == fsuid {
