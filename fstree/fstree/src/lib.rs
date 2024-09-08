@@ -132,8 +132,10 @@ impl FsStruct {
         let attr = node.get_attr()?;
         if attr.is_dir() {
             ax_err!(IsADirectory)
+        /*
         } else if !attr.perm().owner_writable() {
             ax_err!(PermissionDenied)
+        */
         } else {
             self.parent_node_of(dir, path).remove(path)
         }

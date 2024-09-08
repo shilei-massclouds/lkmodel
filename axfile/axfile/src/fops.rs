@@ -258,13 +258,12 @@ impl File {
             return ax_err!(IsADirectory);
         }
 
-        if !perm_to_cap(attr.perm()).contains(access_cap) {
-            return ax_err!(PermissionDenied);
+        let mut mask = Self::cap_to_linux_mask(access_cap);
+        if opts.create || opts.create_new {
+            mask = 0;
         }
         Self::may_open(
-            Self::cap_to_linux_mask(access_cap),
-            uid, gid, attr.uid(), attr.gid(),
-            attr.perm().mode()
+            mask, uid, gid, attr.uid(), attr.gid(), attr.perm().mode()
         )?;
 
         node.open(opts._custom_flags)?;
