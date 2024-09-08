@@ -14,6 +14,7 @@ axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal.git" }
 taskctx = { git = "ssh://git@github.com/shilei-massclouds/taskctx.git" }
 run_queue = { git = "ssh://git@github.com/shilei-massclouds/run_queue.git" }
 driver_block = { git = "ssh://git@github.com/shilei-massclouds/driver_block.git" }
+axfs_vfs = { git = "ssh://git@github.com/shilei-massclouds/axfs_vfs.git" }
 axdriver = { git = "ssh://git@github.com/shilei-massclouds/axdriver.git" }
 fstree = { git = "ssh://git@github.com/shilei-massclouds/fstree.git" }
 axfile = { git = "ssh://git@github.com/shilei-massclouds/axfile.git" }

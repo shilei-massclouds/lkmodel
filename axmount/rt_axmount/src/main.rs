@@ -3,9 +3,11 @@
 
 #[macro_use]
 extern crate axlog2;
-extern crate alloc;
 
+use core::str::from_utf8;
 use core::panic::PanicInfo;
+use axfs_vfs::VfsNodeType;
+use axfile::fops::{File, OpenOptions};
 
 /// Entry
 #[no_mangle]
@@ -26,23 +28,27 @@ pub extern "Rust" fn runtime_main(cpu_id: usize, dtb_pa: usize) {
     fstree::init(cpu_id, dtb_pa);
     let fs = fstree::init_fs();
     let locked_fs = fs.lock();
-    match axfile::api::create_dir("/testcases/abc", &locked_fs, 0, 0) {
+    match locked_fs.create_dir(None, "/testcases/abc", 0, 0, 0o777) {
         Ok(_) => info!("create /testcases/abc ok!"),
         Err(e) => error!("create /testcases/abc failed {}", e),
     }
 
     let fname = "/testcases/abc/new-file.txt";
     info!("test create file {:?}:", fname);
-    //assert_err!(axfile::api::metadata(fname), NotFound);
     let contents = "create a new file!\n";
-    axfile::api::write(fname, contents, &locked_fs, 0, 0).unwrap();
+    let wfile = locked_fs.create_file(None, fname, VfsNodeType::File, 0, 0, 0o644).unwrap();
+    wfile.write_at(0, contents.as_bytes()).unwrap();
 
-    let ret = axfile::api::read_to_string(fname, &locked_fs, 0, 0).unwrap();
-    info!("read test file: \"{}\"", ret);
-    assert_eq!(contents, ret);
+    let mut opts = OpenOptions::new();
+    opts.read(true);
+    let mut rfile = File::open(fname, &opts, &locked_fs, 0, 0).unwrap();
+    let mut buf = [0u8; 256];
+    let len = rfile.read(&mut buf).unwrap();
+    info!("read test file: \"{:?}\". len {}", from_utf8(&buf[..len]), len);
+    assert_eq!(contents.as_bytes(), &buf[..len]);
 
-    assert!(axfile::api::remove_file(fname, &locked_fs).is_ok());
-    assert!(axfile::api::remove_dir("/testcases/abc", &locked_fs).is_ok());
+    assert!(locked_fs.remove_file(None, fname).is_ok());
+    assert!(locked_fs.remove_dir(None, "/testcases/abc").is_ok());
 
     info!("[rt_axmount]: ok!");
     axhal::misc::terminate();

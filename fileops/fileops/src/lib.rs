@@ -24,7 +24,6 @@ mod proc_ops;
 use axerrno::AxResult;
 use axerrno::{LinuxError, LinuxResult, linux_err, linux_err_from};
 use axerrno::AxError::{NotFound, BrokenPipe};
-use axfile::api::{create_dir, remove_dir, remove_file};
 use axfile::fops::File;
 use axfile::fops::OpenOptions;
 use mutex::Mutex;
@@ -437,7 +436,7 @@ pub fn mkdirat(dfd: usize, pathname: &str, mode: usize) -> usize {
     let fs = current.fs.lock();
     let fsuid = current.fsuid();
     let fsgid = current.fsgid();
-    match create_dir(pathname, &fs, fsuid, fsgid) {
+    match fs.create_dir(None, pathname, fsuid, fsgid, mode as i32) {
         Ok(()) => 0,
         Err(e) => linux_err_from!(e),
     }
@@ -463,7 +462,7 @@ pub fn unlinkat(dfd: usize, path: &str, flags: usize) -> usize {
         if !ty.is_dir() {
             return linux_err!(ENOTDIR);
         }
-        match remove_dir(path, &fs) {
+        match fs.remove_dir(None, path) {
             Ok(()) => 0,
             Err(e) => linux_err_from!(e),
         }
@@ -471,7 +470,7 @@ pub fn unlinkat(dfd: usize, path: &str, flags: usize) -> usize {
         if ty.is_dir() {
             return linux_err!(EISDIR);
         }
-        match remove_file(path, &fs) {
+        match fs.remove_file(None, path) {
             Ok(()) => 0,
             Err(e) => linux_err_from!(e),
         }
