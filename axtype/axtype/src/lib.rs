@@ -229,7 +229,7 @@ pub const O_TRUNC:      i32 = 0o001000;
 pub const O_APPEND:     i32 = 0o002000;
 pub const O_NONBLOCK:   i32 = 0o004000;
 pub const O_DIRECTORY:  i32 = 0o200000;     /* must be a directory */
-pub const O_NOFOLLOW:   i32 = 00400000;     /* don't follow links */
+pub const O_NOFOLLOW:   i32 = 0o400000;     /* don't follow links */
 pub const O_NOATIME:    i32 = 0o1000000;
 pub const O_CLOEXEC:    i32 = 0o2000000;    /* set close_on_exec */
 

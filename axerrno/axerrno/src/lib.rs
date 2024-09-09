@@ -93,6 +93,8 @@ pub enum AxError {
     NoPermission,
     /// Permission denied
     PermDenied,
+    /// Too many symbolic links encountered
+    TooManyLinks,
 }
 
 /// A specialized [`Result`] type with [`AxError`] as the error type.
@@ -236,6 +238,7 @@ impl AxError {
             NoDevOrAddr => "No such device or address",
             NoPermission => "Operation not permitted",
             PermDenied => "Permission denied",
+            TooManyLinks => "Too many symbolic links encountered",
         }
     }
 
@@ -301,6 +304,7 @@ impl From<AxError> for LinuxError {
             NoDevOrAddr => LinuxError::ENXIO,
             NoPermission => LinuxError::EPERM,
             PermDenied => LinuxError::EACCES,
+            TooManyLinks => LinuxError::ELOOP,
         }
     }
 }

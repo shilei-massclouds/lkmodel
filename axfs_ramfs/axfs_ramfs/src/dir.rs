@@ -81,8 +81,11 @@ impl DirNode {
         Ok(())
     }
 
-    fn handle_symlink(&self, node: VfsNodeRef, flags: i32) -> Option<String> {
-        if (flags & O_NOFOLLOW) != 0 || !node.get_attr().unwrap().is_symlink() {
+    fn handle_symlink(&self, node: VfsNodeRef, flags: i32, trailing: bool) -> Option<String> {
+        if !node.get_attr().unwrap().is_symlink() {
+            return None;
+        }
+        if trailing && (flags & O_NOFOLLOW) != 0 {
             return None;
         }
         error!("symlink!");
@@ -134,7 +137,7 @@ impl VfsNodeOps for DirNode {
     }
 
     fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<VfsNodeRef> {
-        error!("step1 {}\n", path);
+        error!("lookup: {} flags {:#o}\n", path, flags);
         let (name, rest) = split_path(path);
         let mut name = String::from(name);
         loop {
@@ -148,8 +151,8 @@ impl VfsNodeOps for DirNode {
                     .cloned()
                     .ok_or(VfsError::NotFound),
             }?;
-            error!("name {} rest {:?} {} flags {}", name, rest, node.get_attr()?.is_symlink(), flags);
-            if let Some(linkname) = self.handle_symlink(node.clone(), 0) {
+            error!("name {} rest {:?} {} flags {:#o}", name, rest, node.get_attr()?.is_symlink(), flags);
+            if let Some(linkname) = self.handle_symlink(node.clone(), flags, rest.is_none()) {
                 name = linkname;
                 continue;
             }
@@ -197,7 +200,7 @@ impl VfsNodeOps for DirNode {
                             .get(name.as_str())
                             .ok_or(VfsError::NotFound)?
                             .clone();
-                        if let Some(linkname) = self.handle_symlink(subdir.clone(), 0) {
+                        if let Some(linkname) = self.handle_symlink(subdir.clone(), 0, true) {
                             name = linkname;
                             continue;
                         }
@@ -229,7 +232,7 @@ impl VfsNodeOps for DirNode {
                             .get(name.as_str())
                             .ok_or(VfsError::NotFound)?
                             .clone();
-                        if let Some(linkname) = self.handle_symlink(subdir.clone(), 0) {
+                        if let Some(linkname) = self.handle_symlink(subdir.clone(), 0, true) {
                             name = linkname;
                             continue;
                         }

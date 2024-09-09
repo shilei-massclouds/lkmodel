@@ -90,7 +90,7 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
     let fsgid = current.fsgid();
 
     let path = handle_path(dfd, filename);
-    info!("openat path {}", path);
+    error!("openat path {} flags", path);
     File::open(&path, &opts, &fs, fsuid, fsgid).or_else(|e| {
         if e == NotFound {
             // Handle special filesystem, e.g., procfs, sysfs ..

@@ -237,12 +237,12 @@ impl File {
     }
 
     fn _open_at(dir: Option<&VfsNodeRef>, path: &str, opts: &OpenOptions, fs: &FsStruct, uid: u32, gid: u32) -> AxResult<Self> {
-        error!("open file: {} {:?}", path, opts);
+        error!("open file: {} {:?} flags {:#o}", path, opts, opts._custom_flags);
         if !opts.is_valid() {
             return ax_err!(InvalidInput);
         }
 
-        let node_option = fs.lookup(dir, path, 0);
+        let node_option = fs.lookup(dir, path, opts._custom_flags);
         let node = if opts.create || opts.create_new {
             info!("create: opts.mode {} {:#o}", path, opts._mode);
             match node_option {
@@ -285,9 +285,7 @@ impl File {
         if opts.create || opts.create_new {
             mask = 0;
         }
-        Self::may_open(
-            mask, uid, gid, attr.uid(), attr.gid(), attr.perm().mode()
-        )?;
+        Self::may_open(mask, uid, gid, attr)?;
 
         node.open(opts._custom_flags)?;
         if opts.truncate {
@@ -316,9 +314,17 @@ impl File {
         ret
     }
 
-    fn may_open(mask: u32, uid: u32, gid: u32, fsuid:u32, fsgid: u32, mut mode: u32) -> AxResult {
+    fn may_open(mask: u32, uid: u32, gid: u32, attr: FileAttr) -> AxResult {
+        let fsuid = attr.uid();
+        let fsgid = attr.gid();
+        let mut mode = attr.perm().mode();
         info!("may_open: mask {:#o} uid {:#x}, gid {:#x}, fsuid {:#x} fsgid {:#x} mode {:#o}",
             mask, uid, gid, fsuid, fsgid, mode);
+
+        if attr.is_symlink() {
+            return ax_err!(TooManyLinks);
+        }
+
         // Are we the owner? If so, ACL's don't matter.
         if uid == fsuid {
             mode >>= 6;
