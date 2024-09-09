@@ -1,7 +1,7 @@
 use core::ops::Bound;
 use core::cmp::min;
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use alloc::vec;
+use alloc::{vec, vec::Vec};
 use alloc::collections::VecDeque;
 use alloc::collections::BTreeMap;
 use axfs_vfs::{impl_vfs_non_dir_default, VfsNodeAttr, VfsNodeOps, VfsResult, VfsError};
@@ -11,6 +11,57 @@ use axtype::{O_WRONLY, O_RDWR, O_NONBLOCK};
 use axfs_vfs::alloc_ino;
 
 const PIPE_CAPACITY: usize = 16 * PAGE_SIZE;
+
+/// The pipe node in the RAM filesystem.
+pub struct SymLinkNode {
+    buf: RwLock<Vec<u8>>,
+    ino: usize,
+    uid: u32,
+    gid: u32,
+}
+
+impl SymLinkNode {
+    pub fn new(uid: u32, gid: u32) -> Self {
+        Self {
+            buf: RwLock::new(Vec::new()),
+            ino: alloc_ino(),
+            uid,
+            gid,
+        }
+    }
+}
+
+impl VfsNodeOps for SymLinkNode {
+    fn get_ino(&self) -> usize {
+        self.ino
+    }
+
+    fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
+        Ok(VfsNodeAttr::new_symlink(0, 0, self.uid, self.gid))
+    }
+
+    fn write_at(&self, pos: u64, buf: &[u8]) -> VfsResult<usize> {
+        assert_eq!(pos, 0);
+        info!("symlink: {:?}", buf);
+        let mut wbuf = self.buf.write();
+        for i in 0..buf.len() {
+            wbuf.push(buf[i]);
+        }
+        error!("===> symlink: {:?} {}", wbuf, wbuf.len());
+        Ok(wbuf.len())
+    }
+
+    fn read_at(&self, pos: u64, buf: &mut [u8]) -> VfsResult<usize> {
+        assert_eq!(pos, 0);
+        let rbuf = self.buf.read();
+        assert!(buf.len() >= rbuf.len());
+        error!("sysmlink:read_at: rbuf len {}", rbuf.len());
+        buf[0..rbuf.len()].copy_from_slice(&rbuf);
+        Ok(rbuf.len())
+    }
+
+    impl_vfs_non_dir_default! {}
+}
 
 /// The pipe node in the RAM filesystem.
 pub struct PipeNode {

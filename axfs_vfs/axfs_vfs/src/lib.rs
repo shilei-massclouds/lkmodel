@@ -150,7 +150,12 @@ pub trait VfsNodeOps: Send + Sync {
     /// Lookup the node with given `path` in the directory.
     ///
     /// Return the node if found.
-    fn lookup(self: Arc<Self>, _path: &str) -> VfsResult<VfsNodeRef> {
+    fn lookup(self: Arc<Self>, _path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+        ax_err!(Unsupported)
+    }
+
+    /// Create a symlink with the given `path` and `target`
+    fn symlink(&self, _path: &str, _target: &str, _uid: u32, _gid: u32, _mode: i32) -> VfsResult {
         ax_err!(Unsupported)
     }
 
@@ -224,8 +229,18 @@ impl VfsNodeOps for RootDirectory {
         self.main_fs.root_dir().get_attr()
     }
 
-    fn lookup(self: Arc<Self>, path: &str) -> VfsResult<VfsNodeRef> {
-        self.lookup_mounted_fs(path, |fs, rest_path| fs.root_dir().lookup(rest_path))
+    fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<VfsNodeRef> {
+        self.lookup_mounted_fs(path, |fs, rest_path| fs.root_dir().lookup(rest_path, flags))
+    }
+
+    fn symlink(&self, path: &str, target: &str, uid: u32, gid: u32, mode: i32) -> VfsResult {
+        self.lookup_mounted_fs(path, |fs, rest_path| {
+            if rest_path.is_empty() {
+                Ok(()) // already exists
+            } else {
+                fs.root_dir().symlink(rest_path, target, uid, gid, mode)
+            }
+        })
     }
 
     fn create(&self, path: &str, ty: VfsNodeType, uid: u32, gid: u32, mode: i32) -> VfsResult {
@@ -284,7 +299,7 @@ impl RootDirectory {
         }
         // create the mount point in the main filesystem if it does not exist
         self.main_fs.root_dir().create(path, FileType::Dir, uid, gid, 0o777)?;
-        fs.mount(path, self.main_fs.root_dir().lookup(path)?)?;
+        fs.mount(path, self.main_fs.root_dir().lookup(path, 0)?)?;
         self.mounts.push(MountPoint::new(path, fs));
         Ok(())
     }

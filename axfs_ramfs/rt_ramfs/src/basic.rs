@@ -20,11 +20,11 @@ pub fn test_basic() {
     root.create("f2", VfsNodeType::File, 0, 0, 0o777).unwrap();
     root.create("foo", VfsNodeType::Dir, 0, 0, 0o777).unwrap();
 
-    let dir_foo = root.lookup("foo").unwrap();
+    let dir_foo = root.lookup("foo", 0).unwrap();
     dir_foo.create("f3", VfsNodeType::File, 0, 0, 0o777).unwrap();
     dir_foo.create("bar", VfsNodeType::Dir, 0, 0, 0o777).unwrap();
 
-    let dir_bar = dir_foo.lookup("bar").unwrap();
+    let dir_bar = dir_foo.lookup("bar", 0).unwrap();
     dir_bar.create("f4", VfsNodeType::File, 0, 0, 0o777).unwrap();
 
     let mut entries = ramfs.root_dir_node().get_entries();
@@ -62,15 +62,15 @@ fn test_ops(devfs: &RamFileSystem) -> VfsResult {
     assert!(root.get_attr()?.is_dir());
     assert_eq!(root.get_attr()?.file_type(), VfsNodeType::Dir);
     assert_eq!(
-        root.clone().lookup("urandom").err(),
+        root.clone().lookup("urandom", 0).err(),
         Some(VfsError::NotFound)
     );
     assert_eq!(
-        root.clone().lookup("f1/").err(),
+        root.clone().lookup("f1/", 0).err(),
         Some(VfsError::NotADirectory)
     );
 
-    let node = root.lookup("////f1")?;
+    let node = root.lookup("////f1", 0)?;
     assert_eq!(node.get_attr()?.file_type(), VfsNodeType::File);
     assert!(!node.get_attr()?.is_dir());
     assert_eq!(node.get_attr()?.size(), 0);
@@ -81,24 +81,24 @@ fn test_ops(devfs: &RamFileSystem) -> VfsResult {
     assert_eq!(node.read_at(0, &mut buf)?, N);
     assert_eq!(buf[..N_HALF], [0; N_HALF]);
     assert_eq!(buf[N_HALF..], [1; N_HALF]);
-    assert_eq!(node.lookup("/").err(), Some(VfsError::NotADirectory));
+    assert_eq!(node.lookup("/", 0).err(), Some(VfsError::NotADirectory));
 
-    let foo = devfs.root_dir().lookup(".///.//././/.////foo")?;
+    let foo = devfs.root_dir().lookup(".///.//././/.////foo", 0)?;
     assert!(foo.get_attr()?.is_dir());
     assert_eq!(
         foo.getdents(10, &mut buf).err(),
         None
     );
     assert!(Arc::ptr_eq(
-        &foo.clone().lookup("/f3")?,
-        &devfs.root_dir().lookup(".//./foo///f3")?,
+        &foo.clone().lookup("/f3", 0)?,
+        &devfs.root_dir().lookup(".//./foo///f3", 0)?,
     ));
     assert_eq!(
-        foo.clone().lookup("/bar//f4")?.get_attr()?.file_type(),
+        foo.clone().lookup("/bar//f4", 0)?.get_attr()?.file_type(),
         VfsNodeType::File
     );
     assert_eq!(
-        foo.lookup("/bar///")?.get_attr()?.file_type(),
+        foo.lookup("/bar///", 0)?.get_attr()?.file_type(),
         VfsNodeType::Dir
     );
 
@@ -109,29 +109,29 @@ fn test_get_parent(devfs: &RamFileSystem) -> VfsResult {
     let root = devfs.root_dir();
     assert!(root.parent().is_none());
 
-    let node = root.clone().lookup("f1")?;
+    let node = root.clone().lookup("f1", 0)?;
     assert!(node.parent().is_none());
 
-    let node = root.clone().lookup(".//foo/bar")?;
+    let node = root.clone().lookup(".//foo/bar", 0)?;
     assert!(node.parent().is_some());
     let parent = node.parent().unwrap();
-    assert!(Arc::ptr_eq(&parent, &root.clone().lookup("foo")?));
-    assert!(parent.lookup("bar").is_ok());
+    assert!(Arc::ptr_eq(&parent, &root.clone().lookup("foo", 0)?));
+    assert!(parent.lookup("bar", 0).is_ok());
 
-    let node = root.clone().lookup("foo/..")?;
-    assert!(Arc::ptr_eq(&node, &root.clone().lookup(".")?));
+    let node = root.clone().lookup("foo/..", 0)?;
+    assert!(Arc::ptr_eq(&node, &root.clone().lookup(".", 0)?));
 
     assert!(Arc::ptr_eq(
-        &root.clone().lookup("/foo/..")?,
-        &devfs.root_dir().lookup(".//./foo/././bar/../..")?,
+        &root.clone().lookup("/foo/..", 0)?,
+        &devfs.root_dir().lookup(".//./foo/././bar/../..", 0)?,
     ));
     assert!(Arc::ptr_eq(
-        &root.clone().lookup("././/foo//./../foo//bar///..//././")?,
-        &devfs.root_dir().lookup(".//./foo/")?,
+        &root.clone().lookup("././/foo//./../foo//bar///..//././", 0)?,
+        &devfs.root_dir().lookup(".//./foo/", 0)?,
     ));
     assert!(Arc::ptr_eq(
-        &root.clone().lookup("///foo//bar///../f3")?,
-        &root.lookup("foo/.//f3")?,
+        &root.clone().lookup("///foo//bar///../f3", 0)?,
+        &root.lookup("foo/.//f3", 0)?,
     ));
 
     Ok(())

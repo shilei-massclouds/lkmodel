@@ -60,11 +60,11 @@ impl FsStruct {
         }
     }
 
-    pub fn lookup(&self, dir: Option<&VfsNodeRef>, path: &str) -> AxResult<VfsNodeRef> {
+    pub fn lookup(&self, dir: Option<&VfsNodeRef>, path: &str, flags: i32) -> AxResult<VfsNodeRef> {
         if path.is_empty() {
             return ax_err!(NotFound);
         }
-        let node = self.parent_node_of(dir, path).lookup(path)?;
+        let node = self.parent_node_of(dir, path).lookup(path, flags)?;
         if path.ends_with('/') && !node.get_attr()?.is_dir() {
             ax_err!(NotADirectory)
         } else {
@@ -72,19 +72,36 @@ impl FsStruct {
         }
     }
 
-    pub fn create_file(&self, dir: Option<&VfsNodeRef>, path: &str, ty: VfsNodeType, uid: u32, gid: u32, mode: i32) -> AxResult<VfsNodeRef> {
+    pub fn create_symlink(
+        &self, dir: Option<&VfsNodeRef>,
+        path: &str, target: &str,
+        uid: u32, gid: u32, mode: i32
+    ) -> AxResult {
         if path.is_empty() {
             return ax_err!(NotFound);
         } else if path.ends_with('/') {
             return ax_err!(NotADirectory);
         }
         let parent = self.parent_node_of(dir, path);
+        error!("create_symlink: {}", path);
+        parent.symlink(path, target, uid, gid, mode)
+    }
+
+    pub fn create_file(&self, dir: Option<&VfsNodeRef>, path: &str, ty: VfsNodeType, uid: u32, gid: u32, mode: i32) -> AxResult<VfsNodeRef> {
+        info!("create_file: {} ..", path);
+        if path.is_empty() {
+            return ax_err!(NotFound);
+        } else if path.ends_with('/') {
+            return ax_err!(NotADirectory);
+        }
+        let parent = self.parent_node_of(dir, path);
+        info!("create_file: step1");
         parent.create(path, ty, uid, gid, mode)?;
-        parent.lookup(path)
+        parent.lookup(path, 0)
     }
 
     pub fn create_dir(&self, dir: Option<&VfsNodeRef>, path: &str, uid: u32, gid: u32, mode: i32) -> AxResult {
-        match self.lookup(dir, path) {
+        match self.lookup(dir, path, 0) {
             Ok(_) => ax_err!(AlreadyExists),
             Err(AxError::NotFound) => self.parent_node_of(dir, path).create(path, VfsNodeType::Dir, uid, gid, mode),
             Err(e) => Err(e),
@@ -115,7 +132,7 @@ impl FsStruct {
             return Ok(());
         }
 
-        let node = self.lookup(None, &abs_path)?;
+        let node = self.lookup(None, &abs_path, 0)?;
         let attr = node.get_attr()?;
         if !attr.is_dir() {
             ax_err!(NotADirectory)
@@ -128,7 +145,7 @@ impl FsStruct {
         }
     }
     pub fn remove_file(&self, dir: Option<&VfsNodeRef>, path: &str) -> AxResult {
-        let node = self.lookup(dir, path)?;
+        let node = self.lookup(dir, path, 0)?;
         let attr = node.get_attr()?;
         if attr.is_dir() {
             ax_err!(IsADirectory)
@@ -158,7 +175,7 @@ impl FsStruct {
             return ax_err!(PermissionDenied);
         }
 
-        let node = self.lookup(dir, path)?;
+        let node = self.lookup(dir, path, 0)?;
         let attr = node.get_attr()?;
         if !attr.is_dir() {
             ax_err!(NotADirectory)
@@ -169,7 +186,7 @@ impl FsStruct {
         }
     }
     pub fn rename(&self, old: &str, new: &str) -> AxResult {
-        if self.parent_node_of(None, new).lookup(new).is_ok() {
+        if self.parent_node_of(None, new).lookup(new, 0).is_ok() {
             warn!("dst file already exist, now remove it");
             self.remove_file(None, new)?;
         }

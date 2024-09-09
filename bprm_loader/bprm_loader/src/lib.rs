@@ -41,7 +41,7 @@ pub fn execve(
 }
 
 fn do_open_execat(filename: &str, _flags: usize) -> LinuxResult<FileRef> {
-    fileops::do_open(filename, _flags)
+    fileops::do_open(filename, _flags as i32)
 }
 
 fn exec_binprm(filename: &str, file: FileRef, argv: Vec<String>, envp: Vec<String>) -> LinuxResult<(usize, usize)> {

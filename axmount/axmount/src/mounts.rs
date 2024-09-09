@@ -41,13 +41,13 @@ pub(crate) fn procfs() -> VfsResult<Arc<fs::ramfs::RamFileSystem>> {
     proc_root.create("sys/net", VfsNodeType::Dir, uid, gid, mode)?;
     proc_root.create("sys/net/core", VfsNodeType::Dir, uid, gid, mode)?;
     proc_root.create("sys/net/core/somaxconn", VfsNodeType::File, uid, gid, mode)?;
-    let file_somaxconn = proc_root.clone().lookup("./sys/net/core/somaxconn")?;
+    let file_somaxconn = proc_root.clone().lookup("./sys/net/core/somaxconn", 0)?;
     file_somaxconn.write_at(0, b"4096\n")?;
 
     // Create /proc/sys/vm/overcommit_memory
     proc_root.create("sys/vm", VfsNodeType::Dir, uid, gid, mode)?;
     proc_root.create("sys/vm/overcommit_memory", VfsNodeType::File, uid, gid, mode)?;
-    let file_over = proc_root.clone().lookup("./sys/vm/overcommit_memory")?;
+    let file_over = proc_root.clone().lookup("./sys/vm/overcommit_memory", 0)?;
     file_over.write_at(0, b"0\n")?;
 
     // Create /proc/self/stat
@@ -56,7 +56,7 @@ pub(crate) fn procfs() -> VfsResult<Arc<fs::ramfs::RamFileSystem>> {
 
     // Create /proc/meminfo
     proc_root.create("meminfo", VfsNodeType::File, uid, gid, mode)?;
-    let file_meminfo = proc_root.clone().lookup("./meminfo")?;
+    let file_meminfo = proc_root.clone().lookup("./meminfo", 0)?;
     file_meminfo.write_at(0, b"MemAvailable: 100000 kB\nSwapFree: 100000 kB\n")?;
 
     Ok(Arc::new(procfs))
@@ -77,7 +77,7 @@ pub(crate) fn sysfs() -> VfsResult<Arc<fs::ramfs::RamFileSystem>> {
     sys_root.create("kernel/mm/transparent_hugepage/enabled", VfsNodeType::File, uid, gid, mode)?;
     let file_hp = sys_root
         .clone()
-        .lookup("./kernel/mm/transparent_hugepage/enabled")?;
+        .lookup("./kernel/mm/transparent_hugepage/enabled", 0)?;
     file_hp.write_at(0, b"always [madvise] never\n")?;
 
     // Create /sys/devices/system/clocksource/clocksource0/current_clocksource
@@ -91,7 +91,7 @@ pub(crate) fn sysfs() -> VfsResult<Arc<fs::ramfs::RamFileSystem>> {
     )?;
     let file_cc = sys_root
         .clone()
-        .lookup("devices/system/clocksource/clocksource0/current_clocksource")?;
+        .lookup("devices/system/clocksource/clocksource0/current_clocksource", 0)?;
     file_cc.write_at(0, b"tsc\n")?;
 
     Ok(Arc::new(sysfs))

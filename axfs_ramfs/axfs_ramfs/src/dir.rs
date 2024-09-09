@@ -4,13 +4,15 @@ use core::ptr::copy_nonoverlapping;
 use alloc::collections::BTreeMap;
 use alloc::sync::{Arc, Weak};
 use alloc::{string::String, vec::Vec};
+use alloc::borrow::ToOwned;
 use axfs_vfs::alloc_ino;
+use axtype::O_NOFOLLOW;
 
 use axfs_vfs::{VfsDirEntry, VfsNodeAttr, VfsNodeOps, VfsNodeRef, VfsNodeType};
 use axfs_vfs::{VfsError, VfsResult, DT_, LinuxDirent64};
 use spin::RwLock;
 
-use crate::file::{FileNode, PipeNode};
+use crate::file::{FileNode, PipeNode, SymLinkNode};
 
 /// The directory node in the RAM filesystem.
 ///
@@ -50,7 +52,7 @@ impl DirNode {
     }
 
     /// Creates a new node with the given name and type in this directory.
-    pub fn create_node(&self, name: &str, ty: VfsNodeType, uid: u32, gid: u32, mode: i32) -> VfsResult {
+    pub fn create_node(&self, name: &str, ty: VfsNodeType, uid: u32, gid: u32, mode: i32) -> VfsResult<VfsNodeRef> {
         if self.exist(name) {
             log::error!("AlreadyExists {}", name);
             return Err(VfsError::AlreadyExists);
@@ -59,10 +61,11 @@ impl DirNode {
             VfsNodeType::File => Arc::new(FileNode::new(uid, gid, mode)),
             VfsNodeType::Dir => Self::new(Some(self.this.clone()), uid, gid),
             VfsNodeType::Fifo => Arc::new(PipeNode::new(uid, gid)),
+            VfsNodeType::SymLink => Arc::new(SymLinkNode::new(uid, gid)),
             _ => return Err(VfsError::Unsupported),
         };
-        self.children.write().insert(name.into(), node);
-        Ok(())
+        self.children.write().insert(name.into(), node.clone());
+        Ok(node)
     }
 
     /// Removes a node by the given name in this directory.
@@ -77,9 +80,47 @@ impl DirNode {
         children.remove(name);
         Ok(())
     }
+
+    fn handle_symlink(&self, node: VfsNodeRef, flags: i32) -> Option<String> {
+        if (flags & O_NOFOLLOW) != 0 || !node.get_attr().unwrap().is_symlink() {
+            return None;
+        }
+        error!("symlink!");
+        let mut target = [0u8; 256];
+        let ret = node.read_at(0, &mut target).unwrap();
+        assert!(ret < target.len());
+        let target = core::str::from_utf8(&target[0..ret]).unwrap();
+        error!("SymLink to target: {}", target);
+        Some(target.to_owned())
+    }
 }
 
 impl VfsNodeOps for DirNode {
+    fn symlink(&self, path: &str, target: &str, uid: u32, gid: u32, mode: i32) -> VfsResult {
+        let (name, rest) = split_path(path);
+        if let Some(rest) = rest {
+            match name {
+                "" | "." => self.symlink(rest, target, uid, gid, mode),
+                ".." => self.parent().ok_or(VfsError::NotFound)?.symlink(rest, target, uid, gid, mode),
+                _ => {
+                    let subdir = self
+                        .children
+                        .read()
+                        .get(name)
+                        .ok_or(VfsError::NotFound)?
+                        .clone();
+                    subdir.symlink(rest, target, uid, gid, mode)
+                }
+            }
+        } else if name.is_empty() || name == "." || name == ".." {
+            Ok(()) // already exists
+        } else {
+            let node = self.create_node(name, VfsNodeType::SymLink, uid, gid, mode)?;
+            node.write_at(0, target.as_bytes())?;
+            Ok(())
+        }
+    }
+
     fn get_ino(&self) -> usize {
         self.ino
     }
@@ -92,23 +133,32 @@ impl VfsNodeOps for DirNode {
         self.parent.read().upgrade()
     }
 
-    fn lookup(self: Arc<Self>, path: &str) -> VfsResult<VfsNodeRef> {
+    fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<VfsNodeRef> {
+        error!("step1 {}\n", path);
         let (name, rest) = split_path(path);
-        let node = match name {
-            "" | "." => Ok(self.clone() as VfsNodeRef),
-            ".." => self.parent().ok_or(VfsError::NotFound),
-            _ => self
-                .children
-                .read()
-                .get(name)
-                .cloned()
-                .ok_or(VfsError::NotFound),
-        }?;
+        let mut name = String::from(name);
+        loop {
+            let node = match name.as_str() {
+                "" | "." => Ok(self.clone() as VfsNodeRef),
+                ".." => self.parent().ok_or(VfsError::NotFound),
+                _ => self
+                    .children
+                    .read()
+                    .get(name.as_str())
+                    .cloned()
+                    .ok_or(VfsError::NotFound),
+            }?;
+            error!("name {} rest {:?} {} flags {}", name, rest, node.get_attr()?.is_symlink(), flags);
+            if let Some(linkname) = self.handle_symlink(node.clone(), 0) {
+                name = linkname;
+                continue;
+            }
 
-        if let Some(rest) = rest {
-            node.lookup(rest)
-        } else {
-            Ok(node)
+            if let Some(rest) = rest {
+                return node.lookup(rest, flags);
+            } else {
+                return Ok(node);
+            }
         }
     }
 
@@ -132,26 +182,34 @@ impl VfsNodeOps for DirNode {
     }
 
     fn create(&self, path: &str, ty: VfsNodeType, uid: u32, gid: u32, mode: i32) -> VfsResult {
-        log::debug!("create {:?} at ramfs: {}", ty, path);
+        log::info!("create {:?} at ramfs: {}", ty, path);
         let (name, rest) = split_path(path);
         if let Some(rest) = rest {
             match name {
                 "" | "." => self.create(rest, ty, uid, gid, mode),
                 ".." => self.parent().ok_or(VfsError::NotFound)?.create(rest, ty, uid, gid, mode),
                 _ => {
-                    let subdir = self
-                        .children
-                        .read()
-                        .get(name)
-                        .ok_or(VfsError::NotFound)?
-                        .clone();
-                    subdir.create(rest, ty, uid, gid, mode)
+                    let mut name = String::from(name);
+                    loop {
+                        let subdir = self
+                            .children
+                            .read()
+                            .get(name.as_str())
+                            .ok_or(VfsError::NotFound)?
+                            .clone();
+                        if let Some(linkname) = self.handle_symlink(subdir.clone(), 0) {
+                            name = linkname;
+                            continue;
+                        }
+                        return subdir.create(rest, ty, uid, gid, mode);
+                    }
                 }
             }
         } else if name.is_empty() || name == "." || name == ".." {
             Ok(()) // already exists
         } else {
-            self.create_node(name, ty, uid, gid, mode)
+            self.create_node(name, ty, uid, gid, mode)?;
+            Ok(())
         }
     }
 
@@ -163,13 +221,20 @@ impl VfsNodeOps for DirNode {
                 "" | "." => self.remove(rest),
                 ".." => self.parent().ok_or(VfsError::NotFound)?.remove(rest),
                 _ => {
-                    let subdir = self
-                        .children
-                        .read()
-                        .get(name)
-                        .ok_or(VfsError::NotFound)?
-                        .clone();
-                    subdir.remove(rest)
+                    let mut name = String::from(name);
+                    loop {
+                        let subdir = self
+                            .children
+                            .read()
+                            .get(name.as_str())
+                            .ok_or(VfsError::NotFound)?
+                            .clone();
+                        if let Some(linkname) = self.handle_symlink(subdir.clone(), 0) {
+                            name = linkname;
+                            continue;
+                        }
+                        return subdir.remove(rest);
+                    }
                 }
             }
         } else if name.is_empty() || name == "." || name == ".." {

@@ -271,11 +271,23 @@ impl VfsNodeAttr {
         self.gid
     }
 
-    /// Creates a new `VfsNodeAttr` for a file, with the default file permission.
+    /// Creates a new `VfsNodeAttr` for a pipe, with the default file permission.
     pub const fn new_pipe(size: u64, blocks: u64, uid: u32, gid: u32) -> Self {
         Self {
             mode: VfsNodePerm::default_file(),
             ty: VfsNodeType::Fifo,
+            size,
+            blocks,
+            uid,
+            gid,
+        }
+    }
+
+    /// Creates a new `VfsNodeAttr` for a symlink, with the default file permission.
+    pub const fn new_symlink(size: u64, blocks: u64, uid: u32, gid: u32) -> Self {
+        Self {
+            mode: VfsNodePerm::default_file(),
+            ty: VfsNodeType::SymLink,
             size,
             blocks,
             uid,
@@ -341,6 +353,11 @@ impl VfsNodeAttr {
     /// Whether the node is a directory.
     pub const fn is_dir(&self) -> bool {
         self.ty.is_dir()
+    }
+
+    /// Whether the node is a symlink.
+    pub const fn is_symlink(&self) -> bool {
+        self.ty.is_symlink()
     }
 }
 

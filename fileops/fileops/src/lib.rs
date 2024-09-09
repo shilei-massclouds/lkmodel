@@ -52,7 +52,7 @@ const SEEK_END: usize = 2;
 const F_DUPFD: usize = 0;
 
 pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult<File> {
-    info!(
+    error!(
         "openat '{}' at dfd {:#X} flags {:#o} mode {:#o}",
         filename, dfd, flags, mode
     );
@@ -105,7 +105,7 @@ fn lookup_node(dfd: usize, filename: &str) -> AxResult<VfsNodeRef> {
     let current = task::current();
     let fs = current.fs.lock();
     let path = handle_path(dfd, filename);
-    fs.lookup(None, &path)
+    fs.lookup(None, &path, 0)
 }
 
 pub fn special_open(path: &str, opts: &OpenOptions) -> AxResult<File> {
@@ -442,6 +442,19 @@ pub fn mkdirat(dfd: usize, pathname: &str, mode: usize) -> usize {
     }
 }
 
+pub fn symlinkat(target: &str, newdfd: usize, linkpath: &str) -> usize {
+    error!("symlinkat: target {}, newdfd {:#x}, linkpath: {}",
+        target, newdfd, linkpath);
+    assert_eq!(newdfd, AT_FDCWD);
+    let linkpath = handle_path(newdfd, linkpath);
+    let current = task::current();
+    let fs = current.fs.lock();
+    let fsuid = current.fsuid();
+    let fsgid = current.fsgid();
+    fs.create_symlink(None, &linkpath, target, fsuid, fsgid, 0o777).unwrap();
+    0
+}
+
 pub fn unlinkat(dfd: usize, path: &str, flags: usize) -> usize {
     info!("unlinkat: dfd {:#X}, path {}, flags {:#x}", dfd, path, flags);
     assert_eq!(dfd, AT_FDCWD);
@@ -534,11 +547,14 @@ pub fn ftruncate(fd: usize, length: usize) -> usize {
     0
 }
 
-pub fn do_open(filename: &str, _flags: usize) -> LinuxResult<FileRef> {
+pub fn do_open(filename: &str, flags: i32) -> LinuxResult<FileRef> {
     debug!("do_open path {}", filename);
 
     let mut opts = OpenOptions::new();
     opts.read(true);
+    if (flags & (O_WRONLY|O_RDWR|O_TRUNC|O_APPEND)) != 0 {
+        opts.write(true);
+    }
 
     let current = task::current();
     let fs = current.fs.lock();
@@ -555,7 +571,7 @@ pub fn filetype(fname: &str) -> LinuxResult<VfsNodeType> {
     let current = task::current();
     let fs = current.fs.lock();
     // Todo: replace File::open with lookup
-    let node = fs.lookup(None, fname);
+    let node = fs.lookup(None, fname, 0);
     let metadata = node?.get_attr()?;
     Ok(metadata.file_type())
 }

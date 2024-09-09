@@ -40,6 +40,7 @@ macro_rules! impl_vfs_non_dir_default {
         fn lookup(
             self: $crate::__priv::Arc<Self>,
             _path: &str,
+            _flags: i32,
         ) -> $crate::VfsResult<$crate::VfsNodeRef> {
             $crate::__priv::ax_err!(NotADirectory)
         }

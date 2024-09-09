@@ -45,6 +45,29 @@ pub struct File {
     pub shared_map: BTreeMap<usize, usize>,
 }
 
+/*
+type OpenOp = fn(u32) -> u32;
+type ReadOp = fn(u32, u32) -> u32;
+
+pub struct FileOperations {
+    open: OpenOp,
+    read: ReadOp,
+}
+
+const PIPE_FOPS: FileOperations = FileOperations {
+    open: fifo_open,
+    read: pipe_read,
+};
+
+fn fifo_open(a: u32) -> u32 {
+    0
+}
+
+fn pipe_read(a: u32, b: u32) -> u32 {
+    0
+}
+*/
+
 /// An opened directory object, with open permissions and a cursor for
 /// [`read_dir`](Directory::read_dir).
 pub struct Directory {
@@ -214,14 +237,14 @@ impl File {
     }
 
     fn _open_at(dir: Option<&VfsNodeRef>, path: &str, opts: &OpenOptions, fs: &FsStruct, uid: u32, gid: u32) -> AxResult<Self> {
-        debug!("open file: {} {:?}", path, opts);
+        error!("open file: {} {:?}", path, opts);
         if !opts.is_valid() {
             return ax_err!(InvalidInput);
         }
 
-        let node_option = fs.lookup(dir, path);
+        let node_option = fs.lookup(dir, path, 0);
         let node = if opts.create || opts.create_new {
-            debug!("create: opts.mode {} {:#o}", path, opts._mode);
+            info!("create: opts.mode {} {:#o}", path, opts._mode);
             match node_option {
                 Ok(node) => {
                     // already exists
@@ -440,7 +463,7 @@ impl Directory {
             return ax_err!(InvalidInput);
         }
 
-        let node = fs.lookup(dir, path)?;
+        let node = fs.lookup(dir, path, 0)?;
         let attr = node.get_attr()?;
         if !attr.is_dir() {
             return ax_err!(NotADirectory);
