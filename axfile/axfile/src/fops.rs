@@ -237,7 +237,7 @@ impl File {
     }
 
     fn _open_at(dir: Option<&VfsNodeRef>, path: &str, opts: &OpenOptions, fs: &FsStruct, uid: u32, gid: u32) -> AxResult<Self> {
-        error!("open file: {} {:?} flags {:#o}", path, opts, opts._custom_flags);
+        info!("open file: {} {:?} flags {:#o}", path, opts, opts._custom_flags);
         if !opts.is_valid() {
             return ax_err!(InvalidInput);
         }

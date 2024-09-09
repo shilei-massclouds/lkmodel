@@ -88,12 +88,11 @@ impl DirNode {
         if trailing && (flags & O_NOFOLLOW) != 0 {
             return None;
         }
-        error!("symlink!");
         let mut target = [0u8; 256];
         let ret = node.read_at(0, &mut target).unwrap();
         assert!(ret < target.len());
         let target = core::str::from_utf8(&target[0..ret]).unwrap();
-        error!("SymLink to target: {}", target);
+        debug!("SymLink to target: {}", target);
         Some(target.to_owned())
     }
 }
@@ -137,7 +136,7 @@ impl VfsNodeOps for DirNode {
     }
 
     fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<VfsNodeRef> {
-        error!("lookup: {} flags {:#o}\n", path, flags);
+        info!("lookup: {} flags {:#o}\n", path, flags);
         let (name, rest) = split_path(path);
         let mut name = String::from(name);
         loop {
@@ -151,7 +150,7 @@ impl VfsNodeOps for DirNode {
                     .cloned()
                     .ok_or(VfsError::NotFound),
             }?;
-            error!("name {} rest {:?} {} flags {:#o}", name, rest, node.get_attr()?.is_symlink(), flags);
+            debug!("name {} rest {:?} {} flags {:#o}", name, rest, node.get_attr()?.is_symlink(), flags);
             if let Some(linkname) = self.handle_symlink(node.clone(), flags, rest.is_none()) {
                 name = linkname;
                 continue;

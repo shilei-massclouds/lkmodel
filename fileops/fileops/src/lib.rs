@@ -52,7 +52,7 @@ const SEEK_END: usize = 2;
 const F_DUPFD: usize = 0;
 
 pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult<File> {
-    error!(
+    info!(
         "openat '{}' at dfd {:#X} flags {:#o} mode {:#o}",
         filename, dfd, flags, mode
     );
@@ -90,7 +90,7 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
     let fsgid = current.fsgid();
 
     let path = handle_path(dfd, filename);
-    error!("openat path {} flags", path);
+    debug!("openat path {} flags", path);
     File::open(&path, &opts, &fs, fsuid, fsgid).or_else(|e| {
         if e == NotFound {
             // Handle special filesystem, e.g., procfs, sysfs ..
@@ -201,7 +201,6 @@ pub fn write(fd: usize, ubuf: &[u8]) -> LinuxResult<usize> {
     match locked_file.write(&kbuf) {
         Ok(pos) => Ok(pos),
         Err(BrokenPipe) => {
-            error!("EPIPE");
             let tid = current.tid();
             force_sig_fault(tid, task::SIGPIPE, 0, 0);
             Err(LinuxError::EPIPE)
@@ -443,7 +442,7 @@ pub fn mkdirat(dfd: usize, pathname: &str, mode: usize) -> usize {
 }
 
 pub fn symlinkat(target: &str, newdfd: usize, linkpath: &str) -> usize {
-    error!("symlinkat: target {}, newdfd {:#x}, linkpath: {}",
+    info!("symlinkat: target {}, newdfd {:#x}, linkpath: {}",
         target, newdfd, linkpath);
     assert_eq!(newdfd, AT_FDCWD);
     let linkpath = handle_path(newdfd, linkpath);
