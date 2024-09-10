@@ -52,7 +52,7 @@ impl VfsNodeOps for DirNode {
     }
 
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
-        Ok(VfsNodeAttr::new_dir(4096, 0, self.uid, self.gid))
+        Ok(VfsNodeAttr::new_dir(4096, 0, self.uid, self.gid, 0o777))
     }
 
     fn parent(&self) -> Option<VfsNodeRef> {

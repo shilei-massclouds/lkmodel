@@ -1,13 +1,12 @@
 use core::ops::Bound;
 use core::cmp::min;
-use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use core::sync::atomic::{AtomicUsize, Ordering};
 use alloc::{vec, vec::Vec};
-use alloc::collections::VecDeque;
 use alloc::collections::BTreeMap;
-use axfs_vfs::{impl_vfs_non_dir_default, VfsNodeAttr, VfsNodeOps, VfsResult, VfsError};
+use axfs_vfs::{impl_vfs_non_dir_default, VfsNodeAttr, VfsNodeOps, VfsResult};
+use axfs_vfs::VfsNodeAttrValid;
 use spin::RwLock;
 use axtype::{PAGE_SIZE, PAGE_SHIFT};
-use axtype::{O_WRONLY, O_RDWR, O_NONBLOCK};
 use axfs_vfs::alloc_ino;
 
 /// The symlink node in the RAM filesystem.
@@ -71,8 +70,8 @@ pub struct FileNode {
     index: AtomicUsize,
     offset: AtomicUsize,
     ino: usize,
-    uid: u32,
-    gid: u32,
+    uid: RwLock<u32>,
+    gid: RwLock<u32>,
     mode: i32,
 }
 
@@ -83,8 +82,8 @@ impl FileNode {
             index: AtomicUsize::new(0),
             offset: AtomicUsize::new(0),
             ino: alloc_ino(),
-            uid,
-            gid,
+            uid: RwLock::new(uid),
+            gid: RwLock::new(gid),
             mode,
         }
     }
@@ -109,7 +108,18 @@ impl VfsNodeOps for FileNode {
     }
 
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
-        Ok(VfsNodeAttr::new_file(self.size() as u64, 0, self.uid, self.gid, self.mode))
+        Ok(VfsNodeAttr::new_file(self.size() as u64, 0,
+            *self.uid.read(), *self.gid.read(), self.mode))
+    }
+
+    fn set_attr(&self, attr: &VfsNodeAttr, valid: &VfsNodeAttrValid) -> VfsResult {
+        if valid.contains(VfsNodeAttrValid::ATTR_UID) {
+            *self.uid.write() = attr.uid();
+        }
+        if valid.contains(VfsNodeAttrValid::ATTR_GID) {
+            *self.gid.write() = attr.gid();
+        }
+        Ok(())
     }
 
     fn truncate(&self, size: u64) -> VfsResult {

@@ -131,29 +131,27 @@ fn linux_syscall_setitimer(args: SyscallArgs) -> usize {
 }
 
 fn linux_syscall_fchownat(args: SyscallArgs) -> usize {
-    let [dfd, pathname, owner, group, flags, ..] = args;
-    let pathname = get_user_str(pathname);
-    warn!(
-        "impl fchownat dfd {:#X} path {} owner:group {}:{} flags {:#X}",
-        dfd, pathname, owner, group, flags
-    );
-    0
+    let [dfd, filename, uid, gid, flags, ..] = args;
+    let filename = get_user_str(filename);
+    fileops::fchownat(dfd, &filename, uid as u32, gid as u32, flags)
+        .unwrap_or_else(|e| {
+            linux_err_from!(e)
+        })
 }
 
 fn linux_syscall_fchmod(args: SyscallArgs) -> usize {
     let [fd, mode, ..] = args;
-    warn!("impl fchmod fd {} mode {:#o}", fd, mode);
+    error!("impl fchmod fd {} mode {:#o}", fd, mode);
     0
 }
 
 fn linux_syscall_fchmodat(args: SyscallArgs) -> usize {
-    let [dfd, pathname, mode, flags, ..] = args;
-    let pathname = get_user_str(pathname);
-    warn!(
-        "impl fchmodat dfd {:#X} path {} mode {:#o} flags {:#X}",
-        dfd, pathname, mode, flags
-    );
-    0
+    let [dfd, filename, mode, flags, ..] = args;
+    let filename = get_user_str(filename);
+    fileops::fchmodat(dfd, &filename, mode as i32, flags)
+        .unwrap_or_else(|e| {
+            linux_err_from!(e)
+        })
 }
 
 fn linux_syscall_mkdirat(args: SyscallArgs) -> usize {

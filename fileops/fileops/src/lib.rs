@@ -17,7 +17,8 @@ use pipefs::PipeNode;
 use signal::force_sig_fault;
 use axfs_vfs::VfsNodeRef;
 use axmount::init_root;
-use axfs_vfs::FileSystemInfo;
+use axfs_vfs::{FileSystemInfo, VfsNodeType, VfsNodeAttrValid, VfsNodeAttr};
+use axfs_vfs::path::canonicalize;
 
 mod proc_ops;
 
@@ -29,8 +30,6 @@ use axfile::fops::OpenOptions;
 use mutex::Mutex;
 use axtype::get_user_str;
 use axio::SeekFrom;
-use axfs_vfs::VfsNodeType;
-use axfs_vfs::path::canonicalize;
 use axtype::{O_CREAT, O_TRUNC, O_APPEND, O_WRONLY, O_RDWR, O_EXCL};
 
 pub type FileRef = Arc<Mutex<File>>;
@@ -251,7 +250,7 @@ pub struct KernelStat {
     pub st_ctime_nsec: isize,
 }
 
-pub fn faccessat(dfd: usize, path: &String) -> usize {
+pub fn faccessat(dfd: usize, path: &str) -> usize {
     match lookup_node(dfd, &path) {
         Ok(_) => {
             return 0;
@@ -260,6 +259,48 @@ pub fn faccessat(dfd: usize, path: &String) -> usize {
             return linux_err_from!(e);
         }
     }
+}
+
+pub fn fchmodat(
+    dfd: usize, filename: &str, mode: i32, _flags: usize
+) -> LinuxResult<usize> {
+    error!(
+        "fchmodat dfd {:#X} {} mode {:#o}",
+        dfd, filename, mode
+    );
+
+    let node = lookup_node(dfd, filename)?;
+    let mut attr = VfsNodeAttr::default();
+    let mut valid = VfsNodeAttrValid::ATTR_MODE;
+    attr.set_mode(mode);
+    node.set_attr(&attr, &valid)?;
+    error!("attr {:?} valid {:#x}", node.get_attr()?, valid.bits());
+    Ok(0)
+}
+
+pub fn fchownat(
+    dfd: usize, filename: &str, uid: u32, gid: u32, flags: usize
+) -> LinuxResult<usize> {
+    info!(
+        "fchownat dfd {:#X} {} owner:group {}:{} flags {:#X}",
+        dfd, filename, uid, gid, flags
+    );
+    assert_eq!(flags, 0);
+
+    let node = lookup_node(dfd, filename)?;
+    let mut attr = VfsNodeAttr::default();
+    let mut valid = VfsNodeAttrValid::empty();
+    if uid != u32::MAX {
+        valid.insert(VfsNodeAttrValid::ATTR_UID);
+        attr.set_uid(uid);
+    }
+    if gid != u32::MAX {
+        valid.insert(VfsNodeAttrValid::ATTR_GID);
+        attr.set_gid(gid);
+    }
+    node.set_attr(&attr, &valid)?;
+    info!("attr {:?} valid {:#x}", node.get_attr()?, valid.bits());
+    Ok(0)
 }
 
 pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usize {
@@ -271,11 +312,11 @@ pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usi
     assert!(dfd > 2);
 
     info!("fstatat dfd {:#x} flags {:#x}", dfd, flags);
-    let (metadata, sticky, ino) = if (flags & AT_EMPTY_PATH) == 0 {
+    let (metadata, ino) = if (flags & AT_EMPTY_PATH) == 0 {
         let path = get_user_str(path);
         match lookup_node(dfd, &path) {
             Ok(node) => {
-                (node.get_attr().unwrap(), false, node.get_ino())
+                (node.get_attr().unwrap(), node.get_ino())
             },
             Err(e) => {
                 return linux_err_from!(e);
@@ -291,17 +332,14 @@ pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usi
             }
         };
         let locked_file = file.lock();
-        (locked_file.get_attr().unwrap(), locked_file.sticky(), locked_file.get_ino())
+        (locked_file.get_attr().unwrap(), locked_file.get_ino())
     };
 
     let ty = metadata.file_type() as u8;
     let perm = metadata.perm().bits() as u32;
-    let sticky_bit = if sticky {
-        S_ISVTX
-    } else {
-        0
-    };
-    let st_mode = ((ty as u32) << 12) | perm | sticky_bit as u32;
+    let fsuid = metadata.uid();
+    let fsgid = metadata.gid();
+    let st_mode = ((ty as u32) << 12) | perm;
     let st_size = metadata.size();
     info!("st_mode {:#o} st_size: {}", st_mode, st_size);
 
@@ -310,8 +348,8 @@ pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usi
             st_ino: ino as u64,
             st_nlink: 1,
             st_mode,
-            st_uid: 1000,
-            st_gid: 1000,
+            st_uid: fsuid,
+            st_gid: fsgid,
             st_size: st_size,
             st_blocks: metadata.blocks() as _,
             // Todo: get real block_size from dev

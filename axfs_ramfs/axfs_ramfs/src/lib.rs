@@ -33,10 +33,10 @@ pub struct RamFileSystem {
 
 impl RamFileSystem {
     /// Create a new instance.
-    pub fn new(uid: u32, gid: u32) -> Self {
+    pub fn new(uid: u32, gid: u32, mode: i32) -> Self {
         Self {
             parent: Once::new(),
-            root: DirNode::new(None, uid, gid),
+            root: DirNode::new(None, uid, gid, mode),
         }
     }
 
@@ -72,6 +72,6 @@ impl VfsOps for RamFileSystem {
 
 impl Default for RamFileSystem {
     fn default() -> Self {
-        Self::new(0, 0)
+        Self::new(0, 0, 0)
     }
 }

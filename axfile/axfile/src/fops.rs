@@ -29,13 +29,13 @@ pub type FilePerm = axfs_vfs::VfsNodePerm;
 #define S_IFBLK  0060000
 #define S_IFDIR  0040000
 #define S_IFCHR  0020000
-#define S_ISUID  0004000
-#define S_ISGID  0002000
  */
 pub const S_IFMT:   i32 = 0o170000;
 pub const S_IFREG:  i32 = 0o100000;
 pub const S_IFIFO:  i32 = 0o10000;
-pub const S_ISVTX:  i32 = 0o1000;
+pub const S_ISUID:  i32 = 0o04000;
+pub const S_ISGID:  i32 = 0o02000;
+pub const S_ISVTX:  i32 = 0o01000;
 
 /// An opened file object, with open permissions and a cursor.
 pub struct File {
@@ -225,7 +225,7 @@ fn perm_to_cap(perm: FilePerm) -> Cap {
 impl File {
     pub fn new(node: VfsNodeRef, cap: Cap) -> Self {
         Self {
-            node: WithCap::new(node, cap, false),
+            node: WithCap::new(node, cap),
             is_append: false,
             offset: 0,
             shared_map: BTreeMap::new(),
@@ -291,9 +291,8 @@ impl File {
         if opts.truncate {
             node.truncate(0)?;
         }
-        let sticky = (opts._mode & S_ISVTX) != 0;
         Ok(Self {
-            node: WithCap::new(node, access_cap, sticky),
+            node: WithCap::new(node, access_cap),
             is_append: opts.append,
             offset: 0,
             shared_map: BTreeMap::new(),
@@ -452,11 +451,6 @@ impl File {
     pub fn get_cap(&self) -> Cap {
         self.node.cap()
     }
-
-    /// Gets the file cap.
-    pub fn sticky(&self) -> bool {
-        self.node.sticky()
-    }
 }
 
 impl Directory {
@@ -481,7 +475,7 @@ impl Directory {
 
         node.open(0)?;
         Ok(Self {
-            node: WithCap::new(node, access_cap, false),
+            node: WithCap::new(node, access_cap),
             entry_idx: 0,
         })
     }

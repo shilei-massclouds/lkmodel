@@ -60,7 +60,7 @@ bitflags::bitflags! {
 
 /// Node (file/directory) attributes.
 #[allow(dead_code)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct VfsNodeAttr {
     /// File permission mode.
     mode: VfsNodePerm,
@@ -78,8 +78,15 @@ pub struct VfsNodeAttr {
 
 bitflags::bitflags! {
     /// Node (file/directory) permission mode.
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone, Copy, Default)]
     pub struct VfsNodePerm: u16 {
+        /// Owner has set_uid_bit.
+        const SET_UID = 0o4000;
+        /// Directory has set_gid_bit.
+        const SET_GID = 0o2000;
+        /// Others cannot remove file not owned by themselves.
+        const SET_VTX = 0o1000;
+
         /// Owner has read permission.
         const OWNER_READ = 0o400;
         /// Owner has write permission.
@@ -105,9 +112,10 @@ bitflags::bitflags! {
 
 /// Node (file/directory) type.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Default)]
 pub enum VfsNodeType {
     /// FIFO (named pipe)
+    #[default]
     Fifo = 0o1,
     /// Character device
     CharDevice = 0o2,
@@ -159,7 +167,7 @@ impl VfsNodePerm {
         Self::from_bits_truncate(0o755)
     }
 
-    pub fn init_mode(mode: u16) -> Self {
+    pub fn set_mode(mode: u16) -> Self {
         Self::from_bits_truncate(mode)
     }
 
@@ -296,6 +304,26 @@ impl VfsNodeAttr {
         self.gid
     }
 
+    #[inline]
+    pub fn set_uid(&mut self, uid: u32) {
+        self.uid = uid;
+    }
+
+    #[inline]
+    pub fn set_gid(&mut self, gid: u32) {
+        self.gid = gid;
+    }
+
+    #[inline]
+    pub fn set_mode(&mut self, mode: i32) {
+        self.mode = VfsNodePerm::set_mode(mode as u16);
+    }
+
+    #[inline]
+    pub const fn mode(&self) -> i32 {
+        self.mode.mode() as i32
+    }
+
     /// Creates a new `VfsNodeAttr` for a pipe, with the default file permission.
     pub const fn new_pipe(size: u64, blocks: u64, uid: u32, gid: u32) -> Self {
         Self {
@@ -323,7 +351,7 @@ impl VfsNodeAttr {
     /// Creates a new `VfsNodeAttr` for a file, with the default file permission.
     pub fn new_file(size: u64, blocks: u64, uid: u32, gid: u32, mode: i32) -> Self {
         Self {
-            mode: VfsNodePerm::init_mode(mode as u16),
+            mode: VfsNodePerm::set_mode(mode as u16),
             ty: VfsNodeType::File,
             size,
             blocks,
@@ -334,9 +362,9 @@ impl VfsNodeAttr {
 
     /// Creates a new `VfsNodeAttr` for a directory, with the default directory
     /// permission.
-    pub const fn new_dir(size: u64, blocks: u64, uid: u32, gid: u32) -> Self {
+    pub fn new_dir(size: u64, blocks: u64, uid: u32, gid: u32, mode: i32) -> Self {
         Self {
-            mode: VfsNodePerm::default_dir(),
+            mode: VfsNodePerm::set_mode(mode as u16),
             ty: VfsNodeType::Dir,
             size,
             blocks,

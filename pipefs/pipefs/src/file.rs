@@ -1,12 +1,9 @@
-use core::ops::Bound;
 use core::cmp::min;
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use alloc::{vec, vec::Vec};
 use alloc::collections::VecDeque;
-use alloc::collections::BTreeMap;
 use axfs_vfs::{impl_vfs_non_dir_default, VfsNodeAttr, VfsNodeOps, VfsResult, VfsError};
 use spin::RwLock;
-use axtype::{PAGE_SIZE, PAGE_SHIFT};
+use axtype::PAGE_SIZE;
 use axtype::{O_WRONLY, O_RDWR, O_NONBLOCK};
 use axfs_vfs::alloc_ino;
 

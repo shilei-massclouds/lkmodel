@@ -25,7 +25,8 @@ pub(crate) fn devfs() -> Arc<fs::devfs::DeviceFileSystem> {
 pub(crate) fn ramfs() -> Arc<fs::ramfs::RamFileSystem> {
     let uid = 0;
     let gid = 0;
-    Arc::new(fs::ramfs::RamFileSystem::new(uid, gid))
+    let mode = 0o777;
+    Arc::new(fs::ramfs::RamFileSystem::new(uid, gid, mode))
 }
 
 #[cfg(feature = "procfs")]
@@ -33,7 +34,7 @@ pub(crate) fn procfs() -> VfsResult<Arc<fs::ramfs::RamFileSystem>> {
     let uid = 0;
     let gid = 0;
     let mode = 0o777;
-    let procfs = fs::ramfs::RamFileSystem::new(uid, gid);
+    let procfs = fs::ramfs::RamFileSystem::new(uid, gid, mode);
     let proc_root = procfs.root_dir();
 
     // Create /proc/sys/net/core/somaxconn
@@ -67,7 +68,7 @@ pub(crate) fn sysfs() -> VfsResult<Arc<fs::ramfs::RamFileSystem>> {
     let uid = 0;
     let gid = 0;
     let mode = 0o777;
-    let sysfs = fs::ramfs::RamFileSystem::new(uid, gid);
+    let sysfs = fs::ramfs::RamFileSystem::new(uid, gid, mode);
     let sys_root = sysfs.root_dir();
 
     // Create /sys/kernel/mm/transparent_hugepage/enabled

@@ -10,6 +10,7 @@ use axtype::O_NOFOLLOW;
 
 use axfs_vfs::{VfsDirEntry, VfsNodeAttr, VfsNodeOps, VfsNodeRef, VfsNodeType};
 use axfs_vfs::{VfsError, VfsResult, DT_, LinuxDirent64};
+use axfs_vfs::VfsNodeAttrValid;
 use spin::RwLock;
 
 use crate::file::{FileNode, SymLinkNode};
@@ -23,18 +24,21 @@ pub struct DirNode {
     parent: RwLock<Weak<dyn VfsNodeOps>>,
     children: RwLock<BTreeMap<String, VfsNodeRef>>,
     ino: usize,
-    uid: u32,
-    gid: u32,
+    uid: RwLock<u32>,
+    gid: RwLock<u32>,
+    mode: RwLock<i32>,
 }
 
 impl DirNode {
-    pub(super) fn new(parent: Option<Weak<dyn VfsNodeOps>>, uid: u32, gid: u32) -> Arc<Self> {
+    pub(super) fn new(parent: Option<Weak<dyn VfsNodeOps>>, uid: u32, gid: u32, mode: i32) -> Arc<Self> {
         Arc::new_cyclic(|this| Self {
             this: this.clone(),
             parent: RwLock::new(parent.unwrap_or_else(|| Weak::<Self>::new())),
             children: RwLock::new(BTreeMap::new()),
             ino: alloc_ino(),
-            uid, gid,
+            uid: RwLock::new(uid),
+            gid: RwLock::new(gid),
+            mode: RwLock::new(mode),
         })
     }
 
@@ -60,7 +64,7 @@ impl DirNode {
         }
         let node: VfsNodeRef = match ty {
             VfsNodeType::File => Arc::new(FileNode::new(uid, gid, mode)),
-            VfsNodeType::Dir => Self::new(Some(self.this.clone()), uid, gid),
+            VfsNodeType::Dir => Self::new(Some(self.this.clone()), uid, gid, mode),
             VfsNodeType::Fifo => Arc::new(PipeNode::new(uid, gid)),
             VfsNodeType::SymLink => Arc::new(SymLinkNode::new(uid, gid)),
             _ => return Err(VfsError::Unsupported),
@@ -129,7 +133,23 @@ impl VfsNodeOps for DirNode {
     }
 
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
-        Ok(VfsNodeAttr::new_dir(4096, 0, self.uid, self.gid))
+        Ok(VfsNodeAttr::new_dir(
+            4096, 0, *self.uid.read(), *self.gid.read(), *self.mode.read()
+        ))
+    }
+
+    fn set_attr(&self, attr: &VfsNodeAttr, valid: &VfsNodeAttrValid) -> VfsResult {
+        if valid.contains(VfsNodeAttrValid::ATTR_MODE) {
+            error!("set_attr: mode {:#o}", attr.mode());
+            *self.mode.write() = attr.mode();
+        }
+        if valid.contains(VfsNodeAttrValid::ATTR_UID) {
+            *self.uid.write() = attr.uid();
+        }
+        if valid.contains(VfsNodeAttrValid::ATTR_GID) {
+            *self.gid.write() = attr.gid();
+        }
+        Ok(())
     }
 
     fn parent(&self) -> Option<VfsNodeRef> {

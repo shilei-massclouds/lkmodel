@@ -14,7 +14,7 @@ pub fn test_basic() {
     // ├── f1
     // └── f2
 
-    let ramfs = RamFileSystem::new(0, 0);
+    let ramfs = RamFileSystem::new(0, 0, 0o777);
     let root = ramfs.root_dir();
     root.create("f1", VfsNodeType::File, 0, 0, 0o777).unwrap();
     root.create("f2", VfsNodeType::File, 0, 0, 0o777).unwrap();
