@@ -9,6 +9,7 @@ use alloc::{string::String, sync::Arc};
 use axfs_vfs::{VfsNodeRef, VfsNodeType};
 use spinpreempt::SpinLock;
 use axfs_vfs::RootDirectory;
+use axtype::O_NOFOLLOW;
 use lazy_init::LazyInit;
 
 pub struct FsStruct {
@@ -159,14 +160,10 @@ impl FsStruct {
         }
     }
     pub fn remove_file(&self, dir: Option<&VfsNodeRef>, path: &str) -> AxResult {
-        let node = self.lookup(dir, path, 0)?;
+        let node = self.lookup(dir, path, O_NOFOLLOW)?;
         let attr = node.get_attr()?;
         if attr.is_dir() {
             ax_err!(IsADirectory)
-        /*
-        } else if !attr.perm().owner_writable() {
-            ax_err!(PermissionDenied)
-        */
         } else {
             self.parent_node_of(dir, path).remove(path)
         }

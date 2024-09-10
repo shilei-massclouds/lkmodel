@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 log = "0.4"
 axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal" }
+axtype = { git = "ssh://git@github.com/shilei-massclouds/axtype" }
 axfs_vfs = { git = "ssh://git@github.com/shilei-massclouds/axfs_vfs.git" }
 axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno.git" }
 spinpreempt = { git = "ssh://git@github.com/shilei-massclouds/spinpreempt.git" }

@@ -30,7 +30,7 @@ use axfile::fops::OpenOptions;
 use mutex::Mutex;
 use axtype::get_user_str;
 use axio::SeekFrom;
-use axtype::{O_CREAT, O_TRUNC, O_APPEND, O_WRONLY, O_RDWR, O_EXCL};
+use axtype::{O_CREAT, O_TRUNC, O_APPEND, O_WRONLY, O_RDWR, O_EXCL, O_NOFOLLOW};
 
 pub type FileRef = Arc<Mutex<File>>;
 
@@ -554,7 +554,7 @@ pub fn symlinkat(target: &str, newdfd: usize, linkpath: &str) -> usize {
 }
 
 pub fn unlinkat(dfd: usize, path: &str, flags: usize) -> usize {
-    info!("unlinkat: dfd {:#X}, path {}, flags {:#x}", dfd, path, flags);
+    error!("unlinkat: dfd {:#X}, path {}, flags {:#x}", dfd, path, flags);
     assert_eq!(dfd, AT_FDCWD);
     if (flags & !AT_REMOVEDIR) != 0 {
         return linux_err!(EINVAL);
@@ -669,7 +669,7 @@ pub fn filetype(fname: &str) -> LinuxResult<VfsNodeType> {
     let current = task::current();
     let fs = current.fs.lock();
     // Todo: replace File::open with lookup
-    let node = fs.lookup(None, fname, 0);
+    let node = fs.lookup(None, fname, O_NOFOLLOW);
     let metadata = node?.get_attr()?;
     Ok(metadata.file_type())
 }

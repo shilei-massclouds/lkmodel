@@ -116,7 +116,7 @@ impl DirNode {
         let ret = node.read_at(0, &mut target).unwrap();
         assert!(ret < target.len());
         let target = core::str::from_utf8(&target[0..ret]).unwrap();
-        debug!("SymLink to target: {}", target);
+        error!("SymLink to target: {}", target);
         Some(target.to_owned())
     }
 }
@@ -261,7 +261,7 @@ impl VfsNodeOps for DirNode {
                             .get(name.as_str())
                             .ok_or(VfsError::NotFound)?
                             .clone();
-                        if let Some(linkname) = self.handle_symlink(subdir.clone(), 0, true) {
+                        if let Some(linkname) = self.handle_symlink(subdir.clone(), 0, false) {
                             name = linkname;
                             continue;
                         }
@@ -278,7 +278,7 @@ impl VfsNodeOps for DirNode {
     }
 
     fn remove(&self, path: &str) -> VfsResult {
-        log::error!("remove at ramfs: {}", path);
+        log::info!("remove at ramfs: {}", path);
         let (name, rest) = split_path(path);
         if let Some(rest) = rest {
             match name {
@@ -293,7 +293,7 @@ impl VfsNodeOps for DirNode {
                             .get(name.as_str())
                             .ok_or(VfsError::NotFound)?
                             .clone();
-                        if let Some(linkname) = self.handle_symlink(subdir.clone(), 0, true) {
+                        if let Some(linkname) = self.handle_symlink(subdir.clone(), 0, false) {
                             name = linkname;
                             continue;
                         }
