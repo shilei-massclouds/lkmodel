@@ -93,7 +93,7 @@ impl DirNode {
 
     /// Removes a node by the given name in this directory.
     pub fn remove_node(&self, name: &str) -> VfsResult {
-        error!("remove_node name {} ..", name);
+        info!("remove_node name {} ..", name);
         let mut children = self.children.write();
         let node = children.get(name).ok_or(VfsError::NotFound)?;
         if let Some(dir) = node.as_any().downcast_ref::<DirNode>() {
@@ -198,7 +198,7 @@ impl VfsNodeOps for DirNode {
     }
 
     fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<VfsNodeRef> {
-        error!("lookup: {} flags {:#o}\n", path, flags);
+        info!("lookup: {} flags {:#o}\n", path, flags);
         let (name, rest) = split_path(path);
         let mut name = String::from(name);
         loop {

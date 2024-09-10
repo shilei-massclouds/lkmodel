@@ -554,7 +554,7 @@ pub fn symlinkat(target: &str, newdfd: usize, linkpath: &str) -> usize {
 }
 
 pub fn unlinkat(dfd: usize, path: &str, flags: usize) -> usize {
-    error!("unlinkat: dfd {:#X}, path {}, flags {:#x}", dfd, path, flags);
+    info!("unlinkat: dfd {:#X}, path {}, flags {:#x}", dfd, path, flags);
     assert_eq!(dfd, AT_FDCWD);
     if (flags & !AT_REMOVEDIR) != 0 {
         return linux_err!(EINVAL);
