@@ -39,6 +39,7 @@ pub const LINUX_SYSCALL_SETITIMER: usize = 0x67;
 pub const LINUX_SYSCALL_TGKILL: usize = 0x83;
 pub const LINUX_SYSCALL_RT_SIGRETURN: usize = 0x8b;
 pub const LINUX_SYSCALL_SETGID:usize = 0x90;
+pub const LINUX_SYSCALL_SETREUID: usize = 0x91;
 pub const LINUX_SYSCALL_SETUID: usize = 0x92;
 pub const LINUX_SYSCALL_SETRESUID: usize = 0x93;
 pub const LINUX_SYSCALL_SETPGID: usize = 0x9a;

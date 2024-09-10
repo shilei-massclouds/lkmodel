@@ -69,6 +69,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_GETPID => linux_syscall_getpid(args),
         LINUX_SYSCALL_SETUID => linux_syscall_setuid(args),
         LINUX_SYSCALL_SETGID => linux_syscall_setgid(args),
+        LINUX_SYSCALL_SETREUID => linux_syscall_setreuid(args),
         LINUX_SYSCALL_SETRESUID => linux_syscall_setresuid(args),
         LINUX_SYSCALL_GETPPID => linux_syscall_getppid(args),
         LINUX_SYSCALL_GETGID => linux_syscall_getgid(args),
@@ -452,6 +453,11 @@ fn linux_syscall_setresuid(args: SyscallArgs) -> usize {
     sys::setresuid(ruid, euid, suid)
 }
 
+fn linux_syscall_setreuid(args: SyscallArgs) -> usize {
+    let [ruid, euid, ..] = args;
+    sys::setreuid(ruid, euid)
+}
+
 fn linux_syscall_setgid(args: SyscallArgs) -> usize {
     let gid = args[0];
     sys::setgid(gid)
@@ -475,8 +481,9 @@ fn linux_syscall_getuid(_args: SyscallArgs) -> usize {
     0
 }
 
-fn linux_syscall_setpgid(_args: SyscallArgs) -> usize {
-    sys::setpgid()
+fn linux_syscall_setpgid(args: SyscallArgs) -> usize {
+    let [pid, pgid, ..] = args;
+    sys::setpgid(pid, pgid)
 }
 
 fn linux_syscall_tgkill(_args: SyscallArgs) -> usize {

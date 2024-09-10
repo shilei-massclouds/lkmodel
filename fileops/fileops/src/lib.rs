@@ -10,7 +10,7 @@ use alloc::vec;
 use alloc::format;
 use core::slice;
 use core::cmp::min;
-use axfile::fops::{S_ISVTX, S_IFMT, S_IFREG, S_IFIFO};
+use axtype::{S_ISVTX, S_IFMT, S_IFREG, S_IFIFO};
 use axtype::RLIMIT_NOFILE;
 use capability::Cap;
 use pipefs::PipeNode;

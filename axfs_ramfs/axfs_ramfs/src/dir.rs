@@ -6,7 +6,7 @@ use alloc::sync::{Arc, Weak};
 use alloc::{string::String, vec::Vec};
 use alloc::borrow::ToOwned;
 use axfs_vfs::alloc_ino;
-use axtype::O_NOFOLLOW;
+use axtype::{O_NOFOLLOW, S_ISGID};
 
 use axfs_vfs::{VfsDirEntry, VfsNodeAttr, VfsNodeOps, VfsNodeRef, VfsNodeType};
 use axfs_vfs::{VfsError, VfsResult, DT_, LinuxDirent64};
@@ -57,10 +57,15 @@ impl DirNode {
     }
 
     /// Creates a new node with the given name and type in this directory.
-    pub fn create_node(&self, name: &str, ty: VfsNodeType, uid: u32, gid: u32, mode: i32) -> VfsResult<VfsNodeRef> {
+    pub fn create_node(&self, name: &str, ty: VfsNodeType, uid: u32, mut gid: u32, mode: i32) -> VfsResult<VfsNodeRef> {
         if self.exist(name) {
             log::error!("AlreadyExists {}", name);
             return Err(VfsError::AlreadyExists);
+        }
+        let dir_mode = *self.mode.read();
+        error!("dir_mode: {:#o}", dir_mode);
+        if (dir_mode & S_ISGID) != 0 {
+            gid = *self.gid.read();
         }
         let node: VfsNodeRef = match ty {
             VfsNodeType::File => Arc::new(FileNode::new(uid, gid, mode)),

@@ -52,17 +52,19 @@ pub fn getppid() -> usize {
 }
 
 pub fn getgid() -> usize {
-    warn!("impl getgid");
-    0
+    let task = task::current();
+    let mut cred = task.cred.lock();
+    cred.gid as usize
 }
 
 pub fn getegid() -> usize {
-    warn!("impl getegid");
-    0
+    let task = task::current();
+    let mut cred = task.cred.lock();
+    cred.egid as usize
 }
 
-pub fn setpgid() -> usize {
-    warn!("impl setpgid");
+pub fn setpgid(pid: usize, pgid: usize) -> usize {
+    warn!("impl setpgid pid {} pgid {}", pid, pgid);
     0
 }
 
@@ -113,6 +115,19 @@ pub fn setuid(uid: usize) -> usize {
     0
 }
 
+pub fn setreuid(ruid: usize, euid: usize) -> usize {
+    info!("setresuid: {:#x}, {:#x}", ruid, euid);
+    let ruid = ruid as u32;
+    let euid = euid as u32;
+
+    let task = task::current();
+    let mut cred = task.cred.lock();
+    cred.uid = ruid;
+    cred.euid = euid;
+    cred.fsuid = euid;
+    0
+}
+
 pub fn setresuid(ruid: usize, euid: usize, suid: usize) -> usize {
     info!("setresuid: {:#x}, {:#x}, {:#x}", ruid, euid, suid);
     let ruid = ruid as u32;
@@ -129,6 +144,7 @@ pub fn setresuid(ruid: usize, euid: usize, suid: usize) -> usize {
 }
 
 pub fn setgid(gid: usize) -> usize {
+    info!("setgid: {}", gid);
     let task = task::current();
     let mut cred = task.cred.lock();
     cred.gid = gid as u32;

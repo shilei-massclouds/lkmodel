@@ -23,20 +23,6 @@ pub type FileAttr = axfs_vfs::VfsNodeAttr;
 /// Alias of [`axfs_vfs::VfsNodePerm`].
 pub type FilePerm = axfs_vfs::VfsNodePerm;
 
-/*
-#define S_IFSOCK 0140000
-#define S_IFLNK  0120000
-#define S_IFBLK  0060000
-#define S_IFDIR  0040000
-#define S_IFCHR  0020000
- */
-pub const S_IFMT:   i32 = 0o170000;
-pub const S_IFREG:  i32 = 0o100000;
-pub const S_IFIFO:  i32 = 0o10000;
-pub const S_ISUID:  i32 = 0o04000;
-pub const S_ISGID:  i32 = 0o02000;
-pub const S_ISVTX:  i32 = 0o01000;
-
 /// An opened file object, with open permissions and a cursor.
 pub struct File {
     node: WithCap<VfsNodeRef>,
