@@ -49,7 +49,8 @@ use alloc::{sync::Arc, vec::Vec};
 use axerrno::{ax_err, AxError, AxResult};
 use core::sync::atomic::{AtomicUsize, Ordering};
 
-pub use self::structs::{FileSystemInfo, VfsDirEntry, VfsNodeAttr, VfsNodePerm, VfsNodeType, DT_, LinuxDirent64};
+pub use self::structs::{VfsDirEntry, VfsNodeAttr, VfsNodePerm, VfsNodeType};
+pub use self::structs::{VfsNodeAttrValid, FileSystemInfo, DT_, LinuxDirent64};
 
 pub type FileType = VfsNodeType;
 
@@ -108,6 +109,11 @@ pub trait VfsNodeOps: Send + Sync {
 
     /// Get the attributes of the node.
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
+        ax_err!(Unsupported)
+    }
+
+    /// Set the attributes of the node.
+    fn set_attr(&self, _attr: &VfsNodeAttr, _valid: &VfsNodeAttrValid) -> VfsResult {
         ax_err!(Unsupported)
     }
 

@@ -8,9 +8,11 @@
 extern crate log;
 extern crate alloc;
 
-mod dir;
 mod file;
 
+pub use self::file::PipeNode;
+
+/*
 pub use self::dir::DirNode;
 pub use self::file::FileNode;
 
@@ -59,3 +61,4 @@ impl Default for PipeFileSystem {
         Self::new()
     }
 }
+*/

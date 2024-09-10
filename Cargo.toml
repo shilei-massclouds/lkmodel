@@ -148,6 +148,9 @@ path = "./axfs_devfs/axfs_devfs"
 axfs_ramfs = { path = "./axfs_ramfs/axfs_ramfs" }
 rt_ramfs = { path = "./axfs_ramfs/rt_ramfs" }
 
+[patch."ssh://git@github.com/shilei-massclouds/pipefs"]
+pipefs = { path = "./pipefs/pipefs" }
+
 [patch."ssh://git@github.com/shilei-massclouds/rust_fatfs".rust_fatfs]
 path = "./rust_fatfs/rust_fatfs"
 

@@ -12,7 +12,8 @@ use axfs_vfs::{VfsDirEntry, VfsNodeAttr, VfsNodeOps, VfsNodeRef, VfsNodeType};
 use axfs_vfs::{VfsError, VfsResult, DT_, LinuxDirent64};
 use spin::RwLock;
 
-use crate::file::{FileNode, PipeNode, SymLinkNode};
+use crate::file::{FileNode, SymLinkNode};
+use pipefs::PipeNode;
 
 /// The directory node in the RAM filesystem.
 ///

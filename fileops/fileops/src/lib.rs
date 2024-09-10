@@ -13,7 +13,7 @@ use core::cmp::min;
 use axfile::fops::{S_ISVTX, S_IFMT, S_IFREG, S_IFIFO};
 use axtype::RLIMIT_NOFILE;
 use capability::Cap;
-use axfs_ramfs::PipeNode;
+use pipefs::PipeNode;
 use signal::force_sig_fault;
 use axfs_vfs::VfsNodeRef;
 use axmount::init_root;
