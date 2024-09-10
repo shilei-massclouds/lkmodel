@@ -63,7 +63,7 @@ impl DirNode {
             return Err(VfsError::AlreadyExists);
         }
         let dir_mode = *self.mode.read();
-        error!("dir_mode: {:#o}", dir_mode);
+        info!("dir_mode: {:#o}", dir_mode);
         if (dir_mode & S_ISGID) != 0 {
             gid = *self.gid.read();
         }
@@ -145,7 +145,6 @@ impl VfsNodeOps for DirNode {
 
     fn set_attr(&self, attr: &VfsNodeAttr, valid: &VfsNodeAttrValid) -> VfsResult {
         if valid.contains(VfsNodeAttrValid::ATTR_MODE) {
-            error!("set_attr: mode {:#o}", attr.mode());
             *self.mode.write() = attr.mode();
         }
         if valid.contains(VfsNodeAttrValid::ATTR_UID) {

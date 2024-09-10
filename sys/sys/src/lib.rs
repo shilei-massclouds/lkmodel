@@ -53,13 +53,13 @@ pub fn getppid() -> usize {
 
 pub fn getgid() -> usize {
     let task = task::current();
-    let mut cred = task.cred.lock();
+    let cred = task.cred.lock();
     cred.gid as usize
 }
 
 pub fn getegid() -> usize {
     let task = task::current();
-    let mut cred = task.cred.lock();
+    let cred = task.cred.lock();
     cred.egid as usize
 }
 

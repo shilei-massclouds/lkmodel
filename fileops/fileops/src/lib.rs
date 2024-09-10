@@ -10,7 +10,7 @@ use alloc::vec;
 use alloc::format;
 use core::slice;
 use core::cmp::min;
-use axtype::{S_ISVTX, S_IFMT, S_IFREG, S_IFIFO};
+use axtype::{S_IFMT, S_IFREG, S_IFIFO};
 use axtype::RLIMIT_NOFILE;
 use capability::Cap;
 use pipefs::PipeNode;
@@ -264,17 +264,17 @@ pub fn faccessat(dfd: usize, path: &str) -> usize {
 pub fn fchmodat(
     dfd: usize, filename: &str, mode: i32, _flags: usize
 ) -> LinuxResult<usize> {
-    error!(
+    info!(
         "fchmodat dfd {:#X} {} mode {:#o}",
         dfd, filename, mode
     );
 
     let node = lookup_node(dfd, filename)?;
     let mut attr = VfsNodeAttr::default();
-    let mut valid = VfsNodeAttrValid::ATTR_MODE;
+    let valid = VfsNodeAttrValid::ATTR_MODE;
     attr.set_mode(mode);
     node.set_attr(&attr, &valid)?;
-    error!("attr {:?} valid {:#x}", node.get_attr()?, valid.bits());
+    info!("attr {:?} valid {:#x}", node.get_attr()?, valid.bits());
     Ok(0)
 }
 
