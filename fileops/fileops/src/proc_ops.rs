@@ -15,6 +15,7 @@ use crate::OpenOptions;
 use mm::{VM_READ, VM_WRITE, VM_EXEC, VM_MAYSHARE};
 use core::cmp::min;
 use axfs_vfs::alloc_ino;
+use crate::do_open;
 
 struct ProcNode {
     path: String,
@@ -60,9 +61,22 @@ impl VfsNodeOps for ProcNode {
             "/proc/self/pagemap" => {
                 handle_pagemap(offset, buf)
             },
+            "/proc/mounts" => {
+                handle_mounts(offset, buf)
+            },
             _ => unimplemented!("openat path {}", self.path),
         }
     }
+}
+
+fn handle_mounts(offset: usize, buf: &mut [u8]) -> VfsResult<usize> {
+    // Todo: handle offset properly!
+    if offset != 0 {
+        return Ok(0);
+    }
+    let f = do_open("/etc/fstab", 0)?;
+    let ret = f.lock().read(buf)?;
+    Ok(ret)
 }
 
 fn handle_pagemap(offset: usize, buf: &mut [u8]) -> VfsResult<usize> {
