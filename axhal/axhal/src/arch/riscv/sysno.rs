@@ -12,6 +12,9 @@ pub const LINUX_SYSCALL_MKNODAT: usize = 0x21;
 pub const LINUX_SYSCALL_MKDIRAT: usize = 0x22;
 pub const LINUX_SYSCALL_UNLINKAT: usize = 0x23;
 pub const LINUX_SYSCALL_SYMLINKAT: usize = 0x24;
+pub const LINUX_SYSCALL_LINKAT: usize = 0x25;
+pub const LINUX_SYSCALL_UMOUNT2: usize = 0x27;
+pub const LINUX_SYSCALL_MOUNT:usize = 0x28;
 pub const LINUX_SYSCALL_STATFS: usize = 0x2b;
 pub const LINUX_SYSCALL_FTRUNCATE: usize = 0x2e;
 pub const LINUX_SYSCALL_FACCESSAT: usize = 0x30;
@@ -76,5 +79,3 @@ pub const LINUX_SYSCALL_SCHED_GETAFFINITY: usize = 0x7b;
 pub const LINUX_SYSCALL_KILL: usize = 0x81;
 pub const LINUX_SYSCALL_RT_SIGACTION: usize = 0x86;
 pub const LINUX_SYSCALL_RT_SIGPROCMASK: usize = 0x87;
-
-pub const LINUX_SYSCALL_MOUNT:usize = 0x28;

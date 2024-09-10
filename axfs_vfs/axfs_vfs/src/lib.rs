@@ -160,6 +160,11 @@ pub trait VfsNodeOps: Send + Sync {
         ax_err!(Unsupported)
     }
 
+    /// Create a hardlink with the given `path` and node
+    fn link(&self, path: &str, node: VfsNodeRef) -> VfsResult {
+        ax_err!(Unsupported)
+    }
+
     /// Create a symlink with the given `path` and `target`
     fn symlink(&self, _path: &str, _target: &str, _uid: u32, _gid: u32, _mode: i32) -> VfsResult {
         ax_err!(Unsupported)
@@ -237,6 +242,16 @@ impl VfsNodeOps for RootDirectory {
 
     fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<VfsNodeRef> {
         self.lookup_mounted_fs(path, |fs, rest_path| fs.root_dir().lookup(rest_path, flags))
+    }
+
+    fn link(&self, path: &str, node: VfsNodeRef) -> VfsResult {
+        self.lookup_mounted_fs(path, |fs, rest_path| {
+            if rest_path.is_empty() {
+                Ok(()) // already exists
+            } else {
+                fs.root_dir().link(rest_path, node)
+            }
+        })
     }
 
     fn symlink(&self, path: &str, target: &str, uid: u32, gid: u32, mode: i32) -> VfsResult {

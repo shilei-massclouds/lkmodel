@@ -10,7 +10,7 @@ use alloc::vec;
 use alloc::format;
 use core::slice;
 use core::cmp::min;
-use axtype::{S_IFMT, S_IFREG, S_IFIFO};
+use axtype::{S_IFMT, S_IFREG, S_IFIFO, S_IFCHR};
 use axtype::RLIMIT_NOFILE;
 use capability::Cap;
 use pipefs::PipeNode;
@@ -498,6 +498,9 @@ pub fn mknodat(dfd: usize, filename: &str, mode: usize, dev: usize) -> usize {
         S_IFIFO => {
             fs.create_file(None, &path, VfsNodeType::Fifo, fsuid, fsgid, mode).unwrap();
         },
+        S_IFCHR => {
+            fs.create_file(None, &path, VfsNodeType::CharDevice, fsuid, fsgid, mode).unwrap();
+        },
         _ => panic!("unknown mode {:#o}", mode & S_IFMT),
     }
     0
@@ -518,6 +521,23 @@ pub fn mkdirat(dfd: usize, pathname: &str, mode: usize) -> usize {
         Ok(()) => 0,
         Err(e) => linux_err_from!(e),
     }
+}
+
+pub fn linkat(
+    olddfd: usize, oldpath: &str,
+    newdfd: usize, newpath: &str,
+    flags: usize
+) -> LinuxResult<usize> {
+    error!("linkat: olddfd {:#x} newdfd {:#x}, oldpath {} newpath {} flags {}",
+        olddfd, newdfd, oldpath, newpath, flags);
+    let node = lookup_node(olddfd, oldpath)?;
+    let newpath = handle_path(newdfd, newpath);
+
+    let current = task::current();
+    let fs = current.fs.lock();
+
+    fs.create_link(None, &newpath, node)?;
+    Ok(0)
 }
 
 pub fn symlinkat(target: &str, newdfd: usize, linkpath: &str) -> usize {

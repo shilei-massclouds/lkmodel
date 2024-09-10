@@ -72,6 +72,20 @@ impl FsStruct {
         }
     }
 
+    pub fn create_link(
+        &self, dir: Option<&VfsNodeRef>,
+        path: &str, node: VfsNodeRef
+    ) -> AxResult {
+        if path.is_empty() {
+            return ax_err!(NotFound);
+        } else if path.ends_with('/') {
+            return ax_err!(NotADirectory);
+        }
+        let parent = self.parent_node_of(dir, path);
+        error!("create_link: {}", path);
+        parent.link(path, node)
+    }
+
     pub fn create_symlink(
         &self, dir: Option<&VfsNodeRef>,
         path: &str, target: &str,

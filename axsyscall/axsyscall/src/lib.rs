@@ -28,6 +28,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_MKNODAT => linux_syscall_mknodat(args),
         LINUX_SYSCALL_MKDIRAT => linux_syscall_mkdirat(args),
         LINUX_SYSCALL_UNLINKAT => linux_syscall_unlinkat(args),
+        LINUX_SYSCALL_LINKAT => linux_syscall_linkat(args),
         LINUX_SYSCALL_SYMLINKAT => linux_syscall_symlinkat(args),
         LINUX_SYSCALL_STATFS => linux_syscall_statfs(args),
         LINUX_SYSCALL_DUP => linux_syscall_dup(args),
@@ -91,6 +92,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_CAPGET => linux_syscall_capget(args),
         LINUX_SYSCALL_SETITIMER => linux_syscall_setitimer(args),
         LINUX_SYSCALL_MOUNT => linux_syscall_mount(args),
+        LINUX_SYSCALL_UMOUNT2 => linux_syscall_umount2(args),
         LINUX_SYSCALL_SOCKET => linux_syscall_socket(args),
         #[cfg(target_arch = "riscv64")]
         LINUX_SYSCALL_GETDENTS64 => linux_syscall_getdents64(args),
@@ -183,6 +185,16 @@ fn linux_syscall_unlinkat(args: SyscallArgs) -> usize {
     let [dfd, path, flags, ..] = args;
     let path = get_user_str(path);
     fileops::unlinkat(dfd, &path, flags)
+}
+
+fn linux_syscall_linkat(args: SyscallArgs) -> usize {
+    let [olddfd, oldpath, newdfd, newpath, flags, ..] = args;
+    let oldpath = get_user_str(oldpath);
+    let newpath = get_user_str(newpath);
+    fileops::linkat(olddfd, &oldpath, newdfd, &newpath, flags)
+        .unwrap_or_else(|e| {
+            linux_err_from!(e)
+        })
 }
 
 fn linux_syscall_symlinkat(args: SyscallArgs) -> usize {
@@ -608,6 +620,13 @@ fn linux_syscall_vfork(_args: SyscallArgs) -> usize {
 
 fn linux_syscall_mount(_args: SyscallArgs) -> usize {
     // TODO: implement mount syscall
+    error!("linux_syscall_mount: unimplemented!");
+    0
+}
+
+fn linux_syscall_umount2(_args: SyscallArgs) -> usize {
+    // TODO: implement umount2 syscall
+    error!("linux_syscall_umount2: unimplemented!");
     0
 }
 

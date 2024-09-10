@@ -7,6 +7,7 @@ use alloc::{string::String, vec::Vec};
 use alloc::borrow::ToOwned;
 use axfs_vfs::alloc_ino;
 use axtype::{O_NOFOLLOW, S_ISGID};
+use axfs_devfs::ConsoleDev;
 
 use axfs_vfs::{VfsDirEntry, VfsNodeAttr, VfsNodeOps, VfsNodeRef, VfsNodeType};
 use axfs_vfs::{VfsError, VfsResult, DT_, LinuxDirent64};
@@ -72,10 +73,23 @@ impl DirNode {
             VfsNodeType::Dir => Self::new(Some(self.this.clone()), uid, gid, mode),
             VfsNodeType::Fifo => Arc::new(PipeNode::new(uid, gid)),
             VfsNodeType::SymLink => Arc::new(SymLinkNode::new(uid, gid)),
+            VfsNodeType::CharDevice => Arc::new(ConsoleDev),
             _ => return Err(VfsError::Unsupported),
         };
         self.children.write().insert(name.into(), node.clone());
         Ok(node)
+    }
+
+    /// Fill a existed node with the given name into this directory.
+    pub fn fill_node(&self, name: &str, node: VfsNodeRef) -> VfsResult {
+        if self.exist(name) {
+            log::error!("AlreadyExists {}", name);
+            return Err(VfsError::AlreadyExists);
+        }
+        let dir_mode = *self.mode.read();
+        self.children.write().insert(name.into(), node.clone());
+        error!("fill_node with name: {}", name);
+        Ok(())
     }
 
     /// Removes a node by the given name in this directory.
@@ -108,6 +122,29 @@ impl DirNode {
 }
 
 impl VfsNodeOps for DirNode {
+    fn link(&self, path: &str, node: VfsNodeRef) -> VfsResult {
+        let (name, rest) = split_path(path);
+        if let Some(rest) = rest {
+            match name {
+                "" | "." => self.link(rest, node),
+                ".." => self.parent().ok_or(VfsError::NotFound)?.link(rest, node),
+                _ => {
+                    let subdir = self
+                        .children
+                        .read()
+                        .get(name)
+                        .ok_or(VfsError::NotFound)?
+                        .clone();
+                    subdir.link(rest, node)
+                }
+            }
+        } else if name.is_empty() || name == "." || name == ".." {
+            Ok(()) // already exists
+        } else {
+            self.fill_node(name, node)
+        }
+    }
+
     fn symlink(&self, path: &str, target: &str, uid: u32, gid: u32, mode: i32) -> VfsResult {
         let (name, rest) = split_path(path);
         if let Some(rest) = rest {

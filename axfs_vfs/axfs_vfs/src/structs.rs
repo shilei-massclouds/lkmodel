@@ -114,8 +114,8 @@ bitflags::bitflags! {
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Default)]
 pub enum VfsNodeType {
-    /// FIFO (named pipe)
     #[default]
+    /// FIFO (named pipe)
     Fifo = 0o1,
     /// Character device
     CharDevice = 0o2,
