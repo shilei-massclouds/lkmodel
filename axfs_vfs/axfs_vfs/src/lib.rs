@@ -161,7 +161,7 @@ pub trait VfsNodeOps: Send + Sync {
     }
 
     /// Create a hardlink with the given `path` and node
-    fn link(&self, path: &str, node: VfsNodeRef) -> VfsResult {
+    fn link(&self, _path: &str, _node: VfsNodeRef) -> VfsResult {
         ax_err!(Unsupported)
     }
 
