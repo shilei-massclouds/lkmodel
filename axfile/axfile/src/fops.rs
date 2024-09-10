@@ -20,6 +20,8 @@ pub type FileType = axfs_vfs::VfsNodeType;
 pub type DirEntry = axfs_vfs::VfsDirEntry;
 /// Alias of [`axfs_vfs::VfsNodeAttr`].
 pub type FileAttr = axfs_vfs::VfsNodeAttr;
+/// Alias of [`axfs_vfs::VfsNodeAttrValid`].
+pub type FileAttrValid = axfs_vfs::VfsNodeAttrValid;
 /// Alias of [`axfs_vfs::VfsNodePerm`].
 pub type FilePerm = axfs_vfs::VfsNodePerm;
 
@@ -431,6 +433,11 @@ impl File {
     /// Gets the file attributes.
     pub fn get_attr(&self) -> AxResult<FileAttr> {
         self.node.access(Cap::empty())?.get_attr()
+    }
+
+    /// Sets the file attributes.
+    pub fn set_attr(&self, attr: &FileAttr, valid: &FileAttrValid) -> AxResult {
+        self.node.access(Cap::empty())?.set_attr(attr, valid)
     }
 
     /// Gets the file cap.

@@ -46,6 +46,7 @@ pub const LINUX_SYSCALL_GETTID: usize = 186;
 pub const LINUX_SYSCALL_FCHMOD: usize = 91;
 pub const LINUX_SYSCALL_FCHMODAT: usize = 268;
 pub const LINUX_SYSCALL_FCHOWNAT: usize = 260;
+pub const LINUX_SYSCALL_FCHOWN: usize = 93;
 
 pub const LINUX_SYSCALL_CAPGET: usize = 125;
 
@@ -83,3 +84,4 @@ pub const LINUX_SYSCALL_SETUID: usize = 105;
 pub const LINUX_SYSCALL_SETGID:usize = 106;
 pub const LINUX_SYSCALL_SYMLINKAT: usize = 266;
 pub const LINUX_SYSCALL_SETREUID: usize = 113;
+pub const LINUX_SYSCALL_FGETXATTR: usize = 193;

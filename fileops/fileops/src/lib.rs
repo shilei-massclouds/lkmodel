@@ -278,6 +278,22 @@ pub fn fchmodat(
     Ok(0)
 }
 
+pub fn fchown(fd: usize, uid: u32, gid: u32) -> LinuxResult<usize> {
+    error!("fchown fd {:#X} owner:group {}:{}", fd, uid, gid);
+    let current = task::current();
+    let filetable = current.filetable.lock();
+    let file = match filetable.get_file(fd) {
+        Some(f) => f,
+        None => {
+            return Err(LinuxError::ENOENT);
+        }
+    };
+    let locked_file = file.lock();
+    let (attr, valid) = mk_attr(uid, gid);
+    locked_file.set_attr(&attr, &valid)?;
+    Ok(0)
+}
+
 pub fn fchownat(
     dfd: usize, filename: &str, uid: u32, gid: u32, flags: usize
 ) -> LinuxResult<usize> {
@@ -288,6 +304,13 @@ pub fn fchownat(
     assert_eq!(flags, 0);
 
     let node = lookup_node(dfd, filename)?;
+    let (attr, valid) = mk_attr(uid, gid);
+    node.set_attr(&attr, &valid)?;
+    info!("attr {:?} valid {:#x}", node.get_attr()?, valid.bits());
+    Ok(0)
+}
+
+fn mk_attr(uid: u32, gid: u32) -> (VfsNodeAttr, VfsNodeAttrValid) {
     let mut attr = VfsNodeAttr::default();
     let mut valid = VfsNodeAttrValid::empty();
     if uid != u32::MAX {
@@ -298,9 +321,7 @@ pub fn fchownat(
         valid.insert(VfsNodeAttrValid::ATTR_GID);
         attr.set_gid(gid);
     }
-    node.set_attr(&attr, &valid)?;
-    info!("attr {:?} valid {:#x}", node.get_attr()?, valid.bits());
-    Ok(0)
+    (attr, valid)
 }
 
 pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usize {
@@ -328,7 +349,7 @@ pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usi
         let file = match filetable.get_file(dfd) {
             Some(f) => f,
             None => {
-                return (-2isize) as usize;
+                return linux_err!(ENOENT);
             }
         };
         let locked_file = file.lock();

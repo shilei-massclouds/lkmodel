@@ -19,6 +19,7 @@ pub type SyscallArgs = [usize; MAX_SYSCALL_ARGS];
 
 pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
     match sysno {
+        LINUX_SYSCALL_FGETXATTR => linux_syscall_fgetxattr(args),
         LINUX_SYSCALL_IOCTL => linux_syscall_ioctl(args),
         LINUX_SYSCALL_FCNTL => linux_syscall_fcntl(args),
         LINUX_SYSCALL_GETCWD => linux_syscall_getcwd(args),
@@ -85,6 +86,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_FCHMOD => linux_syscall_fchmod(args),
         LINUX_SYSCALL_FCHMODAT => linux_syscall_fchmodat(args),
         LINUX_SYSCALL_FCHOWNAT => linux_syscall_fchownat(args),
+        LINUX_SYSCALL_FCHOWN => linux_syscall_fchown(args),
         LINUX_SYSCALL_SCHED_GETAFFINITY => linux_syscall_sched_getaffinity(args),
         LINUX_SYSCALL_CAPGET => linux_syscall_capget(args),
         LINUX_SYSCALL_SETITIMER => linux_syscall_setitimer(args),
@@ -135,6 +137,14 @@ fn linux_syscall_fchownat(args: SyscallArgs) -> usize {
     let [dfd, filename, uid, gid, flags, ..] = args;
     let filename = get_user_str(filename);
     fileops::fchownat(dfd, &filename, uid as u32, gid as u32, flags)
+        .unwrap_or_else(|e| {
+            linux_err_from!(e)
+        })
+}
+
+fn linux_syscall_fchown(args: SyscallArgs) -> usize {
+    let [fd, uid, gid, ..] = args;
+    fileops::fchown(fd, uid as u32, gid as u32)
         .unwrap_or_else(|e| {
             linux_err_from!(e)
         })
@@ -353,6 +363,14 @@ fn linux_syscall_madvise(_args: SyscallArgs) -> usize {
 fn linux_syscall_ioctl(args: SyscallArgs) -> usize {
     let [fd, request, udata, ..] = args;
     fileops::ioctl(fd, request, udata)
+}
+
+fn linux_syscall_fgetxattr(args: SyscallArgs) -> usize {
+    let [fd, name, value, size, ..] = args;
+    let name = get_user_str(name);
+    warn!("impl linux_syscall_fgetxattr fd:{} {}->{} ({})",
+        fd, name, value, size);
+    linux_err!(EBADF)
 }
 
 fn linux_syscall_fcntl(args: SyscallArgs) -> usize {

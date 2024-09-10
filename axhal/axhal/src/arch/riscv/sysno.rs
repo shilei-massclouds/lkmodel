@@ -2,6 +2,7 @@
 /// Linux syscall
 ///
 
+pub const LINUX_SYSCALL_FGETXATTR: usize = 0xa;
 pub const LINUX_SYSCALL_GETCWD: usize = 0x11;
 pub const LINUX_SYSCALL_DUP: usize = 0x17;
 pub const LINUX_SYSCALL_DUP3: usize = 0x18;
@@ -18,6 +19,7 @@ pub const LINUX_SYSCALL_CHDIR: usize = 0x31;
 pub const LINUX_SYSCALL_FCHMOD: usize = 0x34;
 pub const LINUX_SYSCALL_FCHMODAT: usize = 0x35;
 pub const LINUX_SYSCALL_FCHOWNAT: usize = 0x36;
+pub const LINUX_SYSCALL_FCHOWN: usize = 0x37;
 pub const LINUX_SYSCALL_OPENAT: usize = 0x38;
 pub const LINUX_SYSCALL_CLOSE: usize = 0x39;
 pub const LINUX_SYSCALL_PIPE2: usize = 0x3b;
