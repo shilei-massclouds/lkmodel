@@ -38,6 +38,8 @@ bitflags::bitflags! {
         const WRITE = 1 << 1;
         /// Executable access.
         const EXECUTE = 1 << 2;
+        /// Set stat access.
+        const SET_STAT = 1 << 3;
     }
 }
 

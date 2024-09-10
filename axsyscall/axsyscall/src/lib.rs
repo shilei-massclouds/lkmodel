@@ -152,8 +152,10 @@ fn linux_syscall_fchown(args: SyscallArgs) -> usize {
 
 fn linux_syscall_fchmod(args: SyscallArgs) -> usize {
     let [fd, mode, ..] = args;
-    error!("impl fchmod fd {} mode {:#o}", fd, mode);
-    0
+    fileops::fchmod(fd, mode as i32)
+        .unwrap_or_else(|e| {
+            linux_err_from!(e)
+        })
 }
 
 fn linux_syscall_fchmodat(args: SyscallArgs) -> usize {

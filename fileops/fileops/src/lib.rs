@@ -278,6 +278,26 @@ pub fn fchmodat(
     Ok(0)
 }
 
+pub fn fchmod(fd: usize, mode: i32) -> LinuxResult<usize> {
+    error!("fchmod fd {:#x} mode {:#o}", fd, mode);
+    let current = task::current();
+    let filetable = current.filetable.lock();
+    let file = match filetable.get_file(fd) {
+        Some(f) => f,
+        None => {
+            return Err(LinuxError::ENOENT);
+        }
+    };
+
+    let mut attr = VfsNodeAttr::default();
+    let valid = VfsNodeAttrValid::ATTR_MODE;
+    attr.set_mode(mode);
+
+    let locked_file = file.lock();
+    locked_file.set_attr(&attr, &valid)?;
+    Ok(0)
+}
+
 pub fn fchown(fd: usize, uid: u32, gid: u32) -> LinuxResult<usize> {
     error!("fchown fd {:#X} owner:group {}:{}", fd, uid, gid);
     let current = task::current();

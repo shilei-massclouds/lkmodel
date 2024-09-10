@@ -7,7 +7,7 @@ use capability::{Cap, WithCap};
 use core::fmt;
 use fstree::FsStruct;
 use alloc::collections::BTreeMap;
-use axtype::{O_DIRECTORY, O_NOATIME};
+use axtype::{O_DIRECTORY, O_NOATIME, O_PATH};
 
 #[cfg(feature = "myfs")]
 pub use crate::dev::Disk;
@@ -250,7 +250,8 @@ impl File {
             node_option?
         };
 
-        let access_cap = opts.into();
+        // File has Cap::SET_STAT in default.
+        let access_cap = Cap::SET_STAT | opts.into();
         let attr = node.get_attr()?;
 
         if (opts._custom_flags & O_NOATIME) != 0 {
@@ -279,8 +280,15 @@ impl File {
         if opts.truncate {
             node.truncate(0)?;
         }
+
+        let cap = if (opts._custom_flags & O_PATH) != 0 {
+            Cap::empty()
+        } else {
+            access_cap
+        };
+
         Ok(Self {
-            node: WithCap::new(node, access_cap),
+            node: WithCap::new(node, cap),
             is_append: opts.append,
             offset: 0,
             shared_map: BTreeMap::new(),
@@ -437,7 +445,7 @@ impl File {
 
     /// Sets the file attributes.
     pub fn set_attr(&self, attr: &FileAttr, valid: &FileAttrValid) -> AxResult {
-        self.node.access(Cap::empty())?.set_attr(attr, valid)
+        self.node.access(Cap::SET_STAT)?.set_attr(attr, valid)
     }
 
     /// Gets the file cap.
