@@ -87,3 +87,4 @@ pub const LINUX_SYSCALL_LINKAT: usize = 265;
 pub const LINUX_SYSCALL_SYMLINKAT: usize = 266;
 pub const LINUX_SYSCALL_SETREUID: usize = 113;
 pub const LINUX_SYSCALL_FGETXATTR: usize = 193;
+pub const LINUX_SYSCALL_FALLOCATE: usize = 285;

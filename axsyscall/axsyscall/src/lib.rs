@@ -45,6 +45,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_READLINKAT => usize::MAX,
         LINUX_SYSCALL_UTIMENSAT => linux_syscall_utimensat(args),
         LINUX_SYSCALL_FTRUNCATE => linux_syscall_ftruncate(args),
+        LINUX_SYSCALL_FALLOCATE => linux_syscall_fallocate(args),
         LINUX_SYSCALL_FSTATAT => linux_syscall_fstatat(args),
         LINUX_SYSCALL_UNAME => linux_syscall_uname(args),
         LINUX_SYSCALL_UMASK => linux_syscall_umask(args),
@@ -330,6 +331,14 @@ fn linux_syscall_fstatat(args: SyscallArgs) -> usize {
 fn linux_syscall_ftruncate(args: SyscallArgs) -> usize {
     let [fd, length, ..] = args;
     fileops::ftruncate(fd, length)
+}
+
+fn linux_syscall_fallocate(args: SyscallArgs) -> usize {
+    let [fd, mode, offset, len, ..] = args;
+    fileops::fallocate(fd, mode, offset, len)
+        .unwrap_or_else(|e| {
+            linux_err_from!(e)
+        })
 }
 
 fn linux_syscall_utimensat(args: SyscallArgs) -> usize {

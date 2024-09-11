@@ -17,6 +17,7 @@ pub const LINUX_SYSCALL_UMOUNT2: usize = 0x27;
 pub const LINUX_SYSCALL_MOUNT:usize = 0x28;
 pub const LINUX_SYSCALL_STATFS: usize = 0x2b;
 pub const LINUX_SYSCALL_FTRUNCATE: usize = 0x2e;
+pub const LINUX_SYSCALL_FALLOCATE: usize = 0x2f;
 pub const LINUX_SYSCALL_FACCESSAT: usize = 0x30;
 pub const LINUX_SYSCALL_CHDIR: usize = 0x31;
 pub const LINUX_SYSCALL_FCHMOD: usize = 0x34;

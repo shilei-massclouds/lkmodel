@@ -645,6 +645,19 @@ pub fn ftruncate(fd: usize, length: usize) -> usize {
     0
 }
 
+pub fn fallocate(fd: usize, mode: usize, offset: usize, len: usize) -> LinuxResult<usize> {
+    error!("fallocate: fd {} mode {:#o} offset {:#x}, len {:#x}",
+        fd, mode, offset, len);
+    assert_eq!(mode, 0);
+
+    let len = offset + len;
+    let current = task::current();
+    let file = current.filetable.lock().get_file(fd)
+        .ok_or(LinuxError::EBADF)?;
+    file.lock().truncate(len as u64)?;
+    Ok(0)
+}
+
 pub fn do_open(filename: &str, flags: i32) -> LinuxResult<FileRef> {
     debug!("do_open path {}", filename);
 
