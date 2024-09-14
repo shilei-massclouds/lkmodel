@@ -31,6 +31,7 @@ use mutex::Mutex;
 use axtype::get_user_str;
 use axio::SeekFrom;
 use axtype::{O_CREAT, O_TRUNC, O_APPEND, O_WRONLY, O_RDWR, O_EXCL, O_NOFOLLOW};
+use axtype::__O_TMPFILE;
 
 pub type FileRef = Arc<Mutex<File>>;
 
@@ -90,6 +91,11 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
 
     let path = handle_path(dfd, filename);
     debug!("openat path {} flags", path);
+
+    if (flags as i32 & __O_TMPFILE) != 0 {
+        return do_tmpfile(&path, &opts, fsuid, fsgid);
+    }
+
     File::open(&path, &opts, &fs, fsuid, fsgid).or_else(|e| {
         if e == NotFound {
             // Handle special filesystem, e.g., procfs, sysfs ..
@@ -98,6 +104,14 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
             Err(e)
         }
     })
+}
+
+fn do_tmpfile(path: &str, opts: &OpenOptions, uid: u32, gid: u32) -> AxResult<File> {
+    let root = init_root();
+    let fs = root.lookup_fs(path)?;
+    let inode = fs.alloc_inode(VfsNodeType::File, uid, gid, opts.mode())?;
+    let cap = Cap::SET_STAT | opts.into();
+    Ok(File::new(inode, cap))
 }
 
 fn lookup_node(dfd: usize, filename: &str) -> AxResult<VfsNodeRef> {
@@ -521,6 +535,21 @@ pub fn mkdirat(dfd: usize, pathname: &str, mode: usize) -> usize {
         Ok(()) => 0,
         Err(e) => linux_err_from!(e),
     }
+}
+
+pub fn readlinkat(
+    dfd: usize, filename: &str, buf: usize, size: usize
+) -> usize {
+    error!("!!!TODO!!! readlinkat: dfd {:#x} filename {} bufsize {}", dfd, filename, size);
+    let path = handle_path(dfd, filename);
+
+    // Todo: Now just return linkfile's name itself.
+    // Todo: Add readlink for each filesystem.
+    let ubuf: &mut [u8] = unsafe {
+        core::slice::from_raw_parts_mut(buf as *mut _, path.len())
+    };
+    ubuf.copy_from_slice(path.as_bytes());
+    path.len()
 }
 
 pub fn linkat(

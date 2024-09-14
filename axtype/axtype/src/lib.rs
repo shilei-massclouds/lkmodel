@@ -233,6 +233,7 @@ pub const O_NOFOLLOW:   i32 = 0o400000;     /* don't follow links */
 pub const O_NOATIME:    i32 = 0o1000000;
 pub const O_CLOEXEC:    i32 = 0o2000000;    /* set close_on_exec */
 pub const O_PATH:       i32 = 0o10000000;
+pub const __O_TMPFILE:  i32 = 0o20000000;
 
 pub const FS_NAME_LEN: usize = 255;
 

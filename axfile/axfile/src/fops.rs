@@ -100,6 +100,9 @@ impl OpenOptions {
     pub fn set_mode(&mut self, mode: i32) {
         self._mode = mode;
     }
+    pub fn mode(&self) -> i32 {
+        self._mode
+    }
     /// Sets the option for read access.
     pub fn read(&mut self, read: bool) {
         self.read = read;

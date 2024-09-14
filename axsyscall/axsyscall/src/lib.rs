@@ -42,7 +42,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_SENDFILE => linux_syscall_sendfile(args),
         LINUX_SYSCALL_WRITE => linux_syscall_write(args),
         LINUX_SYSCALL_WRITEV => linux_syscall_writev(args),
-        LINUX_SYSCALL_READLINKAT => usize::MAX,
+        LINUX_SYSCALL_READLINKAT => linux_syscall_readlinkat(args),
         LINUX_SYSCALL_UTIMENSAT => linux_syscall_utimensat(args),
         LINUX_SYSCALL_FTRUNCATE => linux_syscall_ftruncate(args),
         LINUX_SYSCALL_FALLOCATE => linux_syscall_fallocate(args),
@@ -321,6 +321,12 @@ fn linux_syscall_writev(args: SyscallArgs) -> usize {
 
     let iov_array = unsafe { core::slice::from_raw_parts(array as *const iovec, size) };
     fileops::writev(fd, iov_array)
+}
+
+fn linux_syscall_readlinkat(args: SyscallArgs) -> usize {
+    let [dfd, filename, buf, size, ..] = args;
+    let filename = get_user_str(filename);
+    fileops::readlinkat(dfd, &filename, buf, size)
 }
 
 fn linux_syscall_fstatat(args: SyscallArgs) -> usize {

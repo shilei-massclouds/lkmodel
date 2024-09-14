@@ -57,6 +57,9 @@ pub type FileType = VfsNodeType;
 /// A wrapper of [`Arc<dyn VfsNodeOps>`].
 pub type VfsNodeRef = Arc<dyn VfsNodeOps>;
 
+/// A wrapper of [`Arc<dyn VfsOps>`]
+pub type VfsRef = Arc<dyn VfsOps>;
+
 /// Alias of [`AxError`].
 pub type VfsError = AxError;
 
@@ -93,6 +96,11 @@ pub trait VfsOps: Send + Sync {
 
     /// Get the root directory of the filesystem.
     fn root_dir(&self) -> VfsNodeRef;
+
+    /// Alloc a new inode.
+    fn alloc_inode(&self, _ty: VfsNodeType, _uid: u32, _gid: u32, _mode: i32) -> VfsResult<VfsNodeRef> {
+        ax_err!(Unsupported)
+    }
 }
 
 /// Node (file/directory) operations.
@@ -334,11 +342,38 @@ impl RootDirectory {
     }
 
     pub fn statfs(&self, path: &str) -> AxResult<FileSystemInfo> {
-        self.lookup_mounted_fs(path, |fs, _| {
-            fs.statfs()
-        })
+        let fs = self.lookup_fs(path)?;
+        fs.statfs()
     }
 
+    pub fn lookup_fs(&self, path: &str) -> AxResult<VfsRef> {
+        error!("lookup_fs {} at root", path);
+        let path = path.trim_matches('/');
+        if let Some(rest) = path.strip_prefix("./") {
+            return self.lookup_fs(rest);
+        }
+
+        let mut idx = 0;
+        let mut max_len = 0;
+
+        // Find the filesystem that has the longest mounted path match
+        // TODO: more efficient, e.g. trie
+        for (i, mp) in self.mounts.iter().enumerate() {
+            // skip the first '/'
+            if path.starts_with(&mp.path[1..]) && mp.path.len() - 1 > max_len {
+                max_len = mp.path.len() - 1;
+                idx = i;
+            }
+        }
+
+        if max_len == 0 {
+            Ok(self.main_fs.clone())        // not matched any mount point
+        } else {
+            Ok(self.mounts[idx].fs.clone()) // matched at `idx`
+        }
+    }
+
+    // Deprecated: use lookup_fs to replace it.
     fn lookup_mounted_fs<F, T>(&self, path: &str, f: F) -> AxResult<T>
     where
         F: FnOnce(Arc<dyn VfsOps>, &str) -> AxResult<T>,

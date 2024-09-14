@@ -20,6 +20,7 @@ pub use self::file::FileNode;
 
 use alloc::sync::Arc;
 use axfs_vfs::{VfsNodeRef, VfsOps, VfsResult, FileSystemInfo};
+use axfs_vfs::{VfsError, VfsNodeType};
 use spin::once::Once;
 use axtype::PAGE_SIZE;
 
@@ -67,6 +68,13 @@ impl VfsOps for RamFileSystem {
             ..Default::default()
         };
         Ok(info)
+    }
+
+    fn alloc_inode(&self, ty: VfsNodeType, uid: u32, gid: u32, mode: i32) -> VfsResult<VfsNodeRef> {
+        match ty {
+            VfsNodeType::File => Ok(Arc::new(FileNode::new(uid, gid, mode))),
+            _ => return Err(VfsError::Unsupported),
+        }
     }
 }
 

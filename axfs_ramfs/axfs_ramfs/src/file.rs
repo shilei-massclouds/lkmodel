@@ -153,7 +153,7 @@ impl VfsNodeOps for FileNode {
     }
 
     fn read_at(&self, pos: u64, buf: &mut [u8]) -> VfsResult<usize> {
-        debug!("read_at pos {}, buf.len {}, total: {}", pos, buf.len(), self.size());
+        info!("read_at pos {}, buf.len {}, total: {}", pos, buf.len(), self.size());
         let mut pos = pos as usize;
         let start = pos as usize;
         let end = min(pos + buf.len(), self.size());
