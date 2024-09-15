@@ -1,18 +1,12 @@
-use core::ops::Bound;
-use core::cmp::min;
-use core::sync::atomic::{AtomicUsize, Ordering};
-use alloc::{vec, vec::Vec};
 use axfs_vfs::{impl_vfs_non_dir_default, VfsNodeAttr, VfsNodeOps, VfsResult};
-use axfs_vfs::VfsNodeAttrValid;
 use spin::RwLock;
-use axtype::{PAGE_SIZE, PAGE_SHIFT};
 use axfs_vfs::alloc_ino;
 
 pub type ReadOp = fn(usize, &mut [u8]) -> VfsResult<usize>;
 
 /// The symlink node in the RAM filesystem.
 pub struct SymLinkNode {
-    buf: RwLock<Vec<u8>>,
+    //buf: RwLock<Vec<u8>>,
     ino: usize,
     uid: u32,
     gid: u32,
@@ -21,7 +15,7 @@ pub struct SymLinkNode {
 impl SymLinkNode {
     pub fn new(uid: u32, gid: u32) -> Self {
         Self {
-            buf: RwLock::new(Vec::new()),
+            //buf: RwLock::new(Vec::new()),
             ino: alloc_ino(),
             uid,
             gid,

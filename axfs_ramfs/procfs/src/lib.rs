@@ -4,7 +4,6 @@
 
 #![cfg_attr(not(test), no_std)]
 #![feature(btree_cursors)]
-#![feature(core_intrinsics)]
 
 #[macro_use]
 extern crate log;
@@ -16,7 +15,6 @@ mod file;
 pub use self::dir::DirNode;
 pub use self::file::FileNode;
 
-use core::intrinsics::offset;
 use core::cmp::min;
 use alloc::format;
 use alloc::sync::Arc;
@@ -25,8 +23,7 @@ use axfs_vfs::{VfsNodeRef, VfsOps, VfsResult, FileSystemInfo};
 use axfs_vfs::{VfsError, VfsNodeType};
 use spin::once::Once;
 use axtype::PAGE_SIZE;
-use mm::{VM_READ, VM_WRITE, VM_EXEC, VM_MAYSHARE, FileRef};
-use axtype::{O_CREAT, O_TRUNC, O_APPEND, O_WRONLY, O_RDWR, O_EXCL, O_NOFOLLOW};
+use mm::{VM_READ, VM_WRITE, VM_EXEC, VM_MAYSHARE};
 use axfile::fops::File;
 use axfile::fops::OpenOptions;
 

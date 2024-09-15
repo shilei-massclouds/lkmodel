@@ -55,8 +55,7 @@ pub fn init_filesystems(mut blk_devs: AxDeviceContainer<AxBlockDevice>, _need_fm
 pub fn init_rootfs(main_fs: Arc<dyn VfsOps>) -> Arc<RootDirectory> {
     let uid = 0;
     let gid = 0;
-    let mode = 0o777;
-    let mut root_dir = RootDirectory::new(main_fs);
+    let root_dir = RootDirectory::new(main_fs);
 
     #[cfg(feature = "devfs")]
     root_dir

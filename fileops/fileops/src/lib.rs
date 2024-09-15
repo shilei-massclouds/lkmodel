@@ -22,7 +22,7 @@ use axfs_vfs::path::canonicalize;
 
 use axerrno::AxResult;
 use axerrno::{LinuxError, LinuxResult, linux_err, linux_err_from};
-use axerrno::AxError::{NotFound, BrokenPipe};
+use axerrno::AxError::BrokenPipe;
 use axfile::fops::File;
 use axfile::fops::OpenOptions;
 use mutex::Mutex;
@@ -96,7 +96,6 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
         return do_tmpfile(&path, &opts, fsuid, fsgid);
     }
 
-    error!("before Open {}", path);
     File::open(&path, &opts, &fs, fsuid, fsgid)
 }
 

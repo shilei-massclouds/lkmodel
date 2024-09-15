@@ -1,16 +1,11 @@
-use core::mem;
-use core::mem::transmute;
-use core::ptr::copy_nonoverlapping;
 use alloc::collections::BTreeMap;
 use alloc::sync::{Arc, Weak};
 use alloc::{string::String, vec::Vec};
 use alloc::borrow::ToOwned;
 use axfs_vfs::alloc_ino;
 use axtype::{O_NOFOLLOW, S_ISGID};
-
-use axfs_vfs::{VfsDirEntry, VfsNodeAttr, VfsNodeOps, VfsNodeRef, VfsNodeType};
-use axfs_vfs::{VfsError, VfsResult, DT_, LinuxDirent64};
-use axfs_vfs::VfsNodeAttrValid;
+use axfs_vfs::{VfsNodeAttr, VfsNodeOps, VfsNodeRef, VfsNodeType};
+use axfs_vfs::{VfsError, VfsResult};
 use spin::RwLock;
 
 use crate::file::{FileNode, SymLinkNode};
@@ -194,7 +189,7 @@ impl VfsNodeOps for DirNode {
     */
 
     fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<VfsNodeRef> {
-        error!("lookup: {} flags {:#o}\n", path, flags);
+        info!("lookup: {} flags {:#o}\n", path, flags);
         let (name, rest) = split_path(path);
         let mut name = String::from(name);
         loop {
