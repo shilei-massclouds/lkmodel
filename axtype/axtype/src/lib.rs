@@ -101,6 +101,9 @@ impl DtbInfo {
 }
 
 pub fn get_user_str(ptr: usize) -> String {
+    if ptr == 0 {
+        return String::new();
+    }
     let ptr = ptr as *const u8;
     String::from(raw_ptr_to_ref_str(ptr))
 }

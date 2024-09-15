@@ -526,9 +526,19 @@ pub fn mkdirat(dfd: usize, pathname: &str, mode: usize) -> usize {
 
 pub fn readlinkat(
     dfd: usize, filename: &str, buf: usize, size: usize
-) -> usize {
+) -> LinuxResult<usize> {
     error!("!!!TODO!!! readlinkat: dfd {:#x} filename {} bufsize {}", dfd, filename, size);
     let path = handle_path(dfd, filename);
+
+    let current = task::current();
+    let fs = current.fs.lock();
+    let link = fs.lookup(None, &path, 0)?;
+
+    if !link.get_attr()?.is_symlink() {
+        return Err(LinuxError::EINVAL);
+    }
+
+    error!("link: type {:?}", link.get_attr()?.file_type());
 
     // Todo: Now just return linkfile's name itself.
     // Todo: Add readlink for each filesystem.
@@ -536,7 +546,7 @@ pub fn readlinkat(
         core::slice::from_raw_parts_mut(buf as *mut _, path.len())
     };
     ubuf.copy_from_slice(path.as_bytes());
-    path.len()
+    Ok(path.len())
 }
 
 pub fn linkat(
@@ -829,9 +839,9 @@ pub fn mount(fsname: &str, dir: &str, fstype: &str, flags: usize, data: usize) -
         fsname, dir, fstype, flags, data);
 
     // TODO: Now only handle procfs. Handle other filesystems in future.
-    if fsname == "proc" {
+    if fstype == "proc" {
         assert_eq!(dir, "/proc");
-        assert_eq!(fstype, "proc");
+        assert_eq!(fsname, "proc");
         let uid = 0;
         let gid = 0;
         let mode = 0o777;

@@ -327,6 +327,9 @@ fn linux_syscall_readlinkat(args: SyscallArgs) -> usize {
     let [dfd, filename, buf, size, ..] = args;
     let filename = get_user_str(filename);
     fileops::readlinkat(dfd, &filename, buf, size)
+        .unwrap_or_else(|e| {
+            linux_err_from!(e)
+        })
 }
 
 fn linux_syscall_fstatat(args: SyscallArgs) -> usize {
@@ -635,6 +638,8 @@ fn linux_syscall_vfork(_args: SyscallArgs) -> usize {
 
 fn linux_syscall_mount(args: SyscallArgs) -> usize {
     let [fsname, dir, fstype, flags, data, ..] = args;
+    error!("sys_mount: name {:#x} dir {:#x} ty {:#x} flags {:#x} data {:#x}",
+        fsname, dir, fstype, flags, data);
     let fsname = get_user_str(fsname);
     let dir = get_user_str(dir);
     let fstype = get_user_str(fstype);

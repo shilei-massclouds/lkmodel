@@ -1,4 +1,4 @@
 mount -a
 #dash
 #mdev -s
-/testcases/open14
+/testcases/open11
