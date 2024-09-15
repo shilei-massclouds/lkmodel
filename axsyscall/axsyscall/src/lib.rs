@@ -633,10 +633,15 @@ fn linux_syscall_vfork(_args: SyscallArgs) -> usize {
     fork::sys_vfork()
 }
 
-fn linux_syscall_mount(_args: SyscallArgs) -> usize {
-    // TODO: implement mount syscall
-    error!("linux_syscall_mount: unimplemented!");
-    0
+fn linux_syscall_mount(args: SyscallArgs) -> usize {
+    let [fsname, dir, fstype, flags, data, ..] = args;
+    let fsname = get_user_str(fsname);
+    let dir = get_user_str(dir);
+    let fstype = get_user_str(fstype);
+    fileops::mount(&fsname, &dir, &fstype, flags, data)
+        .unwrap_or_else(|e| {
+            linux_err_from!(e)
+        })
 }
 
 fn linux_syscall_umount2(_args: SyscallArgs) -> usize {

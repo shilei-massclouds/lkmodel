@@ -29,6 +29,7 @@ pub(crate) fn ramfs() -> Arc<fs::ramfs::RamFileSystem> {
     Arc::new(fs::ramfs::RamFileSystem::new(uid, gid, mode))
 }
 
+/*
 #[cfg(feature = "procfs")]
 pub(crate) fn procfs() -> VfsResult<Arc<fs::ramfs::RamFileSystem>> {
     let uid = 0;
@@ -55,13 +56,9 @@ pub(crate) fn procfs() -> VfsResult<Arc<fs::ramfs::RamFileSystem>> {
     proc_root.create("self", VfsNodeType::Dir, uid, gid, mode)?;
     proc_root.create("self/stat", VfsNodeType::File, uid, gid, mode)?;
 
-    // Create /proc/meminfo
-    proc_root.create("meminfo", VfsNodeType::File, uid, gid, mode)?;
-    let file_meminfo = proc_root.clone().lookup("./meminfo", 0)?;
-    file_meminfo.write_at(0, b"MemAvailable: 100000 kB\nSwapFree: 100000 kB\n")?;
-
     Ok(Arc::new(procfs))
 }
+*/
 
 #[cfg(feature = "sysfs")]
 pub(crate) fn sysfs() -> VfsResult<Arc<fs::ramfs::RamFileSystem>> {

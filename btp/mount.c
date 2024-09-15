@@ -14,8 +14,10 @@ int main(int argc, char *argv[]) {
 
     // mount proc filesystem
     if (mount(source, target, "proc", MS_MGC_VAL, NULL) == -1) {
-        perror("mount");
-        return -1;
+        if (errno != EEXIST) {
+            perror("mount");
+            return -1;
+        }
     }
     printf("File system mounted successfully\n");
 

@@ -46,8 +46,10 @@ mod structs;
 pub mod path;
 
 use alloc::{sync::Arc, vec::Vec};
+use alloc::string::String;
 use axerrno::{ax_err, AxError, AxResult};
 use core::sync::atomic::{AtomicUsize, Ordering};
+use spin::RwLock;
 
 pub use self::structs::{VfsDirEntry, VfsNodeAttr, VfsNodePerm, VfsNodeType};
 pub use self::structs::{VfsNodeAttrValid, FileSystemInfo, DT_, LinuxDirent64};
@@ -169,7 +171,17 @@ pub trait VfsNodeOps: Send + Sync {
     }
 
     /// Create a hardlink with the given `path` and node
+    /// Deprecated: use link_child
     fn link(&self, _path: &str, _node: VfsNodeRef) -> VfsResult {
+        ax_err!(Unsupported)
+    }
+
+    /// Create a hardlink with the given `fname` and node
+    /// Note: Compared with `link`, fname cannot be a path.
+    /// So child is a direct child of dir.
+    ///
+    /// Return [`Ok(())`](Ok) if it already exists.
+    fn link_child(&self, _fname: &str, _node: VfsNodeRef) -> VfsResult {
         ax_err!(Unsupported)
     }
 
@@ -181,7 +193,17 @@ pub trait VfsNodeOps: Send + Sync {
     /// Create a new node with the given `path` in the directory
     ///
     /// Return [`Ok(())`](Ok) if it already exists.
+    /// Deprecated. Use create_child to replace it.
     fn create(&self, _path: &str, _ty: VfsNodeType, _uid: u32, _gid: u32, _mode: i32) -> VfsResult {
+        ax_err!(Unsupported)
+    }
+
+    /// Create a new node with the given `fname` in the directory
+    /// Note: Compared with `create`, fname cannot be a path.
+    /// So child is a direct child of dir.
+    ///
+    /// Return [`Ok(())`](Ok) if it already exists.
+    fn create_child(&self, _fname: &str, _ty: VfsNodeType, _uid: u32, _gid: u32, _mode: i32) -> VfsResult<VfsNodeRef> {
         ax_err!(Unsupported)
     }
 
@@ -220,13 +242,13 @@ pub mod __priv {
 }
 
 pub struct MountPoint {
-    path: &'static str,
+    path: String,
     fs: Arc<dyn VfsOps>,
 }
 
 impl MountPoint {
-    pub fn new(path: &'static str, fs: Arc<dyn VfsOps>) -> Self {
-        Self { path, fs }
+    pub fn new(path: &str, fs: Arc<dyn VfsOps>) -> Self {
+        Self { path: String::from(path), fs }
     }
 }
 
@@ -238,7 +260,7 @@ impl Drop for MountPoint {
 
 pub struct RootDirectory {
     main_fs: Arc<dyn VfsOps>,
-    mounts: Vec<MountPoint>,
+    mounts: RwLock<Vec<MountPoint>>,
 }
 
 impl VfsNodeOps for RootDirectory {
@@ -311,34 +333,34 @@ impl RootDirectory {
     pub const fn new(main_fs: Arc<dyn VfsOps>) -> Self {
         Self {
             main_fs,
-            mounts: Vec::new(),
+            mounts: RwLock::new(Vec::new()),
         }
     }
 
-    pub fn mount(&mut self, path: &'static str, fs: Arc<dyn VfsOps>, uid: u32, gid: u32) -> AxResult {
-        info!("============== mount ...");
+    pub fn mount(&self, path: &str, fs: Arc<dyn VfsOps>, uid: u32, gid: u32) -> AxResult {
+        info!("mount ...");
         if path == "/" {
             return ax_err!(InvalidInput, "cannot mount root filesystem");
         }
         if !path.starts_with('/') {
             return ax_err!(InvalidInput, "mount path must start with '/'");
         }
-        if self.mounts.iter().any(|mp| mp.path == path) {
-            return ax_err!(InvalidInput, "mount point already exists");
+        if self.contains(path) {
+            return ax_err!(AlreadyExists, "mount point already exists");
         }
         // create the mount point in the main filesystem if it does not exist
         self.main_fs.root_dir().create(path, FileType::Dir, uid, gid, 0o777)?;
         fs.mount(path, self.main_fs.root_dir().lookup(path, 0)?)?;
-        self.mounts.push(MountPoint::new(path, fs));
+        self.mounts.write().push(MountPoint::new(path, fs));
         Ok(())
     }
 
-    pub fn _umount(&mut self, path: &str) {
-        self.mounts.retain(|mp| mp.path != path);
+    pub fn _umount(&self, path: &str) {
+        self.mounts.write().retain(|mp| mp.path != path);
     }
 
     pub fn contains(&self, path: &str) -> bool {
-        self.mounts.iter().any(|mp| mp.path == path)
+        self.mounts.read().iter().any(|mp| mp.path == path)
     }
 
     pub fn statfs(&self, path: &str) -> AxResult<FileSystemInfo> {
@@ -356,9 +378,11 @@ impl RootDirectory {
         let mut idx = 0;
         let mut max_len = 0;
 
+        let mounts = self.mounts.read();
+
         // Find the filesystem that has the longest mounted path match
         // TODO: more efficient, e.g. trie
-        for (i, mp) in self.mounts.iter().enumerate() {
+        for (i, mp) in mounts.iter().enumerate() {
             // skip the first '/'
             if path.starts_with(&mp.path[1..]) && mp.path.len() - 1 > max_len {
                 max_len = mp.path.len() - 1;
@@ -369,7 +393,7 @@ impl RootDirectory {
         if max_len == 0 {
             Ok(self.main_fs.clone())        // not matched any mount point
         } else {
-            Ok(self.mounts[idx].fs.clone()) // matched at `idx`
+            Ok(mounts[idx].fs.clone()) // matched at `idx`
         }
     }
 
@@ -387,9 +411,11 @@ impl RootDirectory {
         let mut idx = 0;
         let mut max_len = 0;
 
+        let mounts = self.mounts.read();
+
         // Find the filesystem that has the longest mounted path match
         // TODO: more efficient, e.g. trie
-        for (i, mp) in self.mounts.iter().enumerate() {
+        for (i, mp) in mounts.iter().enumerate() {
             // skip the first '/'
             if path.starts_with(&mp.path[1..]) && mp.path.len() - 1 > max_len {
                 max_len = mp.path.len() - 1;
@@ -400,7 +426,7 @@ impl RootDirectory {
         if max_len == 0 {
             f(self.main_fs.clone(), path) // not matched any mount point
         } else {
-            f(self.mounts[idx].fs.clone(), &path[max_len..]) // matched at `idx`
+            f(mounts[idx].fs.clone(), &path[max_len..]) // matched at `idx`
         }
     }
 }

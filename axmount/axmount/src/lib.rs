@@ -14,6 +14,7 @@ use alloc::sync::Arc;
 use lazy_init::LazyInit;
 use axfs_vfs::VfsOps;
 use axfs_vfs::RootDirectory;
+//use procfs::{ProcFileSystem, init_procfs};
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "myfs")] { // override the default filesystem
@@ -54,6 +55,7 @@ pub fn init_filesystems(mut blk_devs: AxDeviceContainer<AxBlockDevice>, _need_fm
 pub fn init_rootfs(main_fs: Arc<dyn VfsOps>) -> Arc<RootDirectory> {
     let uid = 0;
     let gid = 0;
+    let mode = 0o777;
     let mut root_dir = RootDirectory::new(main_fs);
 
     #[cfg(feature = "devfs")]
@@ -70,11 +72,12 @@ pub fn init_rootfs(main_fs: Arc<dyn VfsOps>) -> Arc<RootDirectory> {
         .mount("/tmp", mounts::ramfs(), uid, gid)
         .expect("failed to mount ramfs at /tmp");
 
-    // Mount another ramfs as procfs
-    #[cfg(feature = "procfs")]
-    root_dir // should not fail
-        .mount("/proc", mounts::procfs().unwrap(), uid, gid)
+    /*
+    // Mount procfs
+    root_dir
+        .mount("/proc", init_procfs(uid, gid, mode).unwrap(), uid, gid)
         .expect("fail to mount procfs at /proc");
+        */
 
     // Mount another ramfs as sysfs
     #[cfg(feature = "sysfs")]

@@ -3,6 +3,8 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <sys/mount.h>
+#include <errno.h>
 
 struct results {
     int passed;
@@ -14,6 +16,18 @@ void test(const char *, struct results *);
 int main()
 {
     printf("Test syscalls ...\n");
+
+    const char *source = "proc";
+    const char *target = "/proc";
+
+    // mount proc filesystem
+    if (mount(source, target, "proc", MS_MGC_VAL, NULL) == -1) {
+        if (errno != EEXIST) {
+            perror("mount");
+            return -1;
+        }
+    }
+    printf("File system mounted successfully\n");
 
     FILE *fp = fopen("/opt/syscalls", "r");
 

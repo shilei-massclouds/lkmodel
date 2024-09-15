@@ -20,8 +20,6 @@ use axmount::init_root;
 use axfs_vfs::{FileSystemInfo, VfsNodeType, VfsNodeAttrValid, VfsNodeAttr};
 use axfs_vfs::path::canonicalize;
 
-mod proc_ops;
-
 use axerrno::AxResult;
 use axerrno::{LinuxError, LinuxResult, linux_err, linux_err_from};
 use axerrno::AxError::{NotFound, BrokenPipe};
@@ -31,6 +29,8 @@ use mutex::Mutex;
 use axtype::get_user_str;
 use axio::SeekFrom;
 use axtype::{O_CREAT, O_TRUNC, O_APPEND, O_WRONLY, O_RDWR, O_EXCL, O_NOFOLLOW};
+use procfs::init_procfs;
+
 use axtype::__O_TMPFILE;
 
 pub type FileRef = Arc<Mutex<File>>;
@@ -96,14 +96,8 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
         return do_tmpfile(&path, &opts, fsuid, fsgid);
     }
 
-    File::open(&path, &opts, &fs, fsuid, fsgid).or_else(|e| {
-        if e == NotFound {
-            // Handle special filesystem, e.g., procfs, sysfs ..
-            special_open(&path, &opts)
-        } else {
-            Err(e)
-        }
-    })
+    error!("before Open {}", path);
+    File::open(&path, &opts, &fs, fsuid, fsgid)
 }
 
 fn do_tmpfile(path: &str, opts: &OpenOptions, uid: u32, gid: u32) -> AxResult<File> {
@@ -119,13 +113,6 @@ fn lookup_node(dfd: usize, filename: &str) -> AxResult<VfsNodeRef> {
     let fs = current.fs.lock();
     let path = handle_path(dfd, filename);
     fs.lookup(None, &path, 0)
-}
-
-pub fn special_open(path: &str, opts: &OpenOptions) -> AxResult<File> {
-    if path.starts_with("/proc") {
-        return proc_ops::open(path, opts);
-    }
-    Err(NotFound)
 }
 
 pub fn register_file(file: AxResult<File>, flags: usize) -> usize {
@@ -733,9 +720,6 @@ pub fn fcntl(fd: usize, cmd: usize, udata: usize) -> usize {
 }
 
 pub fn dup(fd: usize) -> usize {
-    if fd <= 2 {
-        unimplemented!("impl chardev file!");
-    }
     info!("dup [{:#x}] ...", fd);
     let cur = task::current();
     let mut locked_fdt = cur.filetable.lock();
@@ -838,6 +822,25 @@ pub fn pipe2(fds: usize, flags: usize) -> LinuxResult {
     fds[1] = wfd;
     debug!("pipe2 ok! fd0 {:#x} fd1 {:#x}", fds[0], fds[1]);
     Ok(())
+}
+
+pub fn mount(fsname: &str, dir: &str, fstype: &str, flags: usize, data: usize) -> LinuxResult<usize> {
+    error!("mount: name {} dir {} ty {} flags {:#x} data {:#x}",
+        fsname, dir, fstype, flags, data);
+
+    // TODO: Now only handle procfs. Handle other filesystems in future.
+    if fsname == "proc" {
+        assert_eq!(dir, "/proc");
+        assert_eq!(fstype, "proc");
+        let uid = 0;
+        let gid = 0;
+        let mode = 0o777;
+        let current = task::current();
+        let fs = current.fs.lock();
+        let root = fs.root_dir().expect("bad root");
+        root.mount(dir, init_procfs(uid, gid, mode).unwrap(), uid, gid)?;
+    }
+    Ok(0)
 }
 
 fn file_size(file: FileRef) -> LinuxResult<usize> {

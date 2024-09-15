@@ -49,9 +49,7 @@ impl FsStruct {
         self.curr_dir = locked_fs.curr_dir.as_ref().map(|curr_dir| curr_dir.clone());
         self.curr_path = locked_fs.curr_path.clone();
     }
-}
 
-impl FsStruct {
     fn parent_node_of(&self, dir: Option<&VfsNodeRef>, path: &str) -> VfsNodeRef {
         if path.starts_with('/') {
             assert!(self.root_dir.is_some());
@@ -123,6 +121,10 @@ impl FsStruct {
         }
     }
 
+    pub fn root_dir(&self) -> Option<Arc<RootDirectory>> {
+        self.root_dir.clone()
+    }
+
     pub fn current_dir(&self) -> AxResult<String> {
         Ok(self.curr_path.clone())
     }
@@ -159,6 +161,7 @@ impl FsStruct {
             Ok(())
         }
     }
+
     pub fn remove_file(&self, dir: Option<&VfsNodeRef>, path: &str) -> AxResult {
         let node = self.lookup(dir, path, O_NOFOLLOW)?;
         let attr = node.get_attr()?;
@@ -168,6 +171,7 @@ impl FsStruct {
             self.parent_node_of(dir, path).remove(path)
         }
     }
+
     pub fn remove_dir(&self, dir: Option<&VfsNodeRef>, path: &str) -> AxResult {
         if path.is_empty() {
             return ax_err!(NotFound);
