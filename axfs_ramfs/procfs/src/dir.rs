@@ -84,7 +84,7 @@ impl DirNode {
             return Err(VfsError::AlreadyExists);
         }
         self.children.write().insert(name.into(), node.clone());
-        error!("fill_node with name: {}", name);
+        info!("fill_node with name: {}", name);
         Ok(())
     }
 
@@ -129,12 +129,12 @@ impl VfsNodeOps for DirNode {
         assert!(!fname.is_empty());
         assert!(fname != ".");
         assert!(fname != "..");
-        error!("create child [{:?}] '{}'", ty, fname);
+        info!("create child [{:?}] '{}'", ty, fname);
         self.create_node(fname, ty, uid, gid, mode)
     }
 
     fn link_child(&self, fname: &str, node: VfsNodeRef) -> VfsResult {
-        error!("link_child: {}", fname);
+        info!("link_child: {}", fname);
         assert!(fname.find('/').is_none(), "bad filename {}", fname);
         assert!(!fname.is_empty());
         assert!(fname != ".");
@@ -221,7 +221,7 @@ impl VfsNodeOps for DirNode {
             }
 
             if let Some(rest) = rest {
-                error!("lookup: rest {}", rest);
+                debug!("lookup: rest {}", rest);
                 return node.lookup(rest, flags);
             } else {
                 return Ok((node, String::new()));

@@ -81,7 +81,7 @@ impl FsStruct {
             return ax_err!(NotADirectory);
         }
         let parent = self.parent_node_of(dir, path);
-        error!("create_link: {}", path);
+        info!("create_link: {}", path);
         parent.link(path, node)
     }
 

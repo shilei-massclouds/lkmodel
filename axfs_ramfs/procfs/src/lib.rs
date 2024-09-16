@@ -137,7 +137,7 @@ fn lookup_fd_table(path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
     let fd = path.parse::<usize>().map_err(|_| {
         NotConnected
     })?;
-    error!("fd: {}", fd);
+    info!("fd: {}", fd);
     let current = task::current();
     let file = current.filetable.lock().get_file(fd)
         .ok_or(NotConnected)?;

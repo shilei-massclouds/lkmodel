@@ -48,7 +48,7 @@ impl VfsNodeOps for SymLinkNode {
         assert_eq!(pos, 0);
         let rbuf = self.buf.read();
         assert!(buf.len() >= rbuf.len());
-        error!("sysmlink:read_at: rbuf len {}", rbuf.len());
+        info!("sysmlink:read_at: rbuf len {}", rbuf.len());
         buf[0..rbuf.len()].copy_from_slice(&rbuf);
         Ok(rbuf.len())
     }
@@ -134,7 +134,7 @@ impl VfsNodeOps for FileNode {
     */
 
     fn read_at(&self, offset: u64, buf: &mut [u8]) -> VfsResult<usize> {
-        error!("read_at offset {}, buf.len {}", offset, buf.len());
+        info!("read_at offset {}, buf.len {}", offset, buf.len());
         (self.read_op)(offset as usize, buf)
     }
 

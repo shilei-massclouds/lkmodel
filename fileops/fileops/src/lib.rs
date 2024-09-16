@@ -352,7 +352,7 @@ pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usi
     }
     assert!(dfd > 2);
 
-    error!("fstatat dfd {:#x} flags {:#x}", dfd, flags);
+    info!("fstatat dfd {:#x} flags {:#x}", dfd, flags);
     let (metadata, ino) = if (flags & AT_EMPTY_PATH) == 0 {
         let path = get_user_str(path);
         match lookup_node(dfd, &path) {
@@ -537,7 +537,7 @@ pub fn readlinkat(
         return Err(LinuxError::EINVAL);
     }
 
-    error!("link: type {:?}", link.get_attr()?.file_type());
+    info!("link: type {:?}", link.get_attr()?.file_type());
     let ubuf: &mut [u8] = unsafe {
         core::slice::from_raw_parts_mut(buf as *mut _, size)
     };
@@ -560,7 +560,7 @@ pub fn linkat(
     newdfd: usize, newpath: &str,
     flags: usize
 ) -> LinuxResult<usize> {
-    error!("linkat: olddfd {:#x} newdfd {:#x}, oldpath {} newpath {} flags {}",
+    info!("linkat: olddfd {:#x} newdfd {:#x}, oldpath {} newpath {} flags {}",
         olddfd, newdfd, oldpath, newpath, flags);
     let node = lookup_node(olddfd, oldpath)?;
     let newpath = handle_path(newdfd, newpath);

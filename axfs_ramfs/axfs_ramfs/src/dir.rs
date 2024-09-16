@@ -87,7 +87,7 @@ impl DirNode {
             return Err(VfsError::AlreadyExists);
         }
         self.children.write().insert(name.into(), node.clone());
-        error!("fill_node with name: {}", name);
+        info!("fill_node with name: {}", name);
         Ok(())
     }
 
@@ -116,7 +116,7 @@ impl DirNode {
         let ret = node.read_at(0, &mut target).unwrap();
         assert!(ret < target.len());
         let target = core::str::from_utf8(&target[0..ret]).unwrap();
-        error!("SymLink to target: {}", target);
+        info!("SymLink to target: {}", target);
         Some(target.to_owned())
     }
 }
@@ -215,7 +215,7 @@ impl VfsNodeOps for DirNode {
             debug!("name {} rest {:?} {} flags {:#o}", name, rest, node.get_attr()?.is_symlink(), flags);
             if let Some(linkname) = self.handle_symlink(node.clone(), flags, rest.is_none()) {
                 if linkname.starts_with("/") {
-                    error!("root path: {}", linkname);
+                    info!("root path: {}", linkname);
                     return Ok((node, linkname));
                 }
                 name = linkname;
