@@ -129,12 +129,12 @@ pub fn init_procfs(uid: u32, gid: u32, mode: i32) -> VfsResult<Arc<ProcFileSyste
 fn lookup_fd_link(path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
     let node = SymLinkNode::new(0, 0);
     let linkto = format!("/proc/self/_fd/{}", path);
-    node.write_at(0, linkto.as_bytes());
+    node.write_at(0, linkto.as_bytes())?;
     Ok(Arc::new(node))
 }
 
 fn lookup_fd_table(path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
-    let fd = path.parse::<usize>().map_err(|e| {
+    let fd = path.parse::<usize>().map_err(|_| {
         NotConnected
     })?;
     error!("fd: {}", fd);
@@ -143,10 +143,6 @@ fn lookup_fd_table(path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
         .ok_or(NotConnected)?;
     let node = file.lock().get_node()?;
     Ok(node)
-}
-
-fn read_fd(offset: usize, buf: &mut [u8]) -> VfsResult<usize> {
-    unimplemented!();
 }
 
 fn read_meminfo(offset: usize, buf: &mut [u8]) -> VfsResult<usize> {

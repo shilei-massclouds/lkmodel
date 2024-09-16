@@ -1,6 +1,5 @@
-use alloc::sync::Arc;
 use alloc::vec::Vec;
-use axfs_vfs::{impl_vfs_non_dir_default, VfsNodeAttr, VfsNodeOps, VfsResult, VfsNodeRef};
+use axfs_vfs::{impl_vfs_non_dir_default, VfsNodeAttr, VfsNodeOps, VfsResult};
 use spin::RwLock;
 use axfs_vfs::alloc_ino;
 
