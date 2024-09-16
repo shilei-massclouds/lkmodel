@@ -114,14 +114,6 @@ fn lookup_node(dfd: usize, filename: &str) -> AxResult<VfsNodeRef> {
     fs.lookup(None, &path, 0)
 }
 
-fn lookup_node2(dfd: usize, filename: &str) -> AxResult<VfsNodeRef> {
-    let current = task::current();
-    let fs = current.fs.lock();
-    let path = handle_path(dfd, filename);
-    error!("lookup_node2: path {}", path);
-    fs.lookup(None, &path, 0)
-}
-
 pub fn register_file(file: AxResult<File>, flags: usize) -> usize {
     let file = match file {
         Ok(f) => f,
@@ -363,7 +355,7 @@ pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usi
     error!("fstatat dfd {:#x} flags {:#x}", dfd, flags);
     let (metadata, ino) = if (flags & AT_EMPTY_PATH) == 0 {
         let path = get_user_str(path);
-        match lookup_node2(dfd, &path) {
+        match lookup_node(dfd, &path) {
             Ok(node) => {
                 (node.get_attr().unwrap(), node.get_ino())
             },

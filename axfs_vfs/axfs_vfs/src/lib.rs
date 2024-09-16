@@ -272,7 +272,6 @@ impl VfsNodeOps for RootDirectory {
     }
 
     fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<(VfsNodeRef, String)> {
-        //self.lookup_mounted_fs(path, |fs, rest_path| fs.root_dir().lookup(rest_path, flags))
         let mut root_path = String::from(path);
         loop {
             let (fs, rest_path) = self.lookup_fs(&root_path)?;
