@@ -197,7 +197,7 @@ impl VfsNodeOps for DirNode {
         self.parent.read().upgrade()
     }
 
-    fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<VfsNodeRef> {
+    fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<(VfsNodeRef, String)> {
         info!("lookup: {} flags {:#o}\n", path, flags);
         let (name, rest) = split_path(path);
         let mut name = String::from(name);
@@ -214,6 +214,10 @@ impl VfsNodeOps for DirNode {
             }?;
             debug!("name {} rest {:?} {} flags {:#o}", name, rest, node.get_attr()?.is_symlink(), flags);
             if let Some(linkname) = self.handle_symlink(node.clone(), flags, rest.is_none()) {
+                if linkname.starts_with("/") {
+                    error!("root path: {}", linkname);
+                    return Ok((node, linkname));
+                }
                 name = linkname;
                 continue;
             }
@@ -221,7 +225,7 @@ impl VfsNodeOps for DirNode {
             if let Some(rest) = rest {
                 return node.lookup(rest, flags);
             } else {
-                return Ok(node);
+                return Ok((node, String::new()));
             }
         }
     }

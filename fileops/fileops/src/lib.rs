@@ -101,7 +101,7 @@ pub fn openat(dfd: usize, filename: &str, flags: usize, mode: usize) -> AxResult
 
 fn do_tmpfile(path: &str, opts: &OpenOptions, uid: u32, gid: u32) -> AxResult<File> {
     let root = init_root();
-    let fs = root.lookup_fs(path)?;
+    let (fs, _) = root.lookup_fs(path)?;
     let inode = fs.alloc_inode(VfsNodeType::File, uid, gid, opts.mode())?;
     let cap = Cap::SET_STAT | opts.into();
     Ok(File::new(inode, cap))
@@ -111,6 +111,14 @@ fn lookup_node(dfd: usize, filename: &str) -> AxResult<VfsNodeRef> {
     let current = task::current();
     let fs = current.fs.lock();
     let path = handle_path(dfd, filename);
+    fs.lookup(None, &path, 0)
+}
+
+fn lookup_node2(dfd: usize, filename: &str) -> AxResult<VfsNodeRef> {
+    let current = task::current();
+    let fs = current.fs.lock();
+    let path = handle_path(dfd, filename);
+    error!("lookup_node2: path {}", path);
     fs.lookup(None, &path, 0)
 }
 
@@ -352,10 +360,10 @@ pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usi
     }
     assert!(dfd > 2);
 
-    info!("fstatat dfd {:#x} flags {:#x}", dfd, flags);
+    error!("fstatat dfd {:#x} flags {:#x}", dfd, flags);
     let (metadata, ino) = if (flags & AT_EMPTY_PATH) == 0 {
         let path = get_user_str(path);
-        match lookup_node(dfd, &path) {
+        match lookup_node2(dfd, &path) {
             Ok(node) => {
                 (node.get_attr().unwrap(), node.get_ino())
             },
@@ -538,7 +546,13 @@ pub fn readlinkat(
     }
 
     error!("link: type {:?}", link.get_attr()?.file_type());
+    let ubuf: &mut [u8] = unsafe {
+        core::slice::from_raw_parts_mut(buf as *mut _, size)
+    };
+    let ret = link.read_at(0, ubuf)?;
+    Ok(ret)
 
+    /*
     // Todo: Now just return linkfile's name itself.
     // Todo: Add readlink for each filesystem.
     let ubuf: &mut [u8] = unsafe {
@@ -546,6 +560,7 @@ pub fn readlinkat(
     };
     ubuf.copy_from_slice(path.as_bytes());
     Ok(path.len())
+    */
 }
 
 pub fn linkat(

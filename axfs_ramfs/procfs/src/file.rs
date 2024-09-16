@@ -1,4 +1,6 @@
-use axfs_vfs::{impl_vfs_non_dir_default, VfsNodeAttr, VfsNodeOps, VfsResult};
+use alloc::sync::Arc;
+use alloc::vec::Vec;
+use axfs_vfs::{impl_vfs_non_dir_default, VfsNodeAttr, VfsNodeOps, VfsResult, VfsNodeRef};
 use spin::RwLock;
 use axfs_vfs::alloc_ino;
 
@@ -6,7 +8,7 @@ pub type ReadOp = fn(usize, &mut [u8]) -> VfsResult<usize>;
 
 /// The symlink node in the RAM filesystem.
 pub struct SymLinkNode {
-    //buf: RwLock<Vec<u8>>,
+    buf: RwLock<Vec<u8>>,
     ino: usize,
     uid: u32,
     gid: u32,
@@ -15,7 +17,7 @@ pub struct SymLinkNode {
 impl SymLinkNode {
     pub fn new(uid: u32, gid: u32) -> Self {
         Self {
-            //buf: RwLock::new(Vec::new()),
+            buf: RwLock::new(Vec::new()),
             ino: alloc_ino(),
             uid,
             gid,
@@ -32,7 +34,6 @@ impl VfsNodeOps for SymLinkNode {
         Ok(VfsNodeAttr::new_symlink(0, 0, self.uid, self.gid))
     }
 
-    /*
     fn write_at(&self, pos: u64, buf: &[u8]) -> VfsResult<usize> {
         assert_eq!(pos, 0);
         info!("symlink: {:?}", buf);
@@ -40,7 +41,7 @@ impl VfsNodeOps for SymLinkNode {
         for i in 0..buf.len() {
             wbuf.push(buf[i]);
         }
-        error!("===> symlink: {:?} {}", wbuf, wbuf.len());
+        debug!("===> symlink: {:?} {}", wbuf, wbuf.len());
         Ok(wbuf.len())
     }
 
@@ -52,7 +53,6 @@ impl VfsNodeOps for SymLinkNode {
         buf[0..rbuf.len()].copy_from_slice(&rbuf);
         Ok(rbuf.len())
     }
-    */
 
     impl_vfs_non_dir_default! {}
 }

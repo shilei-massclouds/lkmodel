@@ -13,19 +13,20 @@ mod dir;
 mod file;
 
 pub use self::dir::DirNode;
-pub use self::file::FileNode;
+pub use self::file::{FileNode, SymLinkNode};
 
 use core::cmp::min;
 use alloc::format;
 use alloc::sync::Arc;
 use alloc::string::String;
 use axfs_vfs::{VfsNodeRef, VfsOps, VfsResult, FileSystemInfo};
-use axfs_vfs::{VfsError, VfsNodeType};
+use axfs_vfs::{VfsError, VfsNodeType, VfsNodeOps};
 use spin::once::Once;
 use axtype::PAGE_SIZE;
 use mm::{VM_READ, VM_WRITE, VM_EXEC, VM_MAYSHARE};
 use axfile::fops::File;
 use axfile::fops::OpenOptions;
+use axerrno::AxError::NotConnected;
 
 const PROC_SUPER_MAGIC: u64 = 0x9fa0;
 
@@ -40,7 +41,7 @@ impl ProcFileSystem {
     pub fn new(uid: u32, gid: u32, mode: i32) -> Self {
         Self {
             parent: Once::new(),
-            root: DirNode::new(None, uid, gid, mode),
+            root: DirNode::new(None, uid, gid, mode, None),
         }
     }
 
@@ -106,6 +107,12 @@ pub fn init_procfs(uid: u32, gid: u32, mode: i32) -> VfsResult<Arc<ProcFileSyste
     let f_pagemap = FileNode::new(Some(read_pagemap), uid, gid, mode);
     d_self.link_child("pagemap", Arc::new(f_pagemap))?;
 
+    let d_fd = DirNode::new(Some(Arc::downgrade(&d_self)), uid, gid, mode, Some(lookup_fd_link));
+    d_self.link_child("fd", d_fd)?;
+
+    let d_fd_table = DirNode::new(Some(Arc::downgrade(&d_self)), uid, gid, mode, Some(lookup_fd_table));
+    d_self.link_child("_fd", d_fd_table)?;
+
     //
     // Group '/proc/mounts'
     //
@@ -117,6 +124,29 @@ pub fn init_procfs(uid: u32, gid: u32, mode: i32) -> VfsResult<Arc<ProcFileSyste
     root.link_child("meminfo", Arc::new(f_meminfo))?;
 
     Ok(Arc::new(fs))
+}
+
+fn lookup_fd_link(path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+    let node = SymLinkNode::new(0, 0);
+    let linkto = format!("/proc/self/_fd/{}", path);
+    node.write_at(0, linkto.as_bytes());
+    Ok(Arc::new(node))
+}
+
+fn lookup_fd_table(path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+    let fd = path.parse::<usize>().map_err(|e| {
+        NotConnected
+    })?;
+    error!("fd: {}", fd);
+    let current = task::current();
+    let file = current.filetable.lock().get_file(fd)
+        .ok_or(NotConnected)?;
+    let node = file.lock().get_node()?;
+    Ok(node)
+}
+
+fn read_fd(offset: usize, buf: &mut [u8]) -> VfsResult<usize> {
+    unimplemented!();
 }
 
 fn read_meminfo(offset: usize, buf: &mut [u8]) -> VfsResult<usize> {

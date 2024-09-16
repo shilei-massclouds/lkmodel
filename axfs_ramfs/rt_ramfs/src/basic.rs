@@ -20,11 +20,11 @@ pub fn test_basic() {
     root.create("f2", VfsNodeType::File, 0, 0, 0o777).unwrap();
     root.create("foo", VfsNodeType::Dir, 0, 0, 0o777).unwrap();
 
-    let dir_foo = root.lookup("foo", 0).unwrap();
+    let (dir_foo, _) = root.lookup("foo", 0).unwrap();
     dir_foo.create("f3", VfsNodeType::File, 0, 0, 0o777).unwrap();
     dir_foo.create("bar", VfsNodeType::Dir, 0, 0, 0o777).unwrap();
 
-    let dir_bar = dir_foo.lookup("bar", 0).unwrap();
+    let (dir_bar, _) = dir_foo.lookup("bar", 0).unwrap();
     dir_bar.create("f4", VfsNodeType::File, 0, 0, 0o777).unwrap();
 
     let mut entries = ramfs.root_dir_node().get_entries();
@@ -70,7 +70,7 @@ fn test_ops(devfs: &RamFileSystem) -> VfsResult {
         Some(VfsError::NotADirectory)
     );
 
-    let node = root.lookup("////f1", 0)?;
+    let (node, _) = root.lookup("////f1", 0)?;
     assert_eq!(node.get_attr()?.file_type(), VfsNodeType::File);
     assert!(!node.get_attr()?.is_dir());
     assert_eq!(node.get_attr()?.size(), 0);
@@ -83,22 +83,22 @@ fn test_ops(devfs: &RamFileSystem) -> VfsResult {
     assert_eq!(buf[N_HALF..], [1; N_HALF]);
     assert_eq!(node.lookup("/", 0).err(), Some(VfsError::NotADirectory));
 
-    let foo = devfs.root_dir().lookup(".///.//././/.////foo", 0)?;
+    let (foo, _) = devfs.root_dir().lookup(".///.//././/.////foo", 0)?;
     assert!(foo.get_attr()?.is_dir());
     assert_eq!(
         foo.getdents(10, &mut buf).err(),
         None
     );
     assert!(Arc::ptr_eq(
-        &foo.clone().lookup("/f3", 0)?,
-        &devfs.root_dir().lookup(".//./foo///f3", 0)?,
+        &foo.clone().lookup("/f3", 0)?.0,
+        &devfs.root_dir().lookup(".//./foo///f3", 0)?.0,
     ));
     assert_eq!(
-        foo.clone().lookup("/bar//f4", 0)?.get_attr()?.file_type(),
+        foo.clone().lookup("/bar//f4", 0)?.0.get_attr()?.file_type(),
         VfsNodeType::File
     );
     assert_eq!(
-        foo.lookup("/bar///", 0)?.get_attr()?.file_type(),
+        foo.lookup("/bar///", 0)?.0.get_attr()?.file_type(),
         VfsNodeType::Dir
     );
 
@@ -109,29 +109,29 @@ fn test_get_parent(devfs: &RamFileSystem) -> VfsResult {
     let root = devfs.root_dir();
     assert!(root.parent().is_none());
 
-    let node = root.clone().lookup("f1", 0)?;
+    let (node, _) = root.clone().lookup("f1", 0)?;
     assert!(node.parent().is_none());
 
-    let node = root.clone().lookup(".//foo/bar", 0)?;
+    let (node, _) = root.clone().lookup(".//foo/bar", 0)?;
     assert!(node.parent().is_some());
     let parent = node.parent().unwrap();
-    assert!(Arc::ptr_eq(&parent, &root.clone().lookup("foo", 0)?));
+    assert!(Arc::ptr_eq(&parent, &root.clone().lookup("foo", 0)?.0));
     assert!(parent.lookup("bar", 0).is_ok());
 
-    let node = root.clone().lookup("foo/..", 0)?;
-    assert!(Arc::ptr_eq(&node, &root.clone().lookup(".", 0)?));
+    let (node, _) = root.clone().lookup("foo/..", 0)?;
+    assert!(Arc::ptr_eq(&node, &root.clone().lookup(".", 0)?.0));
 
     assert!(Arc::ptr_eq(
-        &root.clone().lookup("/foo/..", 0)?,
-        &devfs.root_dir().lookup(".//./foo/././bar/../..", 0)?,
+        &root.clone().lookup("/foo/..", 0)?.0,
+        &devfs.root_dir().lookup(".//./foo/././bar/../..", 0)?.0,
     ));
     assert!(Arc::ptr_eq(
-        &root.clone().lookup("././/foo//./../foo//bar///..//././", 0)?,
-        &devfs.root_dir().lookup(".//./foo/", 0)?,
+        &root.clone().lookup("././/foo//./../foo//bar///..//././", 0)?.0,
+        &devfs.root_dir().lookup(".//./foo/", 0)?.0,
     ));
     assert!(Arc::ptr_eq(
-        &root.clone().lookup("///foo//bar///../f3", 0)?,
-        &root.lookup("foo/.//f3", 0)?,
+        &root.clone().lookup("///foo//bar///../f3", 0)?.0,
+        &root.lookup("foo/.//f3", 0)?.0,
     ));
 
     Ok(())

@@ -1,5 +1,6 @@
 use alloc::collections::BTreeMap;
 use alloc::sync::{Arc, Weak};
+use alloc::string::String;
 use axfs_vfs::{VfsDirEntry, VfsNodeAttr, VfsNodeOps, VfsNodeRef, VfsNodeType};
 use axfs_vfs::{VfsError, VfsResult};
 use spin::RwLock;
@@ -59,7 +60,7 @@ impl VfsNodeOps for DirNode {
         self.parent.read().upgrade()
     }
 
-    fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<VfsNodeRef> {
+    fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<(VfsNodeRef, String)> {
         let (name, rest) = split_path(path);
         let node = match name {
             "" | "." => Ok(self.clone() as VfsNodeRef),
@@ -75,7 +76,7 @@ impl VfsNodeOps for DirNode {
         if let Some(rest) = rest {
             node.lookup(rest, flags)
         } else {
-            Ok(node)
+            Ok((node, String::new()))
         }
     }
 

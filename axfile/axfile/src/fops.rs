@@ -455,6 +455,10 @@ impl File {
     pub fn get_cap(&self) -> Cap {
         self.node.cap()
     }
+
+    pub fn get_node(&self) -> AxResult<VfsNodeRef> {
+        Ok(self.node.access(Cap::empty())?.clone())
+    }
 }
 
 impl Directory {

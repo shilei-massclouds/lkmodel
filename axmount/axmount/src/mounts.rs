@@ -73,7 +73,7 @@ pub(crate) fn sysfs() -> VfsResult<Arc<fs::ramfs::RamFileSystem>> {
     sys_root.create("kernel/mm", VfsNodeType::Dir, uid, gid, mode)?;
     sys_root.create("kernel/mm/transparent_hugepage", VfsNodeType::Dir, uid, gid, mode)?;
     sys_root.create("kernel/mm/transparent_hugepage/enabled", VfsNodeType::File, uid, gid, mode)?;
-    let file_hp = sys_root
+    let (file_hp, _) = sys_root
         .clone()
         .lookup("./kernel/mm/transparent_hugepage/enabled", 0)?;
     file_hp.write_at(0, b"always [madvise] never\n")?;
@@ -87,7 +87,7 @@ pub(crate) fn sysfs() -> VfsResult<Arc<fs::ramfs::RamFileSystem>> {
         "devices/system/clocksource/clocksource0/current_clocksource",
         VfsNodeType::File, uid, gid, mode
     )?;
-    let file_cc = sys_root
+    let (file_cc, _) = sys_root
         .clone()
         .lookup("devices/system/clocksource/clocksource0/current_clocksource", 0)?;
     file_cc.write_at(0, b"tsc\n")?;

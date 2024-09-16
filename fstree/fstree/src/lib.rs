@@ -63,7 +63,7 @@ impl FsStruct {
         if path.is_empty() {
             return ax_err!(NotFound);
         }
-        let node = self.parent_node_of(dir, path).lookup(path, flags)?;
+        let (node, _) = self.parent_node_of(dir, path).lookup(path, flags)?;
         if path.ends_with('/') && !node.get_attr()?.is_dir() {
             ax_err!(NotADirectory)
         } else {
@@ -110,7 +110,8 @@ impl FsStruct {
         let parent = self.parent_node_of(dir, path);
         info!("create_file: step1");
         parent.create(path, ty, uid, gid, mode)?;
-        parent.lookup(path, 0)
+        let (node, _) = parent.lookup(path, 0)?;
+        Ok(node)
     }
 
     pub fn create_dir(&self, dir: Option<&VfsNodeRef>, path: &str, uid: u32, gid: u32, mode: i32) -> AxResult {

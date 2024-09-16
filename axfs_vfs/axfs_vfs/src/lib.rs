@@ -47,6 +47,7 @@ pub mod path;
 
 use alloc::{sync::Arc, vec::Vec};
 use alloc::string::String;
+use crate::alloc::borrow::ToOwned;
 use axerrno::{ax_err, AxError, AxResult};
 use core::sync::atomic::{AtomicUsize, Ordering};
 use spin::RwLock;
@@ -166,7 +167,7 @@ pub trait VfsNodeOps: Send + Sync {
     /// Lookup the node with given `path` in the directory.
     ///
     /// Return the node if found.
-    fn lookup(self: Arc<Self>, _path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+    fn lookup(self: Arc<Self>, _path: &str, _flags: i32) -> VfsResult<(VfsNodeRef, String)> {
         ax_err!(Unsupported)
     }
 
@@ -270,8 +271,19 @@ impl VfsNodeOps for RootDirectory {
         self.main_fs.root_dir().get_attr()
     }
 
-    fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<VfsNodeRef> {
-        self.lookup_mounted_fs(path, |fs, rest_path| fs.root_dir().lookup(rest_path, flags))
+    fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<(VfsNodeRef, String)> {
+        //self.lookup_mounted_fs(path, |fs, rest_path| fs.root_dir().lookup(rest_path, flags))
+        let mut root_path = String::from(path);
+        loop {
+            let (fs, rest_path) = self.lookup_fs(&root_path)?;
+            let (node, symlink) = fs.root_dir().lookup(&rest_path, flags)?;
+            if !symlink.is_empty() {
+                assert!(symlink.starts_with("/"));
+                root_path = symlink;
+                continue;
+            }
+            return Ok((node, String::new()));
+        }
     }
 
     fn link(&self, path: &str, node: VfsNodeRef) -> VfsResult {
@@ -350,7 +362,8 @@ impl RootDirectory {
         }
         // create the mount point in the main filesystem if it does not exist
         self.main_fs.root_dir().create(path, FileType::Dir, uid, gid, 0o777)?;
-        fs.mount(path, self.main_fs.root_dir().lookup(path, 0)?)?;
+        let (mnt_point, _) = self.main_fs.root_dir().lookup(path, 0)?;
+        fs.mount(path, mnt_point)?;
         self.mounts.write().push(MountPoint::new(path, fs));
         Ok(())
     }
@@ -364,12 +377,12 @@ impl RootDirectory {
     }
 
     pub fn statfs(&self, path: &str) -> AxResult<FileSystemInfo> {
-        let fs = self.lookup_fs(path)?;
+        let (fs, _) = self.lookup_fs(path)?;
         fs.statfs()
     }
 
-    pub fn lookup_fs(&self, path: &str) -> AxResult<VfsRef> {
-        error!("lookup_fs {} at root", path);
+    pub fn lookup_fs(&self, path: &str) -> AxResult<(VfsRef, String)> {
+        info!("lookup_fs {} at root", path);
         let path = path.trim_matches('/');
         if let Some(rest) = path.strip_prefix("./") {
             return self.lookup_fs(rest);
@@ -391,9 +404,10 @@ impl RootDirectory {
         }
 
         if max_len == 0 {
-            Ok(self.main_fs.clone())        // not matched any mount point
+            Ok((self.main_fs.clone(), path.to_owned()))        // not matched any mount point
         } else {
-            Ok(mounts[idx].fs.clone()) // matched at `idx`
+            let ret = String::from(&path[max_len..]);
+            Ok((mounts[idx].fs.clone(), ret)) // matched at `idx`
         }
     }
 

@@ -10,6 +10,8 @@ use spin::RwLock;
 
 use crate::file::{FileNode, SymLinkNode};
 
+pub type LookupOp = fn(&str, i32) -> VfsResult<VfsNodeRef>;
+
 /// The directory node in the Proc filesystem.
 ///
 /// It implements [`axfs_vfs::VfsNodeOps`].
@@ -21,10 +23,13 @@ pub struct DirNode {
     uid: RwLock<u32>,
     gid: RwLock<u32>,
     mode: RwLock<i32>,
+    lookup_op: Option<LookupOp>,
 }
 
 impl DirNode {
-    pub(super) fn new(parent: Option<Weak<dyn VfsNodeOps>>, uid: u32, gid: u32, mode: i32) -> Arc<Self> {
+    pub(super) fn new(
+        parent: Option<Weak<dyn VfsNodeOps>>, uid: u32, gid: u32, mode: i32, lookup_op: Option<LookupOp>,
+    ) -> Arc<Self> {
         Arc::new_cyclic(|this| Self {
             this: this.clone(),
             parent: RwLock::new(parent.unwrap_or_else(|| Weak::<Self>::new())),
@@ -33,6 +38,7 @@ impl DirNode {
             uid: RwLock::new(uid),
             gid: RwLock::new(gid),
             mode: RwLock::new(mode),
+            lookup_op,
         })
     }
 
@@ -63,7 +69,7 @@ impl DirNode {
         }
         let node: VfsNodeRef = match ty {
             VfsNodeType::File => Arc::new(FileNode::new(None, uid, gid, mode)),
-            VfsNodeType::Dir => Self::new(Some(self.this.clone()), uid, gid, mode),
+            VfsNodeType::Dir => Self::new(Some(self.this.clone()), uid, gid, mode, None),
             VfsNodeType::SymLink => Arc::new(SymLinkNode::new(uid, gid)),
             _ => return Err(VfsError::Unsupported),
         };
@@ -188,8 +194,13 @@ impl VfsNodeOps for DirNode {
     }
     */
 
-    fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<VfsNodeRef> {
+    fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<(VfsNodeRef, String)> {
         info!("lookup: {} flags {:#o}\n", path, flags);
+        if let Some(lookup_op) = self.lookup_op {
+            let node = lookup_op(path, flags)?;
+            return Ok((node, String::new()));
+        }
+
         let (name, rest) = split_path(path);
         let mut name = String::from(name);
         loop {
@@ -210,9 +221,10 @@ impl VfsNodeOps for DirNode {
             }
 
             if let Some(rest) = rest {
+                error!("lookup: rest {}", rest);
                 return node.lookup(rest, flags);
             } else {
-                return Ok(node);
+                return Ok((node, String::new()));
             }
         }
     }
