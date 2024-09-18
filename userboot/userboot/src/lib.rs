@@ -151,7 +151,9 @@ fn run_init_process(init_filename: &str) -> LinuxResult {
     info!("run_init_process...");
 
     let argv_init: Vec<String> = vec![init_filename.into()];
-    let envp_init: Vec<String> = vec!["HOME=/".into(), "TERM=linux".into()];
+    let envp_init: Vec<String> = vec![
+        "HOME=/".into(), "TERM=linux".into(), "PATH=/bin:/sbin".into(),
+    ];
 
     exec::kernel_execve(init_filename, argv_init, envp_init)
 }
