@@ -159,5 +159,6 @@ fn run_init_process(init_filename: &str) -> LinuxResult {
 }
 
 fn kernel_init_freeable() -> LinuxResult {
-    fileops::console_on_rootfs()
+    fileops::console_on_rootfs()?;
+    fileops::loop_init()
 }

@@ -19,6 +19,8 @@ use axfs_vfs::VfsNodeRef;
 use axmount::init_root;
 use axfs_vfs::{FileSystemInfo, VfsNodeType, VfsNodeAttrValid, VfsNodeAttr};
 use axfs_vfs::path::canonicalize;
+use axtype::MAX_LOOP_NUMBER;
+use block_loop::{LoopCtlDev, LoopDev};
 
 use axerrno::AxResult;
 use axerrno::{LinuxError, LinuxResult, linux_err, linux_err_from};
@@ -423,55 +425,19 @@ fn fstatat_stdio(_dfd: usize, path: usize, statbuf: *mut KernelStat, _flags: usi
     return 0;
 }
 
-// IOCTL
-const TCGETS: usize = 0x5401;
-
-const NCCS: usize = 19;
-
-#[derive(Debug, Clone, Copy, Default)]
-#[repr(C)]
-struct Termios {
-    c_iflag: u32,     /* input mode flags */
-    c_oflag: u32,     /* output mode flags */
-    c_cflag: u32,     /* control mode flags */
-    c_lflag: u32,     /* local mode flags */
-    c_line: u8,       /* line discipline */
-    c_cc: [u8; NCCS], /* control characters */
-}
-
-pub fn ioctl(fd: usize, request: usize, udata: usize) -> usize {
+pub fn ioctl(fd: usize, request: usize, udata: usize) -> LinuxResult<usize> {
     info!(
         "linux_syscall_ioctl fd {}, request {:#X}, udata {:#X}",
         fd, request, udata
     );
 
-    if fd != 0 && fd != 1 && fd != 2 {
-        return usize::MAX;
-    }
 
-    assert!(fd == 0 || fd == 1 || fd == 2);
-    if request != TCGETS {
-        return usize::MAX;
-    }
-    assert_eq!(request, TCGETS);
+    let current = task::current();
+    let file = current.filetable.lock()
+        .get_file(fd).ok_or(LinuxError::EBADF)?;
 
-    let cc: [u8; NCCS] = [
-        0x3, 0x1c, 0x7f, 0x15, 0x4, 0x0, 0x1, 0x0, 0x11, 0x13, 0x1a, 0x0, 0x12, 0xf, 0x17, 0x16,
-        0x0, 0x0, 0x0,
-    ];
-
-    let ubuf = udata as *mut Termios;
-    unsafe {
-        *ubuf = Termios {
-            c_iflag: 0x500,
-            c_oflag: 0x5,
-            c_cflag: 0xcbd,
-            c_lflag: 0x8a3b,
-            c_line: 0,
-            c_cc: cc,
-        };
-    }
-    0
+    let ret = file.lock().ioctl(request, udata)?;
+    Ok(ret)
 }
 
 pub fn mknodat(dfd: usize, filename: &str, mode: usize, dev: usize) -> usize {
@@ -882,6 +848,21 @@ pub fn console_on_rootfs() -> LinuxResult {
     info!("Register stdout: fd[{}]", stdout);
     let stderr = current.filetable.lock().insert(console.clone(), 0);
     info!("Register stderr: fd[{}]", stderr);
+    Ok(())
+}
+
+pub fn loop_init() -> LinuxResult {
+    let loop_ctl = LoopCtlDev::new();
+
+    let current = task::current();
+    let fs = current.fs.lock();
+    fs.create_link(None, "/dev/loop-control", Arc::new(loop_ctl))?;
+
+    for i in 0..MAX_LOOP_NUMBER {
+        let name = format!("/dev/loop{}", i);
+        let loop_dev = LoopDev::new(i);
+        fs.create_link(None, &name, Arc::new(loop_dev))?;
+    }
     Ok(())
 }
 

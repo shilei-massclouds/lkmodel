@@ -1,5 +1,7 @@
 use alloc::sync::Arc;
+use alloc::format;
 use axfs_vfs::{VfsNodeType, VfsOps, VfsResult};
+use axtype::MAX_LOOP_NUMBER;
 
 use crate::fs;
 
@@ -16,6 +18,7 @@ pub(crate) fn devfs() -> Arc<fs::devfs::DeviceFileSystem> {
     devfs.add("null", Arc::new(null));
     devfs.add("zero", Arc::new(zero));
     devfs.add("console", Arc::new(console));
+
     foo_dir.add("bar", Arc::new(bar));
     devfs.mkdir("shm", uid, gid);
     Arc::new(devfs)

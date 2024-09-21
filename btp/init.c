@@ -14,6 +14,7 @@ int exec_cmd(char *cmdline)
 {
     pid_t pid;
     char *token;
+    char *envp[] = { "PATH=/bin:/sbin", NULL };
     char *argv[MAX_ARG_COUNT + 1]; // argv with end 'NULL'
     int argc = 0;
 
@@ -33,7 +34,7 @@ int exec_cmd(char *cmdline)
         } else {
             sprintf(exe_path, "%s/%s", SBIN_PATH, argv[0]);
         }
-        execv(exe_path, argv);
+        execve(exe_path, argv, envp);
         exit(0);
     }
     waitpid(pid, NULL, 0);

@@ -141,8 +141,9 @@ rt_axtrap = { path = "./axtrap/rt_axtrap" }
 [patch."ssh://git@github.com/shilei-massclouds/axtype".axtype]
 path = "./axtype/axtype"
 
-[patch."ssh://git@github.com/shilei-massclouds/axfs_devfs".axfs_devfs]
-path = "./axfs_devfs/axfs_devfs"
+[patch."ssh://git@github.com/shilei-massclouds/axfs_devfs"]
+axfs_devfs = { path = "./axfs_devfs/axfs_devfs" }
+block_loop = { path = "./axfs_devfs/block_loop" }
 
 [patch."ssh://git@github.com/shilei-massclouds/axfs_ramfs"]
 axfs_ramfs = { path = "./axfs_ramfs/axfs_ramfs" }

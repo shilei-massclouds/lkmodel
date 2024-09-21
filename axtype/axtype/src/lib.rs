@@ -256,3 +256,6 @@ pub const S_IFCHR:  i32 = 0o20000;
 pub const S_ISUID:  i32 = 0o04000;
 pub const S_ISGID:  i32 = 0o02000;
 pub const S_ISVTX:  i32 = 0o01000;
+
+/// Max loop dev number.
+pub const MAX_LOOP_NUMBER: usize = 2;

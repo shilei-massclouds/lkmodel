@@ -395,6 +395,9 @@ fn linux_syscall_madvise(_args: SyscallArgs) -> usize {
 fn linux_syscall_ioctl(args: SyscallArgs) -> usize {
     let [fd, request, udata, ..] = args;
     fileops::ioctl(fd, request, udata)
+        .unwrap_or_else(|e| {
+            linux_err_from!(e)
+        })
 }
 
 fn linux_syscall_fgetxattr(args: SyscallArgs) -> usize {

@@ -223,6 +223,11 @@ pub trait VfsNodeOps: Send + Sync {
         ax_err!(Unsupported)
     }
 
+    /// Ioctl device.
+    fn ioctl(&self, _req: usize, _data: usize) -> VfsResult<usize> {
+        ax_err!(Unsupported)
+    }
+
     /// Convert `&self` to [`&dyn Any`][1] that can use
     /// [`Any::downcast_ref`][2].
     ///

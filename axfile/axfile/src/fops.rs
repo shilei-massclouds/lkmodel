@@ -423,8 +423,11 @@ impl File {
 
     /// Flushes the file, writes all buffered data to the underlying device.
     pub fn flush(&self) -> AxResult {
-        self.node.access(Cap::WRITE)?.fsync()?;
-        Ok(())
+        self.node.access(Cap::WRITE)?.fsync()
+    }
+
+    pub fn ioctl(&self, req: usize, data: usize) -> AxResult<usize> {
+        self.node.access(Cap::empty())?.ioctl(req, data)
     }
 
     /// Sets the cursor of the file to the specified offset. Returns the new

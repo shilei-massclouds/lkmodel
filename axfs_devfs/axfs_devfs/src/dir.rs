@@ -11,7 +11,7 @@ use axfs_vfs::alloc_ino;
 /// It implements [`axfs_vfs::VfsNodeOps`].
 pub struct DirNode {
     parent: RwLock<Weak<dyn VfsNodeOps>>,
-    children: RwLock<BTreeMap<&'static str, VfsNodeRef>>,
+    children: RwLock<BTreeMap<String, VfsNodeRef>>,
     ino: usize,
     uid: u32,
     gid: u32,
@@ -34,16 +34,16 @@ impl DirNode {
     }
 
     /// Create a subdirectory at this directory.
-    pub fn mkdir(self: &Arc<Self>, name: &'static str, uid: u32, gid: u32) -> Arc<Self> {
+    pub fn mkdir(self: &Arc<Self>, name: &str, uid: u32, gid: u32) -> Arc<Self> {
         let parent = self.clone() as VfsNodeRef;
         let node = Self::new(Some(&parent), uid, gid);
-        self.children.write().insert(name, node.clone());
+        self.children.write().insert(String::from(name), node.clone());
         node
     }
 
     /// Add a node to this directory.
-    pub fn add(&self, name: &'static str, node: VfsNodeRef) {
-        self.children.write().insert(name, node);
+    pub fn add(&self, name: &str, node: VfsNodeRef) {
+        self.children.write().insert(String::from(name), node);
     }
 }
 
@@ -100,7 +100,7 @@ impl VfsNodeOps for DirNode {
     }
 
     fn create(&self, path: &str, ty: VfsNodeType, uid: u32, gid: u32, mode: i32) -> VfsResult {
-        log::debug!("create {:?} at devfs: {}", ty, path);
+        debug!("create {:?} at devfs: {}", ty, path);
         let (name, rest) = split_path(path);
         if let Some(rest) = rest {
             match name {
@@ -137,6 +137,14 @@ impl VfsNodeOps for DirNode {
         } else {
             Err(VfsError::PermissionDenied) // do not support to remove nodes dynamically
         }
+    }
+
+    fn link(&self, path: &str, node: VfsNodeRef) -> VfsResult {
+        let (name, rest) = split_path(path);
+        assert!(rest.is_none());
+        assert!(!name.is_empty());
+        self.add(name, node);
+        Ok(())
     }
 
     axfs_vfs::impl_vfs_dir_default! {}

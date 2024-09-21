@@ -225,7 +225,7 @@ impl Ext2Filesystem {
     }
 
     pub fn _read_at(&mut self, inode_nbr: u32, file_offset: &mut u64, mut buf: &mut [u8]) -> LinuxResult<u64> {
-        info!("offset {:#x} buflen {:#x}", file_offset, buf.len());
+        debug!("offset {:#x} buflen {:#x}", file_offset, buf.len());
         let (mut inode, _inode_addr) = self.get_inode(inode_nbr)?;
 
         // EOF
@@ -1689,7 +1689,7 @@ impl VfsNodeOps for Ext2Inode {
     }
 
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
-        info!("get_attr ino: {}", self.entry.directory.get_inode());
+        debug!("get_attr ino: {}", self.entry.directory.get_inode());
         let inode = self.entry.inode;
         let perm = inode.type_and_perm.0 as u32 & !SFlag::S_IFMT.bits();
         let perm = VfsNodePerm::from_bits_truncate(perm as u16);

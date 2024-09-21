@@ -5,6 +5,8 @@
 #![cfg_attr(not(test), no_std)]
 
 extern crate alloc;
+#[macro_use]
+extern crate log;
 
 mod dir;
 mod null;
@@ -39,14 +41,14 @@ impl DeviceFileSystem {
     }
 
     /// Create a subdirectory at the root directory.
-    pub fn mkdir(&self, name: &'static str, uid: u32, gid: u32) -> Arc<DirNode> {
+    pub fn mkdir(&self, name: &str, uid: u32, gid: u32) -> Arc<DirNode> {
         self.root.mkdir(name, uid, gid)
     }
 
     /// Add a node to the root directory.
     ///
     /// The node must implement [`axfs_vfs::VfsNodeOps`], and be wrapped in [`Arc`].
-    pub fn add(&self, name: &'static str, node: VfsNodeRef) {
+    pub fn add(&self, name: &str, node: VfsNodeRef) {
         self.root.add(name, node);
     }
 }
