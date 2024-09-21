@@ -83,6 +83,7 @@ define riscv64_install_apps
   -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/write[[:digit:]]* ./mnt/testcases/
   -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/close[[:digit:]]* ./mnt/testcases/
 
+  @sudo ln -s busybox ./mnt/bin/mkfs.ext2
   ls -l ./mnt/sbin
   ls -l ./mnt/bin
   ls -l ./mnt/testcases

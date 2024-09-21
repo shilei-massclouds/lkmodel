@@ -259,3 +259,6 @@ pub const S_ISVTX:  i32 = 0o01000;
 
 /// Max loop dev number.
 pub const MAX_LOOP_NUMBER: usize = 2;
+
+/// Major Code
+pub const MAJOR_LOOP: u32 = 7;

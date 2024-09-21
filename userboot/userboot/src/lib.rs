@@ -152,10 +152,11 @@ fn run_init_process(init_filename: &str) -> LinuxResult {
 
     let argv_init: Vec<String> = vec![init_filename.into()];
     let envp_init: Vec<String> = vec![
-        "HOME=/".into(), "TERM=linux".into(), "PATH=/bin:/sbin".into(),
+        "HOME=/".into(), "TERM=linux".into(),
     ];
 
-    exec::kernel_execve(init_filename, argv_init, envp_init)
+    exec::kernel_execve(init_filename, argv_init, envp_init)?;
+    Ok(())
 }
 
 fn kernel_init_freeable() -> LinuxResult {

@@ -6,11 +6,11 @@ extern crate alloc;
 use alloc::vec::Vec;
 use alloc::string::String;
 
-use axerrno::LinuxResult;
+use axerrno::{LinuxResult, LinuxError, linux_err_from};
 use axhal::arch::start_thread;
 use axtype::get_user_str_vec;
 
-pub fn kernel_execve(filename: &str, argv: Vec<String>, envp: Vec<String>) -> LinuxResult {
+pub fn kernel_execve(filename: &str, argv: Vec<String>, envp: Vec<String>) -> LinuxResult<usize> {
     info!("kernel_execve... {}", filename);
 
     task::alloc_mm();
@@ -21,7 +21,7 @@ pub fn kernel_execve(filename: &str, argv: Vec<String>, envp: Vec<String>) -> Li
 
     info!("start thread... usp {:#x}", sp);
     start_thread(task::current().pt_regs_addr(), entry, sp);
-    Ok(())
+    Ok(0)
 }
 
 fn do_close_on_exec() -> LinuxResult {
@@ -52,8 +52,10 @@ pub fn execve(path: &str, argv: usize, envp: usize) -> usize {
         info!("env: {}", env);
     }
 
-    kernel_execve(path, args, envp).expect("exec error!");
-    0
+    kernel_execve(path, args, envp)
+        .unwrap_or_else(|e| {
+            linux_err_from!(e)
+        })
 }
 
 pub fn init(cpu_id: usize, dtb_pa: usize) {

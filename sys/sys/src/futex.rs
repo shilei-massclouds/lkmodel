@@ -33,7 +33,6 @@ pub fn do_futex(
     uaddr: usize, op: usize, val: usize, timeout_or_val2: usize,
     uaddr2: usize, mut val3: usize
 ) -> usize {
-    assert_eq!(timeout_or_val2, 0);
     assert_eq!(uaddr2, 0);
 
     let cmd = op & FUTEX_CMD_MASK;
@@ -80,7 +79,11 @@ fn futex_wait(
     uaddr: usize, _flags: usize, val: usize, abs_time: usize, bitset: usize
 ) -> usize {
     debug!("futex_wait ...");
-    assert_eq!(abs_time, 0);
+    if abs_time != 0 {
+        let abs_time = abs_time as *const i64;
+        let timeout = unsafe { *abs_time };
+        error!("timeout: {}", timeout);
+    }
     assert_eq!(bitset, FUTEX_BITSET_MATCH_ANY);
     if bitset == 0 {
         return linux_err!(EINVAL);
@@ -101,6 +104,7 @@ fn futex_wait(
             futex_map.get(&uaddr).unwrap().clone()
         }
     };
+
     wq.wait();
     debug!("futex_wait ok!");
     return 0;

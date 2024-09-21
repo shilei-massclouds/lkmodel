@@ -397,6 +397,7 @@ pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usi
             st_blocks: metadata.blocks() as _,
             // Todo: get real block_size from dev
             st_blksize: BLOCK_SIZE,
+            st_rdev: metadata.rdev() as u64,
             ..Default::default()
         };
     }

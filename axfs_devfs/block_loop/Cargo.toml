@@ -7,7 +7,10 @@ edition = "2021"
 
 [dependencies]
 log = "0.4"
+spin = "0.9"
 spinbase = { git = "ssh://git@github.com/shilei-massclouds/spinbase.git" }
+mutex = { git = "ssh://git@github.com/shilei-massclouds/mutex" }
+axfile = { git = "ssh://git@github.com/shilei-massclouds/axfile" }
 axtype = { git = "ssh://git@github.com/shilei-massclouds/axtype.git" }
 axfs_vfs = { git = "ssh://git@github.com/shilei-massclouds/axfs_vfs.git" }
 task = { git = "ssh://git@github.com/shilei-massclouds/task" }

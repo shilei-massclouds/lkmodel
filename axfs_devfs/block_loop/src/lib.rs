@@ -4,12 +4,18 @@
 extern crate log;
 extern crate alloc;
 
+use alloc::sync::Arc;
 use axfs_vfs::{VfsNodeAttr, VfsNodeOps, VfsNodePerm, VfsNodeType, VfsResult};
 use spinbase::SpinNoIrq;
+use mutex::Mutex;
 use axfs_vfs::VfsError;
 use axtype::MAX_LOOP_NUMBER;
-use core::sync::atomic::{AtomicUsize, Ordering};
 use axerrno::AxError;
+use spin::RwLock;
+use axfile::fops::File;
+use axtype::MAJOR_LOOP;
+
+pub type FileRef = Arc<Mutex<File>>;
 
 /* /dev/loop-control interface */
 const LOOP_CTL_ADD:     usize = 0x4C80;
@@ -79,18 +85,39 @@ impl VfsNodeOps for LoopCtlDev {
     axfs_vfs::impl_vfs_non_dir_default! {}
 }
 
+struct LoopInfo {
+    pub file: Option<FileRef>,
+}
+
+impl LoopInfo {
+    pub fn new() -> Self {
+        Self {
+            file: None,
+        }
+    }
+}
+
 /// A device behaves like `/dev/loop0`.
 pub struct LoopDev {
     index: usize,
-    fd: AtomicUsize,
+    info: RwLock<LoopInfo>,
 }
 
 impl LoopDev {
     pub fn new(index: usize) -> Self {
         Self {
             index,
-            fd: AtomicUsize::new(0),
+            info: RwLock::new(LoopInfo::new()),
         }
+    }
+
+    fn set_fd(&self, fd: usize) -> VfsResult {
+        let current = task::current();
+        let file = current.filetable.lock()
+            .get_file(fd)
+            .ok_or(AxError::NotFound)?;
+        self.info.write().file = Some(file.clone());
+        Ok(())
     }
 }
 
@@ -100,15 +127,16 @@ impl VfsNodeOps for LoopDev {
     }
 
     fn get_attr(&self) -> VfsResult<VfsNodeAttr> {
-        error!("loop get_attr");
-        Ok(VfsNodeAttr::new(
+        let mut attr = VfsNodeAttr::new(
             VfsNodePerm::default_file(),
             VfsNodeType::BlockDevice,
             0,
             0,
             0,
             0,
-        ))
+        );
+        attr.set_rdev(MAJOR_LOOP, self.index as u32);
+        Ok(attr)
     }
 
     fn read_at(&self, _offset: u64, _buf: &mut [u8]) -> VfsResult<usize> {
@@ -116,15 +144,13 @@ impl VfsNodeOps for LoopDev {
     }
 
     fn write_at(&self, offset: u64, buf: &[u8]) -> VfsResult<usize> {
-        let fd = self.fd.load(Ordering::Relaxed);
-
-        let current = task::current();
-        let file = current.filetable.lock()
-            .get_file(fd)
-            .ok_or(AxError::NotFound)?;
-        file.lock().write_at(offset, buf)?;
-        info!("write_at: fd {} offset {} buf {:#x}", fd, offset, buf.len());
-        unimplemented!("write_at");
+        info!("write_at: offset {} buf {:#x}", offset, buf.len());
+        let ret = if let Some(ref file) = self.info.read().file {
+            file.lock().write_at(offset, buf)?
+        } else {
+            panic!("no file!");
+        };
+        Ok(ret)
     }
 
     fn truncate(&self, size: u64) -> VfsResult {
@@ -135,7 +161,7 @@ impl VfsNodeOps for LoopDev {
     fn ioctl(&self, req: usize, data: usize) -> VfsResult<usize> {
         match req {
             LOOP_SET_FD => {
-                self.fd.store(data, Ordering::Relaxed);
+                self.set_fd(data)?;
             },
             LOOP_SET_STATUS => {
                 // TODO: Just ignore it.

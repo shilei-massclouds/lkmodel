@@ -74,6 +74,7 @@ pub struct VfsNodeAttr {
     uid: u32,
     /// gid
     gid: u32,
+    rdev: u32,
 }
 
 bitflags::bitflags! {
@@ -291,7 +292,18 @@ impl VfsNodeAttr {
             blocks,
             uid,
             gid,
+            rdev: 0,
         }
+    }
+
+    #[inline]
+    pub fn set_rdev(&mut self, major: u32, minor: u32) {
+        self.rdev = (minor & 0xff) | (major << 8) | ((minor & !0xff) << 12);
+    }
+
+    #[inline]
+    pub fn rdev(&self) -> u32 {
+        self.rdev
     }
 
     #[inline]
@@ -333,6 +345,7 @@ impl VfsNodeAttr {
             blocks,
             uid,
             gid,
+            rdev: 0,
         }
     }
 
@@ -345,6 +358,7 @@ impl VfsNodeAttr {
             blocks,
             uid,
             gid,
+            rdev: 0,
         }
     }
 
@@ -357,6 +371,7 @@ impl VfsNodeAttr {
             blocks,
             uid,
             gid,
+            rdev: 0,
         }
     }
 
@@ -370,6 +385,7 @@ impl VfsNodeAttr {
             blocks,
             uid,
             gid,
+            rdev: 0,
         }
     }
 
