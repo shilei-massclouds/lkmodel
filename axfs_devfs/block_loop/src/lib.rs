@@ -18,8 +18,8 @@ use axtype::MAJOR_LOOP;
 pub type FileRef = Arc<Mutex<File>>;
 
 /* /dev/loop-control interface */
-const LOOP_CTL_ADD:     usize = 0x4C80;
-const LOOP_CTL_REMOVE:  usize = 0x4C81;
+//const LOOP_CTL_ADD:     usize = 0x4C80;
+//const LOOP_CTL_REMOVE:  usize = 0x4C81;
 const LOOP_CTL_GET_FREE:usize = 0x4C82;
 
 const LOOP_SET_FD:      usize = 0x4C00;

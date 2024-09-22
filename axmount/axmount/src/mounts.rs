@@ -1,7 +1,5 @@
 use alloc::sync::Arc;
-use alloc::format;
 use axfs_vfs::{VfsNodeType, VfsOps, VfsResult};
-use axtype::MAX_LOOP_NUMBER;
 
 use crate::fs;
 

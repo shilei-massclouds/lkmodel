@@ -92,7 +92,7 @@ fn do_close(info: &Vec<&str>, fd_map: &mut FdMap) {
     let ofd = parse_usize(info[1].trim());
     let fd = fd_map.remove(&ofd).unwrap();
     info!("close: ofd {:#x} => fd {:#x}", ofd, fd);
-    fileops::unregister_file(fd);
+    let _ = fileops::unregister_file(fd);
 }
 
 //

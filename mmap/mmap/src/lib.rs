@@ -706,7 +706,7 @@ pub fn munmap(va: usize, mut len: usize) -> usize {
 }
 
 pub fn mremap(
-    mut oaddr: usize, mut osize: usize, mut nsize: usize, flags: usize, naddr: usize
+    oaddr: usize, mut osize: usize, mut nsize: usize, flags: usize, naddr: usize
 ) -> usize {
     assert_eq!(flags, 0);
     assert_eq!(naddr, 0);
@@ -737,7 +737,7 @@ pub fn mremap(
 
 fn find_next_area(cur_end: usize) -> Option<VmAreaStruct> {
     let mm = task::current().mm();
-    let mut locked_mm = mm.lock();
+    let locked_mm = mm.lock();
     let cursor = locked_mm.vmas.lower_bound(Bound::Excluded(&cur_end));
     cursor.peek_prev().map(|(_, area)| area.clone())
 }
