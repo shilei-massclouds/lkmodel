@@ -23,6 +23,7 @@ use axhal::arch::{EXC_INST_PAGE_FAULT, EXC_LOAD_PAGE_FAULT, EXC_STORE_PAGE_FAULT
 #[cfg(target_arch = "riscv64")]
 use signal::force_sig_fault;
 use capability::Cap;
+use axhal::arch::flush_tlb;
 
 /// enforced gap between the expanding stack and other mappings.
 const STACK_GUARD_GAP: usize = 256 << PAGE_SHIFT;
@@ -206,7 +207,7 @@ pub fn _mmap(
     }
 
     let mm = task::current().mm();
-    if let Some(mut overlap) = find_overlap(va, len) {
+    if let Some(mut overlap) = cut_overlap(va, len) {
         debug!("find overlap {:#X}-{:#X}", overlap.vm_start, overlap.vm_end);
         assert!(
             overlap.vm_start <= va && va + len <= overlap.vm_end,
@@ -240,7 +241,7 @@ pub fn _mmap(
     if (flags & MAP_SHARED) != 0 {
         vm_flags |= VM_SHARED | VM_MAYSHARE;
     }
-    info!(
+    error!(
         "mmap region: {:#X} - {:#X}, vm_flags: {:#X}, prot {:#X}",
         va,
         va + len,
@@ -291,18 +292,23 @@ fn calc_vm_flag_bits(flags: usize) -> usize {
     vm_flags
 }
 
-fn find_overlap(va: usize, len: usize) -> Option<VmAreaStruct> {
-    debug!("find_overlap: va {:#X} len {:#X}", va, len);
-
+fn find_overlap(va: usize, len: usize) -> Option<usize> {
     let mm = task::current().mm();
     let locked_mm = mm.lock();
-    let ret = locked_mm.vmas.iter().find(|(_, vma)| {
+    locked_mm.vmas.iter().find(|(_, vma)| {
         in_vma(va, va + len, vma) || in_range(vma.vm_start, vma.vm_end, va, va + len)
-    });
+    }).map(|(key, _)| {
+        *key
+    })
+}
 
-    if let Some((key, _)) = ret {
+fn cut_overlap(va: usize, len: usize) -> Option<VmAreaStruct> {
+    debug!("cut_overlap: va {:#X} len {:#X}", va, len);
+
+    if let Some(key) = find_overlap(va, len) {
         warn!("### Removed!!!");
-        mm.lock().vmas.remove(&key)
+        let current = task::current();
+        current.mm().lock().vmas.remove(&key)
     } else {
         None
     }
@@ -323,7 +329,13 @@ fn mmap_base() -> usize {
     STACK_TOP - MIN_GAP
 }
 
-pub fn get_unmapped_vma(_va: usize, len: usize) -> usize {
+pub fn get_unmapped_vma(va: usize, len: usize) -> usize {
+    error!("get_unmapped_vma va {:#x} len {:#x}", va, len);
+    // TODO: fix mmap19
+    if va != 0 && find_overlap(va, len).is_none() {
+        return va;
+    }
+
     let mm = task::current().mm();
     let locked_mm = mm.lock();
     let mut gap_end = mmap_base();
@@ -655,9 +667,9 @@ pub fn munmap(va: usize, mut len: usize) -> usize {
         return linux_err!(EINVAL);
     }
 
-    info!("munmap {:#X} - {:#X}", va, va + len);
+    error!("munmap {:#x} - {:#x}", va, va + len);
 
-    while let Some(mut overlap) = find_overlap(va, len) {
+    while let Some(mut overlap) = cut_overlap(va, len) {
         debug!("find overlap {:#X}-{:#X}", overlap.vm_start, overlap.vm_end);
         if va <= overlap.vm_start && overlap.vm_end <= va + len {
             let len = overlap.vm_end - overlap.vm_start;
@@ -693,18 +705,58 @@ pub fn munmap(va: usize, mut len: usize) -> usize {
     0
 }
 
+pub fn mremap(
+    mut oaddr: usize, mut osize: usize, mut nsize: usize, flags: usize, naddr: usize
+) -> usize {
+    assert_eq!(flags, 0);
+    assert_eq!(naddr, 0);
+    assert!(is_aligned_4k(oaddr));
+    osize = align_up_4k(osize);
+    nsize = align_up_4k(nsize);
+
+    error!("mremap oaddr {:#x} osize {:#x} nsize {:#x}, flags {:#x} naddr {:#x}",
+        oaddr, osize, nsize, flags, naddr);
+
+    let mut area = cut_overlap(oaddr, osize).unwrap_or_else(|| {
+        panic!("no area {:#x} : {:#x}", oaddr, osize);
+    });
+    assert_eq!(oaddr, area.vm_start);
+    assert_eq!(oaddr+osize, area.vm_end);
+
+    if let Some(next_area) = find_next_area(oaddr + nsize) {
+        error!("{:#x} next_area: {:#x}", oaddr + nsize, next_area.vm_start);
+        assert!(oaddr + nsize <= next_area.vm_start);
+    }
+
+    area.vm_end = area.vm_start + nsize;
+
+    let mm = task::current().mm();
+    mm.lock().vmas.insert(area.vm_start, area);
+    oaddr
+}
+
+fn find_next_area(cur_end: usize) -> Option<VmAreaStruct> {
+    let mm = task::current().mm();
+    let mut locked_mm = mm.lock();
+    let cursor = locked_mm.vmas.lower_bound(Bound::Excluded(&cur_end));
+    cursor.peek_prev().map(|(_, area)| area.clone())
+}
+
 fn remove_region(va: usize, len: usize) -> usize {
     let mm = task::current().mm();
     let mut locked_mm = mm.lock();
     // Todo: handle temporary mmaped.
     locked_mm.mapped.remove(&va);
+    error!("remove_region va {:#x} len {:#x}", va, len);
     match locked_mm.unmap_region(va, len) {
-        Ok(_) => 0,
+        Ok(_) => {
+            flush_tlb(None);
+        },
         Err(e) => {
             warn!("unmap region err: {:#?}", e);
-            0
         },
     }
+    0
 }
 
 pub fn mprotect(va: usize, len: usize, prot: usize) -> usize {
@@ -713,7 +765,7 @@ pub fn mprotect(va: usize, len: usize, prot: usize) -> usize {
 
     let mut vma;
     let mm = task::current().mm();
-    if let Some(mut overlap) = find_overlap(va, len) {
+    if let Some(mut overlap) = cut_overlap(va, len) {
         debug!("find overlap {:#X}-{:#X}", overlap.vm_start, overlap.vm_end);
         assert!(
             overlap.vm_start <= va && va + len <= overlap.vm_end,

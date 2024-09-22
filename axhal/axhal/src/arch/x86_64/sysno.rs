@@ -88,3 +88,4 @@ pub const LINUX_SYSCALL_SYMLINKAT: usize = 266;
 pub const LINUX_SYSCALL_SETREUID: usize = 113;
 pub const LINUX_SYSCALL_FGETXATTR: usize = 193;
 pub const LINUX_SYSCALL_FALLOCATE: usize = 285;
+pub const LINUX_SYSCALL_MREMAP: usize = 25;

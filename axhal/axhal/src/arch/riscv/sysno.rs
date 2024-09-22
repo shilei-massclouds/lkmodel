@@ -61,6 +61,7 @@ pub const LINUX_SYSCALL_GETTID: usize = 0xb2;
 pub const LINUX_SYSCALL_SOCKET: usize = 0xc6;
 pub const LINUX_SYSCALL_BRK: usize = 0xd6;
 pub const LINUX_SYSCALL_MUNMAP: usize = 0xd7;
+pub const LINUX_SYSCALL_MREMAP: usize = 0xd8;
 pub const LINUX_SYSCALL_CLONE: usize = 0xdc;
 pub const LINUX_SYSCALL_EXECVE: usize = 0xdd;
 pub const LINUX_SYSCALL_MMAP: usize = 0xde;

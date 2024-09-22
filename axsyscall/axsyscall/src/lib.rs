@@ -54,6 +54,7 @@ pub fn do_syscall(args: SyscallArgs, sysno: usize) -> usize {
         LINUX_SYSCALL_CLONE => linux_syscall_clone(args),
         LINUX_SYSCALL_EXECVE => linux_syscall_execve(args),
         LINUX_SYSCALL_MUNMAP => linux_syscall_munmap(args),
+        LINUX_SYSCALL_MREMAP => linux_syscall_mremap(args),
         LINUX_SYSCALL_MMAP => linux_syscall_mmap(args),
         LINUX_SYSCALL_MSYNC => linux_syscall_msync(args),
         LINUX_SYSCALL_MADVISE => linux_syscall_madvise(args),
@@ -240,7 +241,7 @@ fn linux_syscall_dup3(args: SyscallArgs) -> usize {
 
 fn linux_syscall_close(args: SyscallArgs) -> usize {
     let [fd, ..] = args;
-    error!("linux_syscall_close [{:#x}] ...", fd);
+    info!("linux_syscall_close [{:#x}] ...", fd);
     if let Err(e) = fileops::unregister_file(fd) {
         linux_err_from!(e)
     } else {
@@ -380,6 +381,11 @@ fn linux_syscall_munmap(args: SyscallArgs) -> usize {
     let [va, len, ..] = args;
     warn!("munmap!!! {:#x} {:#x}", va, len);
     mmap::munmap(va, len)
+}
+
+fn linux_syscall_mremap(args: SyscallArgs) -> usize {
+    let [oaddr, osize, nsize, flags, naddr, ..] = args;
+    mmap::mremap(oaddr, osize, nsize, flags, naddr)
 }
 
 fn linux_syscall_msync(args: SyscallArgs) -> usize {

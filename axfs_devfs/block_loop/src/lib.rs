@@ -116,6 +116,7 @@ impl LoopDev {
         let file = current.filetable.lock()
             .get_file(fd)
             .ok_or(AxError::NotFound)?;
+        error!("block size : {:#x}", file.lock().get_attr().unwrap().size());
         self.info.write().file = Some(file.clone());
         Ok(())
     }
@@ -144,7 +145,7 @@ impl VfsNodeOps for LoopDev {
     }
 
     fn write_at(&self, offset: u64, buf: &[u8]) -> VfsResult<usize> {
-        info!("write_at: offset {} buf {:#x}", offset, buf.len());
+        error!("write_at: offset {} buf {:#x}", offset, buf.len());
         let ret = if let Some(ref file) = self.info.read().file {
             file.lock().write_at(offset, buf)?
         } else {
