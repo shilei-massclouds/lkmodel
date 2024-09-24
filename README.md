@@ -38,17 +38,12 @@ make autotools
 
 > Directory layout is just as below:
 
-ParentDir
-
-  |
-
-  +---lkmodel
-
-  |
-
-  +---ltp
-
-  |
+ParentDir<br>
+|<br>
++---lkmodel<br>
+|<br>
++---ltp<br>
+|
 
 
 ## 2. Build & Run
