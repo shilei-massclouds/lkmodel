@@ -281,7 +281,7 @@ pub fn fchmodat(
 }
 
 pub fn fchmod(fd: usize, mode: i32) -> LinuxResult<usize> {
-    error!("fchmod fd {:#x} mode {:#o}", fd, mode);
+    info!("fchmod fd {:#x} mode {:#o}", fd, mode);
     let current = task::current();
     let filetable = current.filetable.lock();
     let file = match filetable.get_file(fd) {
@@ -301,7 +301,7 @@ pub fn fchmod(fd: usize, mode: i32) -> LinuxResult<usize> {
 }
 
 pub fn fchown(fd: usize, uid: u32, gid: u32) -> LinuxResult<usize> {
-    error!("fchown fd {:#X} owner:group {}:{}", fd, uid, gid);
+    info!("fchown fd {:#X} owner:group {}:{}", fd, uid, gid);
     let current = task::current();
     let filetable = current.filetable.lock();
     let file = match filetable.get_file(fd) {
@@ -493,7 +493,7 @@ pub fn mkdirat(dfd: usize, pathname: &str, mode: usize) -> usize {
 pub fn readlinkat(
     dfd: usize, filename: &str, buf: usize, size: usize
 ) -> LinuxResult<usize> {
-    error!("!!!TODO!!! readlinkat: dfd {:#x} filename {} bufsize {}", dfd, filename, size);
+    warn!("!!!TODO!!! readlinkat: dfd {:#x} filename {} bufsize {}", dfd, filename, size);
     let path = handle_path(dfd, filename);
 
     let current = task::current();
@@ -645,7 +645,7 @@ pub fn ftruncate(fd: usize, length: usize) -> usize {
 }
 
 pub fn fallocate(fd: usize, mode: usize, offset: usize, len: usize) -> LinuxResult<usize> {
-    error!("fallocate: fd {} mode {:#o} offset {:#x}, len {:#x}",
+    info!("fallocate: fd {} mode {:#o} offset {:#x}, len {:#x}",
         fd, mode, offset, len);
     assert_eq!(mode, 0);
 
@@ -696,7 +696,7 @@ pub fn fcntl(fd: usize, cmd: usize, udata: usize) -> usize {
     let cur = task::current();
     let mut locked_fdt = cur.filetable.lock();
     let new_fd = locked_fdt.alloc_fd(udata);
-    error!("fcntl: fd {}-{} cmd {} udata {}", fd, new_fd, cmd, udata);
+    debug!("fcntl: fd {}-{} cmd {} udata {}", fd, new_fd, cmd, udata);
     let file = locked_fdt.get_file(fd).unwrap();
     locked_fdt.fd_install(new_fd, file.clone());
     new_fd
@@ -714,7 +714,7 @@ pub fn dup(fd: usize) -> usize {
 
 pub fn dup3(oldfd: usize, newfd: usize, flags: usize) -> usize {
     assert_eq!(flags, 0);
-    error!("dup3 [{:#x}, {:#x}, {:#x}] ...", oldfd, newfd, flags);
+    info!("dup3 [{:#x}, {:#x}, {:#x}] ...", oldfd, newfd, flags);
     let cur = task::current();
     let mut locked_fdt = cur.filetable.lock();
     let file = locked_fdt.get_file(oldfd).unwrap();
@@ -808,7 +808,7 @@ pub fn pipe2(fds: usize, flags: usize) -> LinuxResult {
 }
 
 pub fn mount(fsname: &str, dir: &str, fstype: &str, flags: usize, data: usize) -> LinuxResult<usize> {
-    error!("mount: name {} dir {} ty {} flags {:#x} data {:#x}",
+    info!("mount: name {} dir {} ty {} flags {:#x} data {:#x}",
         fsname, dir, fstype, flags, data);
 
     // TODO: Now only handle procfs. Handle other filesystems in future.

@@ -44,7 +44,7 @@ impl VfsNodeOps for SymLinkNode {
         for i in 0..buf.len() {
             wbuf.push(buf[i]);
         }
-        error!("===> symlink: {:?} {}", wbuf, wbuf.len());
+        debug!("===> symlink: {:?} {}", wbuf, wbuf.len());
         Ok(wbuf.len())
     }
 
@@ -52,7 +52,7 @@ impl VfsNodeOps for SymLinkNode {
         assert_eq!(pos, 0);
         let rbuf = self.buf.read();
         assert!(buf.len() >= rbuf.len());
-        error!("sysmlink:read_at: rbuf len {}", rbuf.len());
+        debug!("sysmlink:read_at: rbuf len {}", rbuf.len());
         buf[0..rbuf.len()].copy_from_slice(&rbuf);
         Ok(rbuf.len())
     }

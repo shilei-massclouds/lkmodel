@@ -26,7 +26,7 @@ pub fn init(cpu_id: usize, dtb: usize) {
 }
 
 pub fn start(_cpu_id: usize, _dtb: usize) {
-    let mut init_cmd = env!("AX_INIT_CMD");
+    let mut init_cmd = env!("AX_INIT");
     if init_cmd.len() == 0 {
         init_cmd = "/btp/sbin/hello";
     }

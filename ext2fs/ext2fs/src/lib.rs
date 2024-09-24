@@ -173,7 +173,7 @@ impl Ext2Filesystem {
 
     pub fn _read_dir(&self, ino: u32, offset: u64, buf: &mut [u8]) -> LinuxResult<u64> {
         if offset != 0 {
-            error!("NOTICE! todo: check offset[{}] and real length of directory!", offset);
+            warn!("NOTICE! todo: check offset[{}] and real length of directory!", offset);
             return Ok(0);
         }
 

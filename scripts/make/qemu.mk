@@ -33,8 +33,8 @@ else
 qemu_args-y := -m 256M -smp $(SMP) $(qemu_args-$(ARCH))
 endif
 
-ifneq ($(INIT_CMD), )
-  qemu_args-y += -append "init=$(INIT_CMD)"
+ifneq ($(INIT), )
+  qemu_args-y += -append "init=$(INIT)"
 endif
 
 qemu_args-$(BLK) += \

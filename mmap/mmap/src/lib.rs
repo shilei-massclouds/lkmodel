@@ -241,7 +241,7 @@ pub fn _mmap(
     if (flags & MAP_SHARED) != 0 {
         vm_flags |= VM_SHARED | VM_MAYSHARE;
     }
-    error!(
+    debug!(
         "mmap region: {:#X} - {:#X}, vm_flags: {:#X}, prot {:#X}",
         va,
         va + len,
@@ -330,8 +330,7 @@ fn mmap_base() -> usize {
 }
 
 pub fn get_unmapped_vma(va: usize, len: usize) -> usize {
-    error!("get_unmapped_vma va {:#x} len {:#x}", va, len);
-    // TODO: fix mmap19
+    debug!("get_unmapped_vma va {:#x} len {:#x}", va, len);
     if va != 0 && find_overlap(va, len).is_none() {
         return va;
     }
@@ -667,7 +666,7 @@ pub fn munmap(va: usize, mut len: usize) -> usize {
         return linux_err!(EINVAL);
     }
 
-    error!("munmap {:#x} - {:#x}", va, va + len);
+    info!("munmap {:#x} - {:#x}", va, va + len);
 
     while let Some(mut overlap) = cut_overlap(va, len) {
         debug!("find overlap {:#X}-{:#X}", overlap.vm_start, overlap.vm_end);
@@ -747,7 +746,7 @@ fn remove_region(va: usize, len: usize) -> usize {
     let mut locked_mm = mm.lock();
     // Todo: handle temporary mmaped.
     locked_mm.mapped.remove(&va);
-    error!("remove_region va {:#x} len {:#x}", va, len);
+    debug!("remove_region va {:#x} len {:#x}", va, len);
     match locked_mm.unmap_region(va, len) {
         Ok(_) => {
             flush_tlb(None);

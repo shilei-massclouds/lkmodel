@@ -96,7 +96,7 @@ impl FsStruct {
             return ax_err!(NotADirectory);
         }
         let parent = self.parent_node_of(dir, path);
-        error!("create_symlink: {}", path);
+        info!("create_symlink: {}", path);
         parent.symlink(path, target, uid, gid, mode)
     }
 

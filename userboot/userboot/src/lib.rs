@@ -126,7 +126,7 @@ fn kernel_init(dtb_info: DtbInfo) {
     // Todo: for x86_64, we don't know how to get cmdline
     // from qemu arg '-append="XX"'.
     // Just use environment.
-    let init_cmd = env!("AX_INIT_CMD");
+    let init_cmd = env!("AX_INIT");
     if init_cmd.len() > 0 {
         info!("init_cmd: {}", init_cmd);
         run_init_process(init_cmd).unwrap_or_else(|_| panic!("Requested init {} failed.", init_cmd));

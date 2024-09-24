@@ -314,7 +314,7 @@ impl VfsNodeOps for DirNode {
 
     fn getdents(&self, offset: u64, buf: &mut [u8]) -> VfsResult<usize> {
         if offset != 0 {
-            log::error!("NOTICE! todo: check offset[{}] and real length of directory!", offset);
+            warn!("NOTICE! todo: check offset[{}] and real length of directory!", offset);
             return Ok(0);
         }
 

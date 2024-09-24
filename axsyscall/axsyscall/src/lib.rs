@@ -647,7 +647,7 @@ fn linux_syscall_vfork(_args: SyscallArgs) -> usize {
 
 fn linux_syscall_mount(args: SyscallArgs) -> usize {
     let [fsname, dir, fstype, flags, data, ..] = args;
-    error!("sys_mount: name {:#x} dir {:#x} ty {:#x} flags {:#x} data {:#x}",
+    info!("sys_mount: name {:#x} dir {:#x} ty {:#x} flags {:#x} data {:#x}",
         fsname, dir, fstype, flags, data);
     let fsname = get_user_str(fsname);
     let dir = get_user_str(dir);

@@ -51,7 +51,7 @@ QEMU_LOG ?= y
 NET_DUMP ?= n
 NET_DEV ?= user
 I ?=
-INIT_CMD ?= $(I)
+INIT ?= $(I)
 GLOBAL_CFG ?= $(addprefix --cfg=, $(CFG_ITEMS))
 LTP ?= ../ltp
 DUMP_OUTPUT ?= n
@@ -130,7 +130,7 @@ export AX_LOG=$(LOG)
 export AX_TARGET=$(TARGET)
 export AX_IP=$(IP)
 export AX_GW=$(GW)
-export AX_INIT_CMD=$(INIT_CMD)
+export AX_INIT=$(INIT)
 
 # Binutils
 CROSS_COMPILE ?= $(ARCH)-linux-musl-
