@@ -1,9 +1,9 @@
 TARGETS := init hello vfork execl runltp signal mmap procfs mount \
 	mkdir runbtp devfs cmd_system pthread named_pipe pipe cred
 
-CC := $(ARCH)-linux-gnu-gcc
-STRIP := $(ARCH)-linux-gnu-strip
-DST_DIR := ./build/$(ARCH)/sbin
+CC := $(AX_ARCH)-linux-gnu-gcc
+STRIP := $(AX_ARCH)-linux-gnu-strip
+DST_DIR := ./build/$(AX_ARCH)/sbin
 PREFIX_TARGETS := $(addprefix $(DST_DIR)/,$(TARGETS))
 
 all: $(PREFIX_TARGETS)

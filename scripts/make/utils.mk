@@ -29,22 +29,6 @@ define make_disk_image
   $(if $(filter $(1),fat32), $(call make_disk_image_fat32,$(2)))
 endef
 
-define build_linux_image
-  @mkdir -p ./mnt
-  @sudo mount $(1) ./mnt
-  @sudo mkdir -p ./mnt/lib
-  @sudo mkdir -p ./mnt/sbin
-  @sudo mkdir -p ./mnt/testcases
-  @sudo cp ./payload/ld-linux-riscv64-lp64d.so.1 ./mnt/lib/
-  @sudo cp ./payload/libc.so.6 ./mnt/lib/
-  @sudo cp ./payload/init ./mnt/sbin/init
-  -@sudo cp ./payload/testcases/* ./mnt/testcases/
-  ls -l ./mnt/lib
-  ls -l ./mnt/testcases
-  @sudo umount ./mnt
-  @rm -rf mnt
-endef
-
 define riscv64_install_apps
   @mkdir -p ./mnt
   @sudo mount $(1) ./mnt

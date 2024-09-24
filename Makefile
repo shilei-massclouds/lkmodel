@@ -33,26 +33,27 @@ LOG ?= error
 V ?=
 
 # App options
-A ?= early_console/rt_early_console
+A ?= macrokernel/rt_macrokernel
 APP ?= $(A)
 FEATURES ?=
 APP_FEATURES ?=
+CFG_ITEMS ?= $(shell cat $(A)/defconfig/$(ARCH) 2>/dev/null)
 
 # QEMU options
-BLK ?= n
+BLK ?= $(if $(findstring blk, $(CFG_ITEMS)),y,n)
 NET ?= n
 GRAPHIC ?= n
 BUS ?= mmio
 
 FS_TYPE ?= ext2
-#FS_TYPE ?= fat32
 DISK_IMG ?= disk.img
 QEMU_LOG ?= y
 NET_DUMP ?= n
 NET_DEV ?= user
-INIT_CMD ?=
-GLOBAL_CFG ?=
-LTP ?= /tmp
+I ?=
+INIT_CMD ?= $(I)
+GLOBAL_CFG ?= $(addprefix --cfg=, $(CFG_ITEMS))
+LTP ?= ../ltp
 DUMP_OUTPUT ?= n
 
 # Network options
@@ -163,6 +164,7 @@ else ifeq ($(PLATFORM_NAME), aarch64-bsta1000b)
 endif
 
 build: $(OUT_DIR) $(OUT_BIN)
+	@echo "[$(GLOBAL_CFG)]"
 
 disasm:
 	$(OBJDUMP) $(OUT_ELF) | less
@@ -210,29 +212,23 @@ unittest_no_fail_fast:
 	$(call unit_test,--no-fail-fast)
 
 disk_img:
-ifneq ($(wildcard $(DISK_IMG)),)
-	@printf "$(YELLOW_C)warning$(END_C): disk image \"$(DISK_IMG)\" already exists!\n"
-else
+	rm -f $(DISK_IMG)
 	$(call make_disk_image,$(FS_TYPE),$(DISK_IMG))
-endif
-
-linux_img: linux_apps
-ifneq ($(wildcard $(DISK_IMG)),)
-	@printf "$(YELLOW_C)warning$(END_C): image \"$(DISK_IMG)\" will be overwritten!\n"
-	@printf "Please rename it for backup or just delete it!\n"
-else
-	$(call make_disk_image,$(FS_TYPE),$(DISK_IMG))
-	$(call build_linux_image,$(DISK_IMG))
-endif
 
 linux_apps:
 	@make -C btp
 
-install_apps:
+install_apps: disk_img linux_apps
 ifeq ($(wildcard $(DISK_IMG)),)
 	@printf "$(YELLOW_C)warning$(END_C): image \"$(DISK_IMG)\" needs to be built first!\n"
 else
 	$(call $(ARCH)_install_apps,$(DISK_IMG))
+endif
+
+ifeq ($(BLK),y)
+prepare: install_apps
+else
+prepare:
 endif
 
 clean: clean_c

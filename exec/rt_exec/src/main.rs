@@ -26,9 +26,9 @@ pub fn init(cpu_id: usize, dtb: usize) {
 }
 
 pub fn start(_cpu_id: usize, _dtb: usize) {
-    let init_cmd = env!("AX_INIT_CMD");
+    let mut init_cmd = env!("AX_INIT_CMD");
     if init_cmd.len() == 0 {
-        panic!("No init_cmd!");
+        init_cmd = "/btp/sbin/hello";
     }
 
     let _ = fileops::console_on_rootfs();
