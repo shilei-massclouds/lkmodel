@@ -262,3 +262,13 @@ pub const MAX_LOOP_NUMBER: usize = 2;
 
 /// Major Code
 pub const MAJOR_LOOP: u32 = 7;
+
+pub const CLOCK_REALTIME:  usize = 0;
+pub const CLOCK_MONOTONIC: usize = 1;
+
+#[derive(Copy, Clone)]
+pub struct TimeSpec {
+   pub tv_sec : i64,    /* seconds */
+   pub tv_nsec: i64,    /* nanoseconds */
+}
+

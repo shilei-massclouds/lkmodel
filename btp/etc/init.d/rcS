@@ -1,5 +1,5 @@
 mount -a
 #dash
 #mdev -s
-#/testcases/mmap19
-/btp/sbin/hello
+#/testcases/mmap16
+/testcases/futex_wait01

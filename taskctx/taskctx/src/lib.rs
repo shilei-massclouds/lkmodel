@@ -17,6 +17,7 @@ use axhal::trap::{TRAPFRAME_SIZE, STACK_ALIGN};
 use memory_addr::{align_up_4k, align_down, PAGE_SIZE_4K};
 use spinbase::SpinNoIrq;
 use axhal::arch::write_page_table_root0;
+use axhal::arch::irqs_enabled;
 use page_table::paging::PageTable;
 use lazy_init::LazyInit;
 
@@ -101,6 +102,7 @@ pub struct SchedInfo {
     pub kstack: Option<TaskStack>,
     state: AtomicU8,
     in_wait_queue: AtomicBool,
+    in_timer_list: AtomicBool,
 
     need_resched: AtomicBool,
     preempt_disable_count: AtomicUsize,
@@ -136,6 +138,7 @@ impl SchedInfo {
             kstack: Some(TaskStack::alloc(align_up_4k(THREAD_SIZE))),
             state: AtomicU8::new(TaskState::Ready as u8),
             in_wait_queue: AtomicBool::new(false),
+            in_timer_list: AtomicBool::new(false),
             need_resched: AtomicBool::new(false),
             preempt_disable_count: AtomicUsize::new(0),
 
@@ -195,8 +198,23 @@ impl SchedInfo {
     }
 
     #[inline]
+    pub fn in_wait_queue(&self) -> bool {
+        self.in_wait_queue.load(Ordering::Acquire)
+    }
+
+    #[inline]
+    pub fn in_timer_list(&self) -> bool {
+        self.in_timer_list.load(Ordering::Acquire)
+    }
+
+    #[inline]
     pub fn set_in_wait_queue(&self, in_wait_queue: bool) {
         self.in_wait_queue.store(in_wait_queue, Ordering::Release);
+    }
+
+    #[inline]
+    pub fn set_in_timer_list(&self, in_timer_list: bool) {
+        self.in_timer_list.store(in_timer_list, Ordering::Release);
     }
 
     pub fn try_pgd(&self) -> Option<Arc<SpinNoIrq<PageTable>>> {
@@ -305,7 +323,8 @@ impl CurrentCtx {
     }
 
     pub unsafe fn set_current(prev: Self, next: CtxRef) {
-        info!("CurrentCtx::set_current {} -> {}...", prev.tid(), next.tid());
+        info!("CurrentCtx::set_current {} -> {}... irqs {}",
+            prev.tid(), next.tid(), irqs_enabled());
         let Self(arc) = prev;
         ManuallyDrop::into_inner(arc); // `call Arc::drop()` to decrease prev task reference count.
         let ptr = Arc::into_raw(next.clone());

@@ -28,6 +28,7 @@ pub fn init(cpu_id: usize, dtb_pa: usize) {
     register_irq_handler(TIMER_IRQ_NUM, || {
         update_timer();
         let _ = NoPreempt::new();
+        wait_queue::on_timer_tick();
         run_queue::on_timer_tick();
     });
 }
@@ -57,4 +58,5 @@ pub fn register_irq_handler(irq: usize, handler: IrqHandler) {
 pub fn start(_cpu_id: usize, _dtb: usize) {
     // Enable IRQs before starting app
     axhal::arch::enable_irqs();
+    info!("irqs enabled!");
 }

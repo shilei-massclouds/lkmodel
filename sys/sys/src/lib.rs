@@ -7,6 +7,10 @@ use axerrno::{LinuxResult, LinuxError, linux_err_from};
 use taskctx::TaskState;
 use axtype::{RLimit64, RLIM_NLIMITS};
 use axtype::{RLIMIT_DATA, RLIMIT_STACK, RLIMIT_CORE, RLIMIT_NOFILE};
+use axtype::{CLOCK_REALTIME, CLOCK_MONOTONIC, TimeSpec};
+use axhal::time::current_time;
+use axhal::arch::{irqs_enabled, enable_irqs};
+
 pub use futex::{do_futex, FUTEX_WAKE};
 
 mod futex;
@@ -156,8 +160,8 @@ pub fn setgid(gid: usize) -> usize {
 
 pub fn wait4(pid: usize, wstatus: usize, options: usize, rusage: usize) -> usize {
     let pid = pid as isize;
-    info!("wait4: pid {:#X} wstatus {:#X} options {:#X} rusage {:#X}",
-           pid, wstatus, options, rusage);
+    info!("wait4: pid {:#X} wstatus {:#X} options {:#X} rusage {:#X} irqs {}",
+           pid, wstatus, options, rusage, irqs_enabled());
 
     if rusage != 0 {
         // Todo: deal with rusage in future.
@@ -188,7 +192,6 @@ pub fn wait4(pid: usize, wstatus: usize, options: usize, rusage: usize) -> usize
     let tid = match do_wait(pid_type, pid as usize, options|WEXITED, &mut status) {
         Ok(tid) => tid,
         Err(e) => linux_err_from!(e),
-        //Err(e) => panic!("do_wait err: {:?}", e),
     };
 
     if wstatus != 0 {
@@ -203,8 +206,8 @@ pub fn wait4(pid: usize, wstatus: usize, options: usize, rusage: usize) -> usize
 fn do_wait(
     pid_type: PidType, tid: Tid, options: usize, status: &mut u32
 ) -> LinuxResult<Tid> {
-    info!("do_wait: pidtype {:?} pid {:#X} options {:#X}; curr {}",
-          pid_type, tid, options, taskctx::current_ctx().tid());
+    info!("do_wait: pidtype {:?} pid {:#X} options {:#X}; curr {} irqs {}",
+        pid_type, tid, options, taskctx::current_ctx().tid(), irqs_enabled());
 
     // Todo: sleep with intr
     //set_current_state(TASK_INTERRUPTIBLE);
@@ -276,7 +279,7 @@ fn wait_children(status: &mut u32) -> Option<Tid> {
 }
 
 fn wait_task_zombie(tid: Tid, status: &mut u32) -> Option<Tid> {
-    info!("wait_task_zombie tid {}", tid);
+    debug!("wait_task_zombie tid {}", tid);
     let target = task::get_task(tid).unwrap();
     let exit_state = target.exit_state.compare_exchange(
         EXIT_ZOMBIE, EXIT_DEAD,
@@ -402,4 +405,17 @@ fn do_task_dead() -> ! {
         rq.lock().resched(false);
         unreachable!()
     }
+}
+
+pub fn clock_gettime(clockid: usize, tp: usize) -> LinuxResult<usize> {
+    info!("clock_gettime: clockid {}, tp {:#x}", clockid, tp);
+    assert!(clockid == CLOCK_REALTIME || clockid == CLOCK_MONOTONIC);
+    let ktp = current_time();
+
+    let tp = tp as *mut TimeSpec;
+    unsafe {
+        (*tp).tv_sec = ktp.as_secs() as i64;
+        (*tp).tv_nsec = ktp.subsec_nanos() as i64;
+    }
+    Ok(0)
 }

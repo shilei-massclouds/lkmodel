@@ -6,6 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+log = "0.4"
+axconfig = { git = "ssh://git@github.com/shilei-massclouds/axconfig" }
+axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal" }
 taskctx = { git = "ssh://git@github.com/shilei-massclouds/taskctx.git" }
 run_queue = { git = "ssh://git@github.com/shilei-massclouds/run_queue.git" }
 spinbase = { git = "ssh://git@github.com/shilei-massclouds/spinbase.git" }
+lazy_init = { git = "ssh://git@github.com/shilei-massclouds/lazy_init" }
+timer_list = { path = "../../timer_list" }
+kernel_guard_base = { git = "ssh://git@github.com/shilei-massclouds/kernel_guard_base" }

@@ -466,9 +466,12 @@ fn linux_syscall_getrandom(args: SyscallArgs) -> usize {
     len
 }
 
-fn linux_syscall_clock_gettime(_args: SyscallArgs) -> usize {
-    warn!("impl linux_syscall_clock_gettime");
-    0
+fn linux_syscall_clock_gettime(args: SyscallArgs) -> usize {
+    let [clockid, tp, ..] = args;
+    sys::clock_gettime(clockid, tp)
+        .unwrap_or_else(|e| {
+            linux_err_from!(e)
+        })
 }
 
 fn linux_syscall_clock_nanosleep(_args: SyscallArgs) -> usize {

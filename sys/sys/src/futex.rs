@@ -5,6 +5,8 @@ use alloc::collections::BTreeMap;
 use axerrno::{linux_err, LinuxError};
 use mutex::Mutex;
 use wait_queue::WaitQueue;
+use axtype::TimeSpec;
+use axhal::time::TimeValue;
 
 pub const FUTEX_WAIT: usize = 0;
 pub const FUTEX_WAKE: usize = 1;
@@ -78,12 +80,7 @@ pub fn do_futex(
 fn futex_wait(
     uaddr: usize, _flags: usize, val: usize, abs_time: usize, bitset: usize
 ) -> usize {
-    debug!("futex_wait ...");
-    if abs_time != 0 {
-        let abs_time = abs_time as *const i64;
-        let timeout = unsafe { *abs_time };
-        error!("timeout: {}", timeout);
-    }
+    info!("futex_wait ...");
     assert_eq!(bitset, FUTEX_BITSET_MATCH_ANY);
     if bitset == 0 {
         return linux_err!(EINVAL);
@@ -105,7 +102,18 @@ fn futex_wait(
         }
     };
 
-    wq.wait();
+    if abs_time != 0 {
+        let abs_time = abs_time as *const TimeSpec;
+        let timeout = unsafe { *abs_time };
+        info!("timeout: {} : {}", timeout.tv_sec, timeout.tv_nsec);
+        let timeout = TimeValue::new(
+            timeout.tv_sec as u64,
+            timeout.tv_nsec as u32
+        );
+        wq.wait_timeout(timeout);
+    } else {
+        wq.wait();
+    }
     debug!("futex_wait ok!");
     return 0;
 }

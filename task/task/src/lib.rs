@@ -337,6 +337,7 @@ pub fn init(cpu_id: usize, dtb_pa: usize) {
     info!("Initialize schedule system ...");
 
     //run_queue::init(cpu_id, dtb_pa);
+    wait_queue::init(cpu_id, dtb_pa);
     fstree::init(cpu_id, dtb_pa);
 
     let init_task = TaskStruct::new();

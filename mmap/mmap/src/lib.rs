@@ -371,7 +371,7 @@ pub fn faultin_page(
     va: usize, cause: usize, epc: usize, fixup: &mut usize,
 ) -> Result<usize, usize> {
     let va = align_down_4k(va);
-    info!("--------- faultin_page... va {:#X} cause {}", va, cause);
+    debug!("--------- faultin_page... va {:#X} cause {}", va, cause);
     let mm = task::current().mm();
     let mut locked_mm = mm.lock();
     if locked_mm.mapped.get(&va).is_some() {

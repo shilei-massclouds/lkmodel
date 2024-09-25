@@ -1,11 +1,16 @@
 #![no_std]
 
+#[macro_use]
+extern crate log;
 extern crate alloc;
 use alloc::collections::VecDeque;
 use spinbase::SpinRaw;
 
 use taskctx::CtxRef;
+use taskctx::CurrentCtx;
 use run_queue::AxRunQueue;
+
+mod timers;
 
 /// A queue to store sleeping tasks.
 ///
@@ -52,24 +57,22 @@ impl WaitQueue {
         self.queue.lock().len()
     }
 
-    /*
-    fn cancel_events(&self, curr: CurrentTask) {
+    fn cancel_events(&self, curr: CurrentCtx) {
+        info!("cancel_events ...");
         // A task can be wake up only one events (timer or `notify()`), remove
         // the event from another queue.
         if curr.in_wait_queue() {
             // wake up by timer (timeout).
             // `RUN_QUEUE` is not locked here, so disable IRQs.
-            let _guard = kernel_guard::IrqSave::new();
+            let _guard = kernel_guard_base::IrqSave::new();
             self.queue.lock().retain(|t| !curr.ptr_eq(t));
             curr.set_in_wait_queue(false);
         }
-        #[cfg(feature = "irq")]
         if curr.in_timer_list() {
             // timeout was set but not triggered (wake up by `WaitQueue::notify()`)
-            crate::timers::cancel_alarm(curr.as_task_ref());
+            crate::timers::cancel_alarm(curr.as_ctx_ref());
         }
     }
-    */
 
     /// Blocks the current task and put it into the wait queue, until other task
     /// notifies it.
@@ -80,7 +83,7 @@ impl WaitQueue {
             task.set_in_wait_queue(true);
             self.queue.lock().push_back(task)
         });
-        //self.cancel_events(crate::current());
+        self.cancel_events(taskctx::current_ctx());
     }
 
     /// Blocks the current task and put it into the wait queue, until the given
@@ -103,24 +106,22 @@ impl WaitQueue {
                 self.queue.lock().push_back(task);
             });
         }
-        //self.cancel_events(crate::current());
+        self.cancel_events(taskctx::current_ctx());
     }
 
-    /*
     /// Blocks the current task and put it into the wait queue, until other tasks
     /// notify it, or the given duration has elapsed.
-    #[cfg(feature = "irq")]
     pub fn wait_timeout(&self, dur: core::time::Duration) -> bool {
-        let curr = crate::current();
+        let curr = taskctx::current_ctx();
         let deadline = axhal::time::current_time() + dur;
-        debug!(
+        info!(
             "task wait_timeout: {} deadline={:?}",
-            curr.id_name(),
+            curr.tid(),
             deadline
         );
         crate::timers::set_alarm_wakeup(deadline, curr.clone());
 
-        RUN_QUEUE.lock().block_current(|task| {
+        run_queue::task_rq(&curr).lock().block_current(|task| {
             task.set_in_wait_queue(true);
             self.queue.lock().push_back(task)
         });
@@ -129,12 +130,12 @@ impl WaitQueue {
         timeout
     }
 
+    /*
     /// Blocks the current task and put it into the wait queue, until the given
     /// `condition` becomes true, or the given duration has elapsed.
     ///
     /// Note that even other tasks notify this task, it will not wake up until
     /// the above conditions are met.
-    #[cfg(feature = "irq")]
     pub fn wait_timeout_until<F>(&self, dur: core::time::Duration, condition: F) -> bool
     where
         F: Fn() -> bool,
@@ -170,6 +171,7 @@ impl WaitQueue {
     /// If `resched` is true, the current task will be preempted when the
     /// preemption is enabled.
     pub fn notify_one(&self, resched: bool) -> bool {
+        debug!("notify_one ...");
         let curr = taskctx::current_ctx();
         let mut rq = run_queue::task_rq(&curr).lock();
         if !self.queue.lock().is_empty() {
@@ -232,4 +234,16 @@ impl WaitQueue {
         }
     }
     */
+}
+
+/// Handles periodic timer ticks for the task manager.
+///
+/// For example, advance scheduler states, checks timed events, etc.
+pub fn on_timer_tick() {
+    timers::check_events();
+}
+
+pub fn init(_cpu_id: usize, _dtb_pa: usize) {
+    axconfig::init_once!();
+    timers::init();
 }

@@ -21,6 +21,7 @@ handler_table = { git = "ssh://git@github.com/shilei-massclouds/handler_table.gi
 lazy_init = { git = "ssh://git@github.com/shilei-massclouds/lazy_init.git" }
 percpu2 = { git = "ssh://git@github.com/shilei-massclouds/percpu2" }
 run_queue = { git = "ssh://git@github.com/shilei-massclouds/run_queue" }
+wait_queue = { git = "ssh://git@github.com/shilei-massclouds/wait_queue" }
 axconfig = { git = "ssh://git@github.com/shilei-massclouds/axconfig" }
 axlog2 = { git = "ssh://git@github.com/shilei-massclouds/axlog2" }
 axalloc = { git = "ssh://git@github.com/shilei-massclouds/axalloc" }
