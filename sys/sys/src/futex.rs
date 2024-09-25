@@ -110,7 +110,9 @@ fn futex_wait(
             timeout.tv_sec as u64,
             timeout.tv_nsec as u32
         );
-        wq.wait_timeout(timeout);
+        if wq.wait_timeout(timeout) {
+            return linux_err!(ETIMEDOUT);
+        }
     } else {
         wq.wait();
     }
