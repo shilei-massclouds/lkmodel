@@ -9,7 +9,7 @@ use axtype::{RLimit64, RLIM_NLIMITS};
 use axtype::{RLIMIT_DATA, RLIMIT_STACK, RLIMIT_CORE, RLIMIT_NOFILE};
 use axtype::{CLOCK_REALTIME, CLOCK_MONOTONIC, TimeSpec};
 use axhal::time::current_time;
-use axhal::arch::{irqs_enabled, enable_irqs};
+use axhal::arch::irqs_enabled;
 
 pub use futex::{do_futex, FUTEX_WAKE};
 

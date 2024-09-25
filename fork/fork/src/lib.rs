@@ -93,7 +93,7 @@ impl KernelCloneArgs {
         let trace = !self.flags.contains(CloneFlags::CLONE_UNTRACED);
 
         let task = self.copy_process(None, trace)?;
-        error!(
+        info!(
             "sched task fork: tid[{}] -> tid[{}]. irqs {}",
             task::current().tid(), task.tid(),
             axhal::arch::irqs_enabled()

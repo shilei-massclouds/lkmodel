@@ -11,7 +11,7 @@ pub fn copy_thread(
     pt_regs: &mut TrapFrame,
     args: &KernelCloneArgs,
 ) -> LinuxResult {
-    error!("copy_thread ... irqs {}", axhal::arch::irqs_enabled());
+    info!("copy_thread ... irqs {}", axhal::arch::irqs_enabled());
 
     if args.entry.is_some() {
         *pt_regs = unsafe { mem::zeroed() };

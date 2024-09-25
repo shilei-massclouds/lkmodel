@@ -510,7 +510,7 @@ fn search_exception_table(epc: usize) -> Option<usize> {
 
     let mut start = __start___ex_table as usize;
     let stop = __stop___ex_table as usize;
-    error!("search ex_table {:#x} {:#x}", start, stop);
+    info!("search ex_table {:#x} {:#x}", start, stop);
 
     while start < stop {
         let ptr = start as *const usize;
@@ -521,7 +521,7 @@ fn search_exception_table(epc: usize) -> Option<usize> {
         let fixup = unsafe { *ptr };
         start += 8;
 
-        error!("{:#x} -> {:#x}", addr, fixup);
+        info!("{:#x} -> {:#x}", addr, fixup);
 
         if addr == epc {
             return Some(fixup);
