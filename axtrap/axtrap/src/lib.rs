@@ -58,5 +58,5 @@ pub fn register_irq_handler(irq: usize, handler: IrqHandler) {
 pub fn start(_cpu_id: usize, _dtb: usize) {
     // Enable IRQs before starting app
     axhal::arch::enable_irqs();
-    info!("irqs enabled!");
+    error!("irqs enabled! irqs {}", axhal::arch::irqs_enabled());
 }

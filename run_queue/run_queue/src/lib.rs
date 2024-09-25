@@ -6,6 +6,7 @@ use taskctx::CtxRef;
 use crate::run_queue::RUN_QUEUE;
 use spinbase::SpinNoIrq;
 use taskctx::{Tid, SchedInfo};
+use axhal::arch::enable_irqs;
 
 #[macro_use]
 extern crate log;
@@ -70,6 +71,8 @@ pub extern "C" fn task_entry() -> ! {
     // schedule_tail
     // unlock runqueue for freshly created task
     force_unlock();
+
+    enable_irqs();
 
     let ctx = taskctx::current_ctx();
     if ctx.set_child_tid != 0 {

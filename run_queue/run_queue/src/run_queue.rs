@@ -181,7 +181,8 @@ impl AxRunQueue {
     }
 
     fn switch_to(&mut self, prev_task: CurrentCtx, next_task: CtxRef) {
-        debug!("============ context switch: {} -> {}", prev_task.tid(), next_task.tid());
+        debug!("============ context switch: {} -> {} irqs {}",
+            prev_task.tid(), next_task.tid(), axhal::arch::irqs_enabled());
         next_task.set_preempt_pending(false);
         next_task.set_state(TaskState::Running);
         if prev_task.ptr_eq(&next_task) {
