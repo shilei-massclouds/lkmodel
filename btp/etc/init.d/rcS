@@ -2,5 +2,4 @@ mount -a
 #dash
 #mdev -s
 #/testcases/mmap16
-#/testcases/futex_wait02
-/testcases/open14
+/testcases/futex_wait03

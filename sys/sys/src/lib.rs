@@ -227,14 +227,18 @@ fn do_wait(
             if siblings_count() > 0 {
                 let ctx = taskctx::current_ctx();
                 for sibling in ctx.siblings.lock().iter() {
-                    panic!("sibling[{}]", sibling);
-                    // Todo: query tid_map to get sibling reference.
-                    /*
-                    for child in sibling.children.lock().iter() {
-                        info!("Current[{}]: has child[{}]",
-                              sibling.tid(), child);
+                    let cur = task::get_task(*sibling).unwrap();
+                    for child in cur.sched_info.children.lock().iter() {
+                        info!("Task[{}]: has child[{}]", cur.tid(), child);
+                        if let Some(tid) = wait_children(status) {
+                            return Ok(tid);
+                        }
                     }
-                    */
+                    error!("cur state {:?} exit {:?}", cur.state(), cur.exit_state);
+                    if let Some(tid) = wait_task_zombie(*sibling, status) {
+                        ctx.siblings.lock().retain(|&cid| cid != tid);
+                        return Ok(tid);
+                    }
                 }
             }
 
@@ -248,6 +252,7 @@ fn do_wait(
         let rq = run_queue::task_rq(&task.sched_info);
         enable_irqs();
         rq.lock().resched(false);
+        // TODO: replace disable_irqs with restore_irqs
         disable_irqs();
     }
 }
