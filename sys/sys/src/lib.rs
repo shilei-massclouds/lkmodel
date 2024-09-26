@@ -250,10 +250,17 @@ fn do_wait(
         // Todo: wait on Exit_WaitQueue of child and resched.
         let task = task::current();
         let rq = run_queue::task_rq(&task.sched_info);
-        enable_irqs();
+
+        let irqs_flag = irqs_enabled();
+        if !irqs_flag {
+            enable_irqs();
+        }
+
         rq.lock().resched(false);
-        // TODO: replace disable_irqs with restore_irqs
-        disable_irqs();
+
+        if !irqs_flag {
+            disable_irqs();
+        }
     }
 }
 
