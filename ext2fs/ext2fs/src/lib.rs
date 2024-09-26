@@ -1716,7 +1716,7 @@ impl VfsNodeOps for Ext2Inode {
         let ino = self.entry.directory.get_inode();
         let ret = Ext2Fs::get().read_at(ino, &mut offset, buf).unwrap();
         self.curr_offset.store(offset, Ordering::Relaxed);
-        info!("read_at[file]: ret {} offset {}", ret, offset);
+        debug!("read_at[file]: ret {} offset {}", ret, offset);
         Ok(ret as usize)
     }
 

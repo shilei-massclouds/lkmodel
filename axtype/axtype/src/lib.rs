@@ -272,3 +272,9 @@ pub struct TimeSpec {
    pub tv_nsec: i64,    /* nanoseconds */
 }
 
+pub fn split_path(path: &str) -> (&str, Option<&str>) {
+    let trimmed_path = path.trim_start_matches('/');
+    trimmed_path.find('/').map_or((trimmed_path, None), |n| {
+        (&trimmed_path[..n], Some(&trimmed_path[n + 1..]))
+    })
+}

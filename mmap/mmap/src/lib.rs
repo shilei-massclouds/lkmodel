@@ -4,6 +4,9 @@
 #[macro_use]
 extern crate log;
 extern crate alloc;
+
+use alloc::sync::Arc;
+use mutex::Mutex;
 use axerrno::{LinuxResult, LinuxError, linux_err};
 use axfile::fops::File;
 use axhal::arch::STACK_TOP;
@@ -24,6 +27,7 @@ use axhal::arch::{EXC_INST_PAGE_FAULT, EXC_LOAD_PAGE_FAULT, EXC_STORE_PAGE_FAULT
 use signal::force_sig_fault;
 use capability::Cap;
 use axhal::arch::flush_tlb;
+use axfs_ramfs::shmem_kernel_file_setup;
 
 /// enforced gap between the expanding stack and other mappings.
 const STACK_GUARD_GAP: usize = 256 << PAGE_SHIFT;
@@ -110,6 +114,9 @@ pub fn mmap(
     fd: usize,
     offset: usize,
 ) -> LinuxResult<usize> {
+    info!("mmap va {:#x} len {:#x} prot {:#x} flags {:#x} fd {:#x} offset {:#x}",
+        va, len, prot, flags, fd ,offset);
+
     if (flags & MAP_ANONYMOUS) == 0 {
         if fd == usize::MAX {
             return Err(LinuxError::EBADF);
@@ -121,7 +128,13 @@ pub fn mmap(
     let current = task::current();
     let filetable = current.filetable.lock();
     let file = if (flags & MAP_ANONYMOUS) != 0 {
-        None
+        if (flags & MAP_SHARED) != 0 {
+            let inode = shmem_kernel_file_setup(len)?;
+            let f = File::new(inode, Cap::READ|Cap::WRITE);
+            Some(Arc::new(Mutex::new(f)))
+        } else {
+            None
+        }
     } else {
         if (flags & MAP_SHARED_VALIDATE) == MAP_SHARED_VALIDATE {
             // Todo: flags_mask also includes file->f_op->mmap_supported_flags
@@ -190,7 +203,7 @@ pub fn _mmap(
 ) -> LinuxResult<usize> {
     assert!(is_aligned_4k(va));
     len = align_up_4k(len);
-    info!("mmap va {:#X} offset {:#X} flags {:#X} prot {:#X}", va, offset, flags, prot);
+    info!("_mmap va {:#X} offset {:#X} flags {:#X} prot {:#X}", va, offset, flags, prot);
 
     /* force arch specific MAP_FIXED handling in get_unmapped_area */
     if (flags & MAP_FIXED_NOREPLACE) != 0 {
@@ -371,7 +384,7 @@ pub fn faultin_page(
     va: usize, cause: usize, epc: usize, fixup: &mut usize,
 ) -> Result<usize, usize> {
     let va = align_down_4k(va);
-    debug!("--------- faultin_page... va {:#X} cause {}", va, cause);
+    info!("faultin_page... va {:#X} cause {}", va, cause);
     let mm = task::current().mm();
     let mut locked_mm = mm.lock();
     if locked_mm.mapped.get(&va).is_some() {
@@ -429,7 +442,7 @@ pub fn faultin_page(
         if f.get_attr().unwrap().is_file() {
             let f_size = f.get_attr().unwrap().size() as usize;
             if offset >= f_size {
-                debug!("offset {} >= f_size {}", offset, f_size);
+                error!("offset({}) >= f_size({})", offset, f_size);
                 return Err(VM_FAULT_SIGBUS);
             }
         }

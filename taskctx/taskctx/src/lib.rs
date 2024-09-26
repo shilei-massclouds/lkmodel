@@ -173,7 +173,7 @@ impl SchedInfo {
     }
 
     #[inline]
-    pub(crate) fn state(&self) -> TaskState {
+    pub fn state(&self) -> TaskState {
         self.state.load(Ordering::Acquire).into()
     }
 

@@ -1,6 +1,6 @@
 use axhal::arch::TrapFrame;
 use axhal::trap::TRAPFRAME_SIZE;
-use axhal::arch::{user_mode, SR_SPIE, enable_irqs};
+use axhal::arch::user_mode;
 use axsyscall::SyscallArgs;
 use riscv::register::scause::{self, Exception as E, Trap};
 use riscv::register::stval;
@@ -102,9 +102,13 @@ fn handle_breakpoint(sepc: &mut usize) {
 
 fn handle_linux_syscall(tf: &mut TrapFrame) {
     debug!("handle_linux_syscall sstatus {:#x}", tf.sstatus);
+    // TODO: Disable code as below, because we can't make sure sync-protect.
+    /*
+    use axhal::arch::{SR_SPIE, enable_irqs};
     if (tf.sstatus & SR_SPIE) != 0 {
         enable_irqs();
     }
+    */
     syscall(tf, axsyscall::do_syscall);
     signal::do_signal(tf, EXC_SYSCALL);
 }

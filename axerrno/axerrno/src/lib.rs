@@ -13,6 +13,7 @@
 #![feature(variant_count)]
 
 use core::fmt;
+use core::num::ParseIntError;
 
 mod linux_errno {
     include!(concat!(env!("OUT_DIR"), "/linux_errno.rs"));
@@ -274,6 +275,12 @@ impl From<LinuxError> for AxError {
             LinuxError::ENOENT => NotFound,
             _ => todo!("{:?}", e),
         }
+    }
+}
+
+impl From<ParseIntError> for AxError {
+    fn from(_: ParseIntError) -> Self {
+        AxError::InvalidInput
     }
 }
 

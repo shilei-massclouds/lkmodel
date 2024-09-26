@@ -1,9 +1,10 @@
 use alloc::vec::Vec;
+use alloc::string::String;
 use axfs_vfs::{impl_vfs_non_dir_default, VfsNodeAttr, VfsNodeOps, VfsResult};
 use spin::RwLock;
 use axfs_vfs::alloc_ino;
 
-pub type ReadOp = fn(usize, &mut [u8]) -> VfsResult<usize>;
+pub type ReadOp = fn(usize, &mut [u8], &str) -> VfsResult<usize>;
 
 /// The symlink node in the RAM filesystem.
 pub struct SymLinkNode {
@@ -63,6 +64,7 @@ impl VfsNodeOps for SymLinkNode {
 /// {page_index => content_in_page}
 pub struct FileNode {
     read_op: ReadOp,
+    arg: String,
     ino: usize,
     uid: RwLock<u32>,
     gid: RwLock<u32>,
@@ -70,9 +72,10 @@ pub struct FileNode {
 }
 
 impl FileNode {
-    pub(super) fn new(read_op: Option<ReadOp>, uid: u32, gid: u32, mode: i32) -> Self {
+    pub(super) fn new(read_op: Option<ReadOp>, arg: &str, uid: u32, gid: u32, mode: i32) -> Self {
         Self {
             read_op: read_op.unwrap_or(read_op_dummy),
+            arg: String::from(arg),
             ino: alloc_ino(),
             uid: RwLock::new(uid),
             gid: RwLock::new(gid),
@@ -135,7 +138,7 @@ impl VfsNodeOps for FileNode {
 
     fn read_at(&self, offset: u64, buf: &mut [u8]) -> VfsResult<usize> {
         info!("read_at offset {}, buf.len {}", offset, buf.len());
-        (self.read_op)(offset as usize, buf)
+        (self.read_op)(offset as usize, buf, &self.arg)
     }
 
     /*
@@ -172,6 +175,6 @@ impl VfsNodeOps for FileNode {
     impl_vfs_non_dir_default! {}
 }
 
-fn read_op_dummy(_: usize, _: &mut [u8]) -> VfsResult<usize> {
+fn read_op_dummy(_: usize, _: &mut [u8], _: &str) -> VfsResult<usize> {
     unreachable!();
 }

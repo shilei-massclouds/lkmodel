@@ -9,7 +9,7 @@ use axtype::{RLimit64, RLIM_NLIMITS};
 use axtype::{RLIMIT_DATA, RLIMIT_STACK, RLIMIT_CORE, RLIMIT_NOFILE};
 use axtype::{CLOCK_REALTIME, CLOCK_MONOTONIC, TimeSpec};
 use axhal::time::current_time;
-use axhal::arch::irqs_enabled;
+use axhal::arch::{irqs_enabled, enable_irqs, disable_irqs};
 
 pub use futex::{do_futex, FUTEX_WAKE};
 
@@ -246,7 +246,9 @@ fn do_wait(
         // Todo: wait on Exit_WaitQueue of child and resched.
         let task = task::current();
         let rq = run_queue::task_rq(&task.sched_info);
+        enable_irqs();
         rq.lock().resched(false);
+        disable_irqs();
     }
 }
 

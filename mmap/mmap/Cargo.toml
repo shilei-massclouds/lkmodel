@@ -12,8 +12,10 @@ axfile = { git = "ssh://git@github.com/shilei-massclouds/axfile.git" }
 task = { git = "ssh://git@github.com/shilei-massclouds/task.git" }
 signal = { git = "ssh://git@github.com/shilei-massclouds/signal.git" }
 mm = { git = "ssh://git@github.com/shilei-massclouds/mm.git" }
+mutex = { git = "ssh://git@github.com/shilei-massclouds/mutex" }
 axerrno = { git = "ssh://git@github.com/shilei-massclouds/axerrno.git" }
 axio = { git = "ssh://git@github.com/shilei-massclouds/axio.git" }
 memory_addr = { git = "ssh://git@github.com/shilei-massclouds/memory_addr.git" }
 axalloc = { git = "ssh://git@github.com/shilei-massclouds/axalloc.git" }
 capability = { git = "ssh://git@github.com/shilei-massclouds/capability.git" }
+axfs_ramfs = { git = "ssh://git@github.com/shilei-massclouds/axfs_ramfs" }

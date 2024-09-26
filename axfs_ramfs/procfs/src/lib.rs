@@ -26,7 +26,9 @@ use axtype::PAGE_SIZE;
 use mm::{VM_READ, VM_WRITE, VM_EXEC, VM_MAYSHARE};
 use axfile::fops::File;
 use axfile::fops::OpenOptions;
-use axerrno::AxError::NotConnected;
+use axerrno::AxError::{NotConnected, NotFound};
+use axerrno::ax_err;
+use axtype::split_path;
 
 const PROC_SUPER_MAGIC: u64 = 0x9fa0;
 
@@ -41,7 +43,7 @@ impl ProcFileSystem {
     pub fn new(uid: u32, gid: u32, mode: i32) -> Self {
         Self {
             parent: Once::new(),
-            root: DirNode::new(None, uid, gid, mode, None),
+            root: DirNode::new(None, uid, gid, mode, Some(lookup_pid)),
         }
     }
 
@@ -76,7 +78,7 @@ impl VfsOps for ProcFileSystem {
 
     fn alloc_inode(&self, ty: VfsNodeType, uid: u32, gid: u32, mode: i32) -> VfsResult<VfsNodeRef> {
         match ty {
-            VfsNodeType::File => Ok(Arc::new(FileNode::new(None, uid, gid, mode))),
+            VfsNodeType::File => Ok(Arc::new(FileNode::new(None, "", uid, gid, mode))),
             _ => return Err(VfsError::Unsupported),
         }
     }
@@ -98,13 +100,13 @@ pub fn init_procfs(uid: u32, gid: u32, mode: i32) -> VfsResult<Arc<ProcFileSyste
     //
     let d_self = root.create_child("self", VfsNodeType::Dir, uid, gid, mode)?;
 
-    let f_status = FileNode::new(Some(read_status), uid, gid, mode);
+    let f_status = FileNode::new(Some(read_status), "", uid, gid, mode);
     d_self.link_child("status", Arc::new(f_status))?;
 
-    let f_maps = FileNode::new(Some(read_maps), uid, gid, mode);
+    let f_maps = FileNode::new(Some(read_maps), "", uid, gid, mode);
     d_self.link_child("maps", Arc::new(f_maps))?;
 
-    let f_pagemap = FileNode::new(Some(read_pagemap), uid, gid, mode);
+    let f_pagemap = FileNode::new(Some(read_pagemap), "", uid, gid, mode);
     d_self.link_child("pagemap", Arc::new(f_pagemap))?;
 
     let d_fd = DirNode::new(Some(Arc::downgrade(&d_self)), uid, gid, mode, Some(lookup_fd_link));
@@ -116,24 +118,43 @@ pub fn init_procfs(uid: u32, gid: u32, mode: i32) -> VfsResult<Arc<ProcFileSyste
     //
     // Group '/proc/mounts'
     //
-    let f_mounts = FileNode::new(Some(read_mounts), uid, gid, mode);
+    let f_mounts = FileNode::new(Some(read_mounts), "", uid, gid, mode);
     root.link_child("mounts", Arc::new(f_mounts))?;
 
     // Group /proc/meminfo
-    let f_meminfo = FileNode::new(Some(read_meminfo), uid, gid, mode);
+    let f_meminfo = FileNode::new(Some(read_meminfo), "", uid, gid, mode);
     root.link_child("meminfo", Arc::new(f_meminfo))?;
 
     Ok(Arc::new(fs))
 }
 
-fn lookup_fd_link(path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+fn lookup_pid(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+    let (name, rest) = split_path(path);
+    error!("path {} name {} rest {:?}", path, name, rest);
+    if let Some(node) = parent.children.read().get(name).cloned() {
+        return Ok(node);
+    }
+
+    // TODO: Handle '/proc/stat'
+    if name.starts_with("stat") {
+        return ax_err!(NotFound);
+    }
+
+    if name.parse::<usize>().is_ok() {
+        return Ok(Arc::new(FileNode::new(Some(read_task), path, 0, 0, 0o600)));
+    }
+
+    panic!("path: {}; name {}; ?digit {:?}", path, name, name.parse::<usize>());
+}
+
+fn lookup_fd_link(_parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
     let node = SymLinkNode::new(0, 0);
     let linkto = format!("/proc/self/_fd/{}", path);
     node.write_at(0, linkto.as_bytes())?;
     Ok(Arc::new(node))
 }
 
-fn lookup_fd_table(path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+fn lookup_fd_table(_parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
     let fd = path.parse::<usize>().map_err(|_| {
         NotConnected
     })?;
@@ -145,7 +166,19 @@ fn lookup_fd_table(path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
     Ok(node)
 }
 
-fn read_meminfo(offset: usize, buf: &mut [u8]) -> VfsResult<usize> {
+fn read_task(_offset: usize, buf: &mut [u8], arg: &str) -> VfsResult<usize> {
+    let (name, rest) = split_path(arg);
+    assert_eq!(rest.unwrap(), "stat");
+
+    let pid = name.parse::<usize>()?;
+    let task = task::get_task(pid).ok_or(NotFound)?;
+    debug!("read_task: pid {} {}", pid, task.linux_state());
+    let src = format!("{} (unknown) {}", pid, task.linux_state());
+    buf[..src.len()].copy_from_slice(src.as_bytes());
+    Ok(buf.len())
+}
+
+fn read_meminfo(offset: usize, buf: &mut [u8], _arg: &str) -> VfsResult<usize> {
     let src = "MemAvailable: 100000 kB\nSwapFree: 100000 kB\n\0";
     let src = src.as_bytes();
     let src: &[u8] = &src[offset..];
@@ -153,7 +186,7 @@ fn read_meminfo(offset: usize, buf: &mut [u8]) -> VfsResult<usize> {
     Ok(buf.len())
 }
 
-fn read_status(offset: usize, buf: &mut [u8]) -> VfsResult<usize> {
+fn read_status(offset: usize, buf: &mut [u8], _arg: &str) -> VfsResult<usize> {
     let mm = task::current().mm();
     let locked_mm = mm.lock();
     let src = format!("VmLck:\t       {} kB\n\0",
@@ -164,7 +197,7 @@ fn read_status(offset: usize, buf: &mut [u8]) -> VfsResult<usize> {
     Ok(buf.len())
 }
 
-fn read_maps(offset: usize, buf: &mut [u8]) -> VfsResult<usize> {
+fn read_maps(offset: usize, buf: &mut [u8], _arg: &str) -> VfsResult<usize> {
     let mm = task::current().mm();
     let locked_mm = mm.lock();
 
@@ -194,7 +227,7 @@ fn read_maps(offset: usize, buf: &mut [u8]) -> VfsResult<usize> {
     return Ok(buf.len());
 }
 
-fn read_pagemap(offset: usize, buf: &mut [u8]) -> VfsResult<usize> {
+fn read_pagemap(offset: usize, buf: &mut [u8], _arg: &str) -> VfsResult<usize> {
     assert!(buf.len() == 8);
     let va = (offset >> 3) << 12;
 
@@ -218,15 +251,15 @@ fn read_pagemap(offset: usize, buf: &mut [u8]) -> VfsResult<usize> {
     Ok(buf.len())
 }
 
-fn read_mounts(offset: usize, buf: &mut [u8]) -> VfsResult<usize> {
+fn read_mounts(offset: usize, buf: &mut [u8], arg: &str) -> VfsResult<usize> {
     // Todo: handle offset properly!
     if offset != 0 {
         return Ok(0);
     }
-    kernel_read("/etc/fstab", buf)
+    kernel_read("/etc/fstab", buf, arg)
 }
 
-fn kernel_read(filename: &str, buf: &mut [u8]) -> VfsResult<usize> {
+fn kernel_read(filename: &str, buf: &mut [u8], _arg: &str) -> VfsResult<usize> {
     let mut opts = OpenOptions::new();
     opts.read(true);
 

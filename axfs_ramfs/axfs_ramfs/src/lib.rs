@@ -83,3 +83,10 @@ impl Default for RamFileSystem {
         Self::new(0, 0, 0)
     }
 }
+
+pub fn shmem_kernel_file_setup(size: usize) -> VfsResult<VfsNodeRef> {
+    let fs = RamFileSystem::default();
+    let inode = fs.alloc_inode(VfsNodeType::File, 0, 0, 0)?;
+    inode.truncate(size as u64)?;
+    Ok(inode)
+}

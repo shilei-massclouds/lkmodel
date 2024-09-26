@@ -206,6 +206,21 @@ impl TaskStruct {
     }
 
     #[inline]
+    pub fn linux_state(&self) -> char {
+        match self.state() {
+            TaskState::Running => 'R',
+            TaskState::Ready => 'R',
+            TaskState::Blocked => 'S',
+            TaskState::Dead => 'X',
+        }
+    }
+
+    #[inline]
+    pub fn state(&self) -> TaskState {
+        self.sched_info.state()
+    }
+
+    #[inline]
     pub fn set_state(&self, state: TaskState) {
         self.sched_info.set_state(state)
     }

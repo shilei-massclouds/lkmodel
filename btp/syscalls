@@ -52,3 +52,4 @@ read04
 close02
 
 futex_wait01
+futex_wait02

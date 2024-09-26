@@ -327,6 +327,7 @@ impl File {
         if uid == fsuid {
             mode >>= 6;
             if (mask & !mode) != 0 {
+                error!("PermDenied: mask {:#o} mode {:#o}", mask, mode);
                 return ax_err!(PermDenied);
             }
             return Ok(());

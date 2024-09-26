@@ -7,10 +7,11 @@ use axtype::{O_NOFOLLOW, S_ISGID};
 use axfs_vfs::{VfsNodeAttr, VfsNodeOps, VfsNodeRef, VfsNodeType};
 use axfs_vfs::{VfsError, VfsResult};
 use spin::RwLock;
+use axtype::split_path;
 
 use crate::file::{FileNode, SymLinkNode};
 
-pub type LookupOp = fn(&str, i32) -> VfsResult<VfsNodeRef>;
+pub type LookupOp = fn(Arc<DirNode>, &str, i32) -> VfsResult<VfsNodeRef>;
 
 /// The directory node in the Proc filesystem.
 ///
@@ -18,7 +19,7 @@ pub type LookupOp = fn(&str, i32) -> VfsResult<VfsNodeRef>;
 pub struct DirNode {
     this: Weak<DirNode>,
     parent: RwLock<Weak<dyn VfsNodeOps>>,
-    children: RwLock<BTreeMap<String, VfsNodeRef>>,
+    pub children: RwLock<BTreeMap<String, VfsNodeRef>>,
     ino: usize,
     uid: RwLock<u32>,
     gid: RwLock<u32>,
@@ -68,7 +69,7 @@ impl DirNode {
             gid = *self.gid.read();
         }
         let node: VfsNodeRef = match ty {
-            VfsNodeType::File => Arc::new(FileNode::new(None, uid, gid, mode)),
+            VfsNodeType::File => Arc::new(FileNode::new(None, "", uid, gid, mode)),
             VfsNodeType::Dir => Self::new(Some(self.this.clone()), uid, gid, mode, None),
             VfsNodeType::SymLink => Arc::new(SymLinkNode::new(uid, gid)),
             _ => return Err(VfsError::Unsupported),
@@ -196,10 +197,6 @@ impl VfsNodeOps for DirNode {
 
     fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<(VfsNodeRef, String)> {
         info!("lookup: {} flags {:#o}\n", path, flags);
-        if let Some(lookup_op) = self.lookup_op {
-            let node = lookup_op(path, flags)?;
-            return Ok((node, String::new()));
-        }
 
         let (name, rest) = split_path(path);
         let mut name = String::from(name);
@@ -207,12 +204,27 @@ impl VfsNodeOps for DirNode {
             let node = match name.as_str() {
                 "" | "." => Ok(self.clone() as VfsNodeRef),
                 ".." => self.parent().ok_or(VfsError::NotFound),
-                _ => self
+                _ => {
+                    /*
+                    self
                     .children
                     .read()
                     .get(name.as_str())
                     .cloned()
                     .ok_or(VfsError::NotFound),
+                    */
+                    match self.children.read().get(name.as_str()).cloned() {
+                        Some(n) => Ok(n),
+                        None => {
+                            if let Some(lookup_op) = self.lookup_op {
+                                let node = lookup_op(self.clone(), path, flags)?;
+                                return Ok((node, String::new()));
+                            } else {
+                                Err(VfsError::NotFound)
+                            }
+                        }
+                    }
+                }
             }?;
             debug!("name {} rest {:?} {} flags {:#o}", name, rest, node.get_attr()?.is_symlink(), flags);
             if let Some(linkname) = self.handle_symlink(node.clone(), flags, rest.is_none()) {
@@ -380,11 +392,4 @@ impl VfsNodeOps for DirNode {
     */
 
     axfs_vfs::impl_vfs_dir_default! {}
-}
-
-fn split_path(path: &str) -> (&str, Option<&str>) {
-    let trimmed_path = path.trim_start_matches('/');
-    trimmed_path.find('/').map_or((trimmed_path, None), |n| {
-        (&trimmed_path[..n], Some(&trimmed_path[n + 1..]))
-    })
 }
