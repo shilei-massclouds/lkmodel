@@ -35,7 +35,7 @@ const ELF_HEAD_BUF_SIZE: usize = 256;
 pub fn execve(
     filename: &str, flags: usize, argv: Vec<String>, envp: Vec<String>
 ) -> LinuxResult<(usize, usize)> {
-    debug!("bprm_execve: {}", filename);
+    info!("bprm_execve: {}", filename);
     let file = do_open_execat(filename, flags)?;
     exec_binprm(filename, file, argv, envp)
 }

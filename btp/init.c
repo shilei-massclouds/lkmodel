@@ -17,6 +17,7 @@ int exec_cmd(char *cmdline)
     char *envp[] = { "PATH=/bin:/sbin", NULL };
     char *argv[MAX_ARG_COUNT + 1]; // argv with end 'NULL'
     int argc = 0;
+    char exe_path[256];
 
     printf("cmd: %s\n", cmdline);
     token = strtok(cmdline, " \t"); // split by 'space' and 'tab'
@@ -26,15 +27,22 @@ int exec_cmd(char *cmdline)
     }
     argv[argc] = NULL;
 
+    if (argv[0][0] == '/') {
+        strcpy(exe_path, argv[0]);
+    } else {
+        sprintf(exe_path, "%s/%s", SBIN_PATH, argv[0]);
+    }
+
+    if (access(exe_path, X_OK) != 0) {
+        printf("no file '%s'!\n", exe_path);
+        exit(-1);
+    }
+
     pid = vfork();
     if (pid == 0) {
-        char exe_path[256];
-        if (argv[0][0] == '/') {
-            strcpy(exe_path, argv[0]);
-        } else {
-            sprintf(exe_path, "%s/%s", SBIN_PATH, argv[0]);
+        if (execve(exe_path, argv, envp) != 0) {
+            exit(-1);
         }
-        execve(exe_path, argv, envp);
         exit(0);
     }
     waitpid(pid, NULL, 0);
