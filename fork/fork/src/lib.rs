@@ -11,7 +11,7 @@ use alloc::sync::Arc;
 
 use axerrno::{LinuxError, LinuxResult};
 use task::{current, Tid, TaskRef, TaskStruct};
-use spinbase::SpinNoIrq;
+use spinpreempt::SpinLock;
 use task::SIGCHLD;
 
 bitflags::bitflags! {
@@ -265,7 +265,7 @@ impl KernelCloneArgs {
         } else {
             info!("copy_mm: NO CLONE_VM");
             let mm = current().mm().lock().deep_dup();
-            task.mm = Some(Arc::new(SpinNoIrq::new(mm)));
+            task.mm = Some(Arc::new(SpinLock::new(mm)));
         }
         Ok(())
     }

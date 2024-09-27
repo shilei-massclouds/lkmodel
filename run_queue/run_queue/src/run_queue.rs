@@ -199,7 +199,7 @@ impl AxRunQueue {
                 switch_mm(
                     prev_task.active_mm_id.load(Ordering::SeqCst),
                     next_task.mm_id.load(Ordering::SeqCst),
-                    next_pgd.clone(),
+                    next_pgd.lock().root_paddr().into(),
                 );
             }
             None => {

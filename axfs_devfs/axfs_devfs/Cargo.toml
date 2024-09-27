@@ -11,7 +11,7 @@ documentation = "https://rcore-os.github.io/arceos/axfs_devfs/index.html"
 
 [dependencies]
 spin = "0.9"
-spinbase = { git = "ssh://git@github.com/shilei-massclouds/spinbase.git" }
+spinpreempt = { git = "ssh://git@github.com/shilei-massclouds/spinpreempt.git" }
 log = "0.4"
 axfs_vfs = { git = "ssh://git@github.com/shilei-massclouds/axfs_vfs.git" }
 axhal = { git = "ssh://git@github.com/shilei-massclouds/axhal.git" }

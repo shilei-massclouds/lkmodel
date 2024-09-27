@@ -20,7 +20,6 @@ use mm::MmStruct;
 use taskctx::switch_mm;
 use taskctx::SchedInfo;
 use taskctx::TaskState;
-use spinbase::SpinNoIrq;
 use spinpreempt::SpinLock;
 use fstree::FsStruct;
 use filetable::FileTable;
@@ -113,7 +112,7 @@ pub struct Cred {
 }
 
 pub struct TaskStruct {
-    pub mm: Option<Arc<SpinNoIrq<MmStruct>>>,
+    pub mm: Option<Arc<SpinLock<MmStruct>>>,
     pub fs: Arc<SpinLock<FsStruct>>,
     pub filetable: Arc<SpinLock<FileTable>>,
     pub sigpending: SpinLock<SigPending>,
@@ -170,11 +169,11 @@ impl TaskStruct {
         self.sched_info.pt_regs_addr()
     }
 
-    pub fn try_mm(&self) -> Option<Arc<SpinNoIrq<MmStruct>>> {
+    pub fn try_mm(&self) -> Option<Arc<SpinLock<MmStruct>>> {
         self.mm.as_ref().and_then(|mm| Some(mm.clone()))
     }
 
-    pub fn mm(&self) -> Arc<SpinNoIrq<MmStruct>> {
+    pub fn mm(&self) -> Arc<SpinLock<MmStruct>> {
         self.mm.as_ref().expect("NOT a user process.").clone()
     }
 
@@ -184,13 +183,13 @@ impl TaskStruct {
         //assert!(self.mm.is_none());
         let mm = MmStruct::new();
         let mm_id = mm.id();
-        self.mm.replace(Arc::new(SpinNoIrq::new(mm)));
+        self.mm.replace(Arc::new(SpinLock::new(mm)));
         info!("================== mmid {}", mm_id);
         let mut ctx = taskctx::current_ctx();
         ctx.mm_id.store(mm_id, Ordering::Relaxed);
         ctx.active_mm_id.store(mm_id, Ordering::Relaxed);
-        ctx.as_ctx_mut().pgd = Some(self.mm().lock().pgd().clone());
-        switch_mm(0, mm_id, self.mm().lock().pgd());
+        ctx.as_ctx_mut().pgd = Some(self.mm().lock().pgd());
+        switch_mm(0, mm_id, self.mm().lock().pgd().lock().root_paddr().into());
     }
 
     pub fn dup_task_struct(&self) -> Self {

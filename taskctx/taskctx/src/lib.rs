@@ -347,14 +347,14 @@ pub fn try_current_ctx() -> Option<CurrentCtx> {
     CurrentCtx::try_get()
 }
 
-pub fn switch_mm(prev_mm_id: usize, next_mm_id: usize, next_pgd: Arc<SpinNoIrq<PageTable>>) {
+pub fn switch_mm(prev_mm_id: usize, next_mm_id: usize, next_root_paddr: usize) {
     if prev_mm_id == next_mm_id {
         return;
     }
     debug!("###### switch_mm prev {} next {}; paddr {:#X}",
-        prev_mm_id, next_mm_id, next_pgd.lock().root_paddr());
+        prev_mm_id, next_mm_id, next_root_paddr);
     unsafe {
-        write_page_table_root0(next_pgd.lock().root_paddr().into());
+        write_page_table_root0(next_root_paddr.into());
     }
 }
 

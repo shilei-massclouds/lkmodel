@@ -6,7 +6,7 @@ extern crate alloc;
 
 use alloc::sync::Arc;
 use axfs_vfs::{VfsNodeAttr, VfsNodeOps, VfsNodePerm, VfsNodeType, VfsResult};
-use spinbase::SpinNoIrq;
+use spinpreempt::SpinLock;
 use mutex::Mutex;
 use axfs_vfs::VfsError;
 use axtype::MAX_LOOP_NUMBER;
@@ -27,13 +27,13 @@ const LOOP_SET_STATUS:  usize = 0x4C02;
 
 /// A device behaves like `/dev/loop-control`.
 pub struct LoopCtlDev {
-    slots: SpinNoIrq<[bool; MAX_LOOP_NUMBER]>,
+    slots: SpinLock<[bool; MAX_LOOP_NUMBER]>,
 }
 
 impl LoopCtlDev {
     pub fn new() -> Self {
         Self {
-            slots: SpinNoIrq::new([false; MAX_LOOP_NUMBER])
+            slots: SpinLock::new([false; MAX_LOOP_NUMBER])
         }
     }
 
