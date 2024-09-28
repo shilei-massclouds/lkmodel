@@ -108,7 +108,7 @@ fn futex_cmd_has_timeout(cmd: usize) -> bool {
 fn futex_wait(
     uaddr: usize, _flags: usize, val: usize, timeout: Option<KTimeSpec>, bitset: u32
 ) -> usize {
-    info!("futex_wait ...");
+    error!("futex_wait uaddr {:#x} ...", uaddr);
     assert_eq!(bitset, FUTEX_BITSET_MATCH_ANY);
     if bitset == 0 {
         return linux_err!(EINVAL);
@@ -153,7 +153,9 @@ fn futex_wake(
 
     let mut futex_map = FUTEX_MAP.lock();
     if let Some(wq) = futex_map.get(&uaddr) {
-        wq.notify_one(true);
+        let num = wq.notify_bitset(nr_wake, bitset, true);
+        assert_eq!(num, nr_wake);
+        error!("futex_wake count {}", wq.count());
         if wq.count() == 0 {
             futex_map.remove(&uaddr);
         }
@@ -162,5 +164,6 @@ fn futex_wake(
         error!("futex_wake no wq uaddr {:#x}", uaddr);
         return 0;
     }
+    error!("futex_wake ret {}", nr_wake);
     return nr_wake;
 }

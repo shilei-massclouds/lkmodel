@@ -206,7 +206,7 @@ pub fn wait4(pid: usize, wstatus: usize, options: usize, rusage: usize) -> usize
 fn do_wait(
     pid_type: PidType, tid: Tid, options: usize, status: &mut u32
 ) -> LinuxResult<Tid> {
-    info!("do_wait: pidtype {:?} pid {:#X} options {:#X}; curr {} irqs {}",
+    error!("do_wait: pidtype {:?} pid {:#X} options {:#X}; curr {} irqs {}",
         pid_type, tid, options, taskctx::current_ctx().tid(), irqs_enabled());
 
     // Todo: sleep with intr
@@ -229,7 +229,7 @@ fn do_wait(
                 for sibling in ctx.siblings.lock().iter() {
                     let cur = task::get_task(*sibling).unwrap();
                     for child in cur.sched_info.children.lock().iter() {
-                        info!("Task[{}]: has child[{}]", cur.tid(), child);
+                        error!("Task[{}]: has child[{}]", cur.tid(), child);
                         if let Some(tid) = wait_children(status) {
                             return Ok(tid);
                         }
@@ -245,6 +245,11 @@ fn do_wait(
             if children_count() == 0 && siblings_count() == 0 {
                 return Err(LinuxError::ECHILD);
             }
+        }
+
+        if (options & WNOHANG) != 0 {
+            error!("WNOHANG");
+            return Ok(0);
         }
 
         // Todo: wait on Exit_WaitQueue of child and resched.
@@ -283,8 +288,9 @@ fn siblings_count() -> usize {
 fn wait_children(status: &mut u32) -> Option<Tid> {
     let ctx = taskctx::current_ctx();
     for (index, child) in ctx.children.lock().iter().enumerate() {
-        info!("Current[{}]: has child[{}]", ctx.tid(), child);
+        //error!("Current[{}]: has child[{}]", ctx.tid(), child);
         if let Some(tid) = wait_task_zombie(*child, status) {
+        error!("child[{}] zombie", *child);
             ctx.children.lock().remove(index);
             return Some(tid);
         }
@@ -316,7 +322,7 @@ pub fn exit(exit_code: u32) -> ! {
 
 /// Exits the current task group.
 pub fn exit_group(exit_code: u32) -> ! {
-    info!("exit_group ... [{}]", exit_code);
+    error!("exit_group ... [{}]", exit_code);
     do_group_exit(exit_code)
 }
 
@@ -397,7 +403,7 @@ fn exit_mm() {
 
 fn exit_notify(exit_code: u32) {
     let task = task::current();
-    debug!("exit_notify: tid {} code {}", task.tid(), exit_code);
+    error!("exit_notify: tid {} code {}", task.tid(), exit_code);
     task.exit_code.store(exit_code, Ordering::Relaxed);
     task.exit_state.store(EXIT_ZOMBIE, Ordering::Relaxed);
     // Todo: wakeup parent

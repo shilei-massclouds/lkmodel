@@ -130,7 +130,7 @@ pub fn init_procfs(uid: u32, gid: u32, mode: i32) -> VfsResult<Arc<ProcFileSyste
 
 fn lookup_pid(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
     let (name, rest) = split_path(path);
-    error!("path {} name {} rest {:?}", path, name, rest);
+    info!("path {} name {} rest {:?}", path, name, rest);
     if let Some(node) = parent.children.read().get(name).cloned() {
         return Ok(node);
     }

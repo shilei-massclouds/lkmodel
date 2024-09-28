@@ -197,6 +197,27 @@ impl WaitQueue {
         }
     }
 
+    pub fn notify_bitset(&self, nr_wake: usize, bitset: u32, resched: bool) -> usize {
+        let mut num = 0;
+        let curr = taskctx::current_ctx();
+        let mut rq = run_queue::task_rq(&curr).lock();
+        self.queue.lock().retain(|item| {
+            if num >= nr_wake {
+                return true;
+            }
+            error!("notify_bitset ...");
+            // Check if one of the bits is set in both bitsets
+            let miss = (item.bitset & bitset) == 0;
+            if !miss {
+                item.task.set_in_wait_queue(false);
+                rq.unblock_task(item.task.clone(), resched);
+                num += 1;
+            }
+            miss
+        });
+        num
+    }
+
     /*
     /// Wakes all tasks in the wait queue.
     ///
