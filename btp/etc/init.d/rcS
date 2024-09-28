@@ -2,4 +2,4 @@ mount -a
 #dash
 #mdev -s
 #/testcases/mmap16
-/testcases/futex_wait06
+/testcases/futex_wait_bitset01

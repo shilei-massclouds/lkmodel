@@ -12,6 +12,19 @@ use run_queue::AxRunQueue;
 
 mod timers;
 
+pub const FUTEX_BITSET_MATCH_ANY: u32 = 0xffffffff;
+
+struct WaitItem {
+    task: CtxRef,
+    bitset: u32,
+}
+
+impl WaitItem {
+    fn new(task: CtxRef, bitset: u32) -> Self {
+        Self { task, bitset }
+    }
+}
+
 /// A queue to store sleeping tasks.
 ///
 /// # Examples
@@ -35,7 +48,7 @@ mod timers;
 /// assert_eq!(VALUE.load(Ordering::Relaxed), 1);
 /// ```
 pub struct WaitQueue {
-    queue: SpinRaw<VecDeque<CtxRef>>, // we already disabled IRQs when lock the `RUN_QUEUE`
+    queue: SpinRaw<VecDeque<WaitItem>>, // we already disabled IRQs when lock the `RUN_QUEUE`
 }
 
 impl WaitQueue {
@@ -65,7 +78,7 @@ impl WaitQueue {
             // wake up by timer (timeout).
             // `RUN_QUEUE` is not locked here, so disable IRQs.
             let _guard = kernel_guard_base::IrqSave::new();
-            self.queue.lock().retain(|t| !curr.ptr_eq(t));
+            self.queue.lock().retain(|item| !curr.ptr_eq(&item.task));
             curr.set_in_wait_queue(false);
         }
         if curr.in_timer_list() {
@@ -76,12 +89,13 @@ impl WaitQueue {
 
     /// Blocks the current task and put it into the wait queue, until other task
     /// notifies it.
-    pub fn wait(&self) {
+    pub fn wait(&self, bitset: u32) {
         let curr = taskctx::current_ctx();
         let mut rq = run_queue::task_rq(&curr).lock();
         rq.block_current(|task| {
             task.set_in_wait_queue(true);
-            self.queue.lock().push_back(task)
+            let item = WaitItem::new(task, bitset);
+            self.queue.lock().push_back(item)
         });
         self.cancel_events(taskctx::current_ctx());
     }
@@ -91,7 +105,7 @@ impl WaitQueue {
     ///
     /// Note that even other tasks notify this task, it will not wake up until
     /// the condition becomes true.
-    pub fn wait_until<F>(&self, condition: F)
+    pub fn wait_until<F>(&self, condition: F, bitset: u32)
     where
         F: Fn() -> bool,
     {
@@ -103,7 +117,8 @@ impl WaitQueue {
             }
             rq.block_current(|task| {
                 task.set_in_wait_queue(true);
-                self.queue.lock().push_back(task);
+                let item = WaitItem::new(task, bitset);
+                self.queue.lock().push_back(item);
             });
         }
         self.cancel_events(taskctx::current_ctx());
@@ -111,7 +126,7 @@ impl WaitQueue {
 
     /// Blocks the current task and put it into the wait queue, until other tasks
     /// notify it, or the given duration has elapsed.
-    pub fn wait_timeout(&self, dur: core::time::Duration) -> bool {
+    pub fn wait_timeout(&self, dur: core::time::Duration, bitset: u32) -> bool {
         let curr = taskctx::current_ctx();
         let deadline = axhal::time::current_time() + dur;
         info!(
@@ -123,7 +138,8 @@ impl WaitQueue {
 
         run_queue::task_rq(&curr).lock().block_current(|task| {
             task.set_in_wait_queue(true);
-            self.queue.lock().push_back(task)
+            let item = WaitItem::new(task, bitset);
+            self.queue.lock().push_back(item)
         });
         let timeout = curr.in_wait_queue(); // still in the wait queue, must have timed out
         self.cancel_events(curr);
@@ -217,9 +233,9 @@ impl WaitQueue {
     */
 
     pub(crate) fn notify_one_locked(&self, resched: bool, rq: &mut AxRunQueue) -> bool {
-        if let Some(task) = self.queue.lock().pop_front() {
-            task.set_in_wait_queue(false);
-            rq.unblock_task(task, resched);
+        if let Some(item) = self.queue.lock().pop_front() {
+            item.task.set_in_wait_queue(false);
+            rq.unblock_task(item.task, resched);
             true
         } else {
             false

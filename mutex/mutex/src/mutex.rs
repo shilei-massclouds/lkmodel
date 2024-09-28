@@ -6,7 +6,7 @@ use core::ops::{Deref, DerefMut};
 use core::sync::atomic::{AtomicU64, Ordering};
 
 use taskctx::current_ctx;
-use wait_queue::WaitQueue;
+use wait_queue::{WaitQueue, FUTEX_BITSET_MATCH_ANY};
 
 /// A mutual exclusion primitive useful for protecting shared data, similar to
 /// [`std::sync::Mutex`](https://doc.rust-lang.org/std/sync/struct.Mutex.html).
@@ -89,7 +89,7 @@ impl<T: ?Sized> Mutex<T> {
                         current_ctx().tid()
                     );
                     // Wait until the lock looks unlocked before retrying
-                    self.wq.wait_until(|| !self.is_locked());
+                    self.wq.wait_until(|| !self.is_locked(), FUTEX_BITSET_MATCH_ANY);
                 }
             }
         }

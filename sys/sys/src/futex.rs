@@ -4,12 +4,14 @@ use alloc::sync::Arc;
 use alloc::collections::BTreeMap;
 use axerrno::{linux_err, LinuxError};
 use mutex::Mutex;
-use wait_queue::WaitQueue;
-use axtype::TimeSpec;
-use axhal::time::TimeValue;
+use wait_queue::{WaitQueue, FUTEX_BITSET_MATCH_ANY};
+
+type UTimeSpec = axtype::TimeSpec;
+type KTimeSpec = axhal::time::TimeValue;
 
 pub const FUTEX_WAIT: usize = 0;
 pub const FUTEX_WAKE: usize = 1;
+pub const FUTEX_LOCK_PI: usize = 6;
 pub const FUTEX_WAIT_BITSET: usize = 9;
 pub const FUTEX_WAKE_BITSET: usize = 10;
 pub const FUTEX_WAIT_REQUEUE_PI: usize = 11;
@@ -23,17 +25,11 @@ const FLAGS_SHARED:     usize = 0x01;
 const FLAGS_CLOCKRT:    usize = 0x02;
 //const FLAGS_HAS_TIMEOUT:usize = 0x04;
 
-//
-// bitset with all bits set for the FUTEX_xxx_BITSET OPs to request a
-// match of any bit.
-//
-const FUTEX_BITSET_MATCH_ANY: usize = 0xffffffff;
-
 static FUTEX_MAP: Mutex<BTreeMap<usize, Arc<WaitQueue>>> = Mutex::new(BTreeMap::new());
 
 pub fn do_futex(
     uaddr: usize, op: usize, val: usize, timeout_or_val2: usize,
-    uaddr2: usize, mut val3: usize
+    uaddr2: usize, mut val3: u32
 ) -> usize {
     assert_eq!(uaddr2, 0);
 
@@ -53,13 +49,33 @@ pub fn do_futex(
         }
     }
 
+    let mut timeout = None;
+    if timeout_or_val2 != 0 && futex_cmd_has_timeout(cmd) {
+        let utimeout = timeout_or_val2 as *const UTimeSpec;
+        let utimeout = unsafe { *utimeout };
+        info!("utimeout: {} : {}", utimeout.tv_sec, utimeout.tv_nsec);
+        let mut ktimeout = KTimeSpec::new(
+            utimeout.tv_sec as u64,
+            utimeout.tv_nsec as u32
+        );
+        if cmd != FUTEX_WAIT {
+            use axhal::time::current_time;
+            if let Some(t) = ktimeout.checked_sub(current_time()) {
+                ktimeout = t;
+            } else {
+                panic!("timeout is negative or overflow!");
+            }
+        }
+        timeout = Some(ktimeout);
+    }
+
     match cmd {
         FUTEX_WAIT => {
             val3 = FUTEX_BITSET_MATCH_ANY;
-            return futex_wait(uaddr, flags, val, timeout_or_val2, val3);
+            return futex_wait(uaddr, flags, val, timeout, val3);
         },
         FUTEX_WAIT_BITSET => {
-            return futex_wait(uaddr, flags, val, timeout_or_val2, val3);
+            return futex_wait(uaddr, flags, val, timeout, val3);
         },
         FUTEX_WAKE => {
             val3 = FUTEX_BITSET_MATCH_ANY;
@@ -77,8 +93,20 @@ pub fn do_futex(
         uaddr, op, val, timeout_or_val2, uaddr2, val3);
 }
 
+#[inline]
+fn futex_cmd_has_timeout(cmd: usize) -> bool {
+    match cmd {
+        FUTEX_WAIT => true,
+        FUTEX_LOCK_PI => true,
+        FUTEX_LOCK_PI2 => true,
+        FUTEX_WAIT_BITSET => true,
+        FUTEX_WAIT_REQUEUE_PI => true,
+        _ => false,
+    }
+}
+
 fn futex_wait(
-    uaddr: usize, _flags: usize, val: usize, abs_time: usize, bitset: usize
+    uaddr: usize, _flags: usize, val: usize, timeout: Option<KTimeSpec>, bitset: u32
 ) -> usize {
     info!("futex_wait ...");
     assert_eq!(bitset, FUTEX_BITSET_MATCH_ANY);
@@ -102,26 +130,19 @@ fn futex_wait(
         }
     };
 
-    if abs_time != 0 {
-        let abs_time = abs_time as *const TimeSpec;
-        let timeout = unsafe { *abs_time };
-        info!("timeout: {} : {}", timeout.tv_sec, timeout.tv_nsec);
-        let timeout = TimeValue::new(
-            timeout.tv_sec as u64,
-            timeout.tv_nsec as u32
-        );
-        if wq.wait_timeout(timeout) {
+    if let Some(timeout) = timeout {
+        if wq.wait_timeout(timeout, bitset) {
             return linux_err!(ETIMEDOUT);
         }
     } else {
-        wq.wait();
+        wq.wait(bitset);
     }
     debug!("futex_wait ok!");
     return 0;
 }
 
 fn futex_wake(
-    uaddr: usize, _flags: usize, nr_wake: usize, bitset: usize
+    uaddr: usize, _flags: usize, nr_wake: usize, bitset: u32
 ) -> usize {
     assert_eq!(nr_wake, 1);
     assert_eq!(bitset, FUTEX_BITSET_MATCH_ANY);

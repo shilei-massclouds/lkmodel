@@ -23,7 +23,7 @@ use taskctx::TaskState;
 use spinpreempt::SpinLock;
 use fstree::FsStruct;
 use filetable::FileTable;
-use wait_queue::WaitQueue;
+use wait_queue::{WaitQueue, FUTEX_BITSET_MATCH_ANY};
 use preempt_guard::NoPreempt;
 use axconfig::TASK_STACK_SIZE;
 
@@ -231,7 +231,7 @@ impl TaskStruct {
     pub fn wait_for_vfork_done(&self) {
         match self.vfork_done {
             Some(ref done) => {
-                done.wait();
+                done.wait(FUTEX_BITSET_MATCH_ANY);
             },
             None => panic!("vfork_done hasn't been inited yet!"),
         }

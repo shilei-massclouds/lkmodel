@@ -640,7 +640,7 @@ fn linux_syscall_exit_group(args: SyscallArgs) -> usize {
 
 fn linux_syscall_futex(args: SyscallArgs) -> usize {
     let [uaddr, op, val, timeout_or_val2, uaddr2, val3, ..] = args;
-    sys::do_futex(uaddr, op, val, timeout_or_val2, uaddr2, val3)
+    sys::do_futex(uaddr, op, val, timeout_or_val2, uaddr2, val3 as u32)
 }
 
 #[cfg(target_arch = "x86_64")]
