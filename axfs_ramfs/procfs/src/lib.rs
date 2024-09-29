@@ -133,7 +133,7 @@ pub fn init_procfs(uid: u32, gid: u32, mode: i32) -> VfsResult<Arc<ProcFileSyste
     Ok(Arc::new(fs))
 }
 
-fn lookup_root(parent: Arc<DirNode>, _name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+fn lookup_root(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
     let (name, rest) = split_path(path);
     error!("lookup_root: path {} name {} rest {:?}", path, name, rest);
     if let Some(node) = parent.children.read().get(name).cloned() {
@@ -154,17 +154,19 @@ fn lookup_root(parent: Arc<DirNode>, _name: &str, path: &str, _flags: i32) -> Vf
     panic!("path: {}; name {}; ?digit {:?}", path, name, name.parse::<usize>());
 }
 
-fn lookup_self_fd(_parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
-    assert_eq!(name, "self/fd");
-    error!("lookup_self_fd: name {} path {}", name, path);
+fn lookup_self_fd(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+    let dname = parent.dname();
+    assert_eq!(dname, "self/fd");
+    error!("lookup_self_fd: dname {} path {}", dname, path);
     let node = SymLinkNode::new(0, 0);
     let linkto = format!("/proc/self/_fd/{}", path);
     node.write_at(0, linkto.as_bytes())?;
     Ok(Arc::new(node))
 }
 
-fn lookup_fd_table(_parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
-    error!("lookup_fd_table: name {} path {}", name, path);
+fn lookup_fd_table(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+    let dname = parent.dname();
+    error!("lookup_fd_table: name {} path {}", dname, path);
     let fd = path.parse::<usize>().map_err(|_| {
         NotConnected
     })?;
@@ -177,19 +179,20 @@ fn lookup_fd_table(_parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -
     Ok(node)
 }
 
-fn lookup_task(parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
-    error!("lookup_task: name {} path {}", name, path);
+fn lookup_task(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+    let dname = parent.dname();
+    error!("lookup_task: name {} path {}", dname, path);
     if path == "stat" {
-        return lookup_thread(parent, name, path, _flags);
+        return lookup_thread(parent, path, _flags);
     }
     assert!(path.starts_with("task"));
     let parent = Arc::downgrade(&parent);
-    let node = DirNode::new(Some(parent), 0, 0, 0o600, Some(lookup_child), Some(getdents_child), name);
+    let node = DirNode::new(Some(parent), 0, 0, 0o600, Some(lookup_child), Some(getdents_child), &dname);
     return Ok(node);
 }
 
 fn getdents_child(parent: Arc<DirNode>, offset: u64, buf: &mut [u8]) -> VfsResult<usize> {
-    error!("getdents {}", parent.get_arg());
+    error!("getdents {}", parent.dname());
 
     if offset != 0 {
         log::error!("NOTICE! check offset[{}]!", offset);
@@ -198,7 +201,7 @@ fn getdents_child(parent: Arc<DirNode>, offset: u64, buf: &mut [u8]) -> VfsResul
 
     static mut INO_SEQ: u64 = 0;
 
-    let pid = parent.get_arg().parse::<usize>()?;
+    let pid = parent.dname().parse::<usize>()?;
     let task = task::get_task(pid).ok_or(VfsError::NotFound)?;
 
     let mut count = 0;
@@ -238,8 +241,9 @@ fn getdents_child(parent: Arc<DirNode>, offset: u64, buf: &mut [u8]) -> VfsResul
     Ok(count)
 }
 
-fn lookup_child(parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
-    error!("lookup_child: name {} path {}", name, path);
+fn lookup_child(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+    let dname = parent.dname();
+    error!("lookup_child: name {} path {}", dname, path);
     let (child, rest) = split_path(path);
     error!("lookup_child: child {} rest {:?}", child, rest);
     let parent = Arc::downgrade(&parent);
@@ -247,10 +251,11 @@ fn lookup_child(parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> Vf
     return Ok(node);
 }
 
-fn lookup_thread(_parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
-    error!("lookup_thread: name {} path {}", name, path);
+fn lookup_thread(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+    let dname = parent.dname();
+    error!("lookup_thread: dname {} path {}", dname, path);
     let node = match path {
-        "stat" => FileNode::new(Some(read_stat), name, 0, 0, 0o600),
+        "stat" => FileNode::new(Some(read_stat), &dname, 0, 0, 0o600),
         _ => panic!("bad subpath {}", path),
     };
     return Ok(Arc::new(node));

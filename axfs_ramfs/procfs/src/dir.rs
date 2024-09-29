@@ -10,7 +10,7 @@ use axtype::split_path;
 
 use crate::file::{FileNode, SymLinkNode};
 
-pub type LookupOp = fn(Arc<DirNode>, &str, &str, i32) -> VfsResult<VfsNodeRef>;
+pub type LookupOp = fn(Arc<DirNode>, &str, i32) -> VfsResult<VfsNodeRef>;
 pub type GetDentsOp = fn(Arc<DirNode>, u64, &mut [u8]) -> VfsResult<usize>;
 
 /// The directory node in the Proc filesystem.
@@ -26,7 +26,7 @@ pub struct DirNode {
     mode: RwLock<i32>,
     lookup_op: Option<LookupOp>,
     getdents_op: Option<GetDentsOp>,
-    arg: String,
+    dname: String,
 }
 
 impl DirNode {
@@ -35,7 +35,7 @@ impl DirNode {
         uid: u32, gid: u32, mode: i32,
         lookup_op: Option<LookupOp>,
         getdents_op: Option<GetDentsOp>,
-        arg: &str
+        dname: &str
     ) -> Arc<Self> {
         Arc::new_cyclic(|this| Self {
             this: this.clone(),
@@ -47,13 +47,13 @@ impl DirNode {
             mode: RwLock::new(mode),
             lookup_op,
             getdents_op,
-            arg: String::from(arg),
+            dname: String::from(dname),
         })
     }
 
     #[inline]
-    pub fn get_arg(&self) -> String {
-        self.arg.clone()
+    pub fn dname(&self) -> String {
+        self.dname.clone()
     }
 
     pub(super) fn set_parent(&self, parent: Option<&VfsNodeRef>) {
@@ -206,7 +206,7 @@ impl VfsNodeOps for DirNode {
                     Some(n) => Ok(n),
                     None => {
                         if let Some(lookup_op) = self.lookup_op {
-                            let n = lookup_op(self.clone(), &self.arg, &path, flags)?;
+                            let n = lookup_op(self.clone(), &path, flags)?;
                             if n.get_attr()?.is_symlink() {
                                 return Ok((n, String::new()));
                             }
