@@ -135,7 +135,7 @@ pub fn init_procfs(uid: u32, gid: u32, mode: i32) -> VfsResult<Arc<ProcFileSyste
 
 fn lookup_root(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
     let (name, rest) = split_path(path);
-    error!("lookup_root: path {} name {} rest {:?}", path, name, rest);
+    info!("lookup_root: path {} name {} rest {:?}", path, name, rest);
     if let Some(node) = parent.children.read().get(name).cloned() {
         return Ok(node);
     }
@@ -181,7 +181,7 @@ fn lookup_fd_table(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<V
 
 fn lookup_task(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
     let dname = parent.dname();
-    error!("lookup_task: name {} path {}", dname, path);
+    info!("lookup_task: name {} path {}", dname, path);
     if path == "stat" {
         return lookup_thread(parent, path, _flags);
     }
@@ -192,10 +192,10 @@ fn lookup_task(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNo
 }
 
 fn getdents_child(parent: Arc<DirNode>, offset: u64, buf: &mut [u8]) -> VfsResult<usize> {
-    error!("getdents {}", parent.dname());
+    info!("getdents {}", parent.dname());
 
     if offset != 0 {
-        log::error!("NOTICE! check offset[{}]!", offset);
+        error!("NOTICE! check offset[{}]!", offset);
         return Ok(0);
     }
 
@@ -243,9 +243,9 @@ fn getdents_child(parent: Arc<DirNode>, offset: u64, buf: &mut [u8]) -> VfsResul
 
 fn lookup_child(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
     let dname = parent.dname();
-    error!("lookup_child: name {} path {}", dname, path);
+    info!("lookup_child: name {} path {}", dname, path);
     let (child, rest) = split_path(path);
-    error!("lookup_child: child {} rest {:?}", child, rest);
+    debug!("lookup_child: child {} rest {:?}", child, rest);
     let parent = Arc::downgrade(&parent);
     let node = DirNode::new(Some(parent), 0, 0, 0o600, Some(lookup_thread), None, child);
     return Ok(node);
@@ -253,7 +253,7 @@ fn lookup_child(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsN
 
 fn lookup_thread(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
     let dname = parent.dname();
-    error!("lookup_thread: dname {} path {}", dname, path);
+    info!("lookup_thread: dname {} path {}", dname, path);
     let node = match path {
         "stat" => FileNode::new(Some(read_stat), &dname, 0, 0, 0o600),
         _ => panic!("bad subpath {}", path),
@@ -262,10 +262,10 @@ fn lookup_thread(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<Vfs
 }
 
 fn read_stat(_offset: usize, buf: &mut [u8], arg: &str) -> VfsResult<usize> {
-    error!("read_stat: arg {}", arg);
+    info!("read_stat: arg {}", arg);
     let pid = arg.parse::<usize>()?;
     let task = task::get_task(pid).ok_or(NotFound)?;
-    error!("read_task: pid {} {}", pid, task.linux_state());
+    debug!("read_task: pid {} {}", pid, task.linux_state());
     let src = format!("{} (unknown) {}", pid, task.linux_state());
     buf[..src.len()].copy_from_slice(src.as_bytes());
     Ok(buf.len())

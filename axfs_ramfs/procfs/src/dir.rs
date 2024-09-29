@@ -196,7 +196,6 @@ impl VfsNodeOps for DirNode {
     fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<(VfsNodeRef, String)> {
         info!("lookup: {} flags {:#o}\n", path, flags);
 
-        error!("begin: path {}", path);
         let (name, rest) = split_path(path);
         let node = match name {
             "" | "." => Ok(self.clone() as VfsNodeRef),

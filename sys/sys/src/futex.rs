@@ -144,7 +144,7 @@ fn futex_wait(
 fn futex_wake(
     uaddr: usize, flags: usize, nr_wake: usize, bitset: u32
 ) -> usize {
-    error!("futex_wake: uaddr {:#x} flags {:#x} nr_wake {} bitset {:#x}",
+    info!("futex_wake: uaddr {:#x} flags {:#x} nr_wake {} bitset {:#x}",
         uaddr, flags, nr_wake, bitset);
     assert_eq!(bitset, FUTEX_BITSET_MATCH_ANY);
     if bitset == 0 {
@@ -155,15 +155,15 @@ fn futex_wake(
     if let Some(wq) = futex_map.get(&uaddr) {
         let num = wq.notify_bitset(nr_wake, bitset, true);
         assert_eq!(num, nr_wake);
-        error!("futex_wake count {}", wq.count());
+        debug!("futex_wake count {}", wq.count());
         if wq.count() == 0 {
             futex_map.remove(&uaddr);
         }
     } else {
         // TODO: noop as success!
-        error!("futex_wake no wq uaddr {:#x}", uaddr);
+        warn!("futex_wake no wq uaddr {:#x}", uaddr);
         return 0;
     }
-    error!("futex_wake ret {}", nr_wake);
+    debug!("futex_wake ret {}", nr_wake);
     return nr_wake;
 }

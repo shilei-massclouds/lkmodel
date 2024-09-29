@@ -205,7 +205,7 @@ impl WaitQueue {
             if num >= nr_wake {
                 return true;
             }
-            error!("notify_bitset ...");
+            debug!("notify_bitset ...");
             // Check if one of the bits is set in both bitsets
             let miss = (item.bitset & bitset) == 0;
             if !miss {
