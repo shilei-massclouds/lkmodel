@@ -133,7 +133,7 @@ pub fn init_procfs(uid: u32, gid: u32, mode: i32) -> VfsResult<Arc<ProcFileSyste
     Ok(Arc::new(fs))
 }
 
-fn lookup_root(parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+fn lookup_root(parent: Arc<DirNode>, _name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
     let (name, rest) = split_path(path);
     error!("lookup_root: path {} name {} rest {:?}", path, name, rest);
     if let Some(node) = parent.children.read().get(name).cloned() {
@@ -247,7 +247,7 @@ fn lookup_child(parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> Vf
     return Ok(node);
 }
 
-fn lookup_thread(parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+fn lookup_thread(_parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
     error!("lookup_thread: name {} path {}", name, path);
     let node = match path {
         "stat" => FileNode::new(Some(read_stat), name, 0, 0, 0o600),

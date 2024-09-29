@@ -1,18 +1,12 @@
-use core::ptr::copy_nonoverlapping;
-use core::mem;
 use alloc::collections::BTreeMap;
-use alloc::string::ToString;
 use alloc::sync::{Arc, Weak};
 use alloc::{string::String, vec::Vec};
-use alloc::borrow::ToOwned;
 use axfs_vfs::alloc_ino;
-use axtype::{O_NOFOLLOW, S_ISGID};
+use axtype::S_ISGID;
 use axfs_vfs::{VfsNodeAttr, VfsNodeOps, VfsNodeRef, VfsNodeType};
 use axfs_vfs::{VfsError, VfsResult};
 use spin::RwLock;
 use axtype::split_path;
-use axfs_vfs::DT_;
-use axfs_vfs::LinuxDirent64;
 
 use crate::file::{FileNode, SymLinkNode};
 

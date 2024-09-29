@@ -375,7 +375,7 @@ impl VfsNodeOps for DirNode {
 
             count += entry_size;
         }
-        Ok(0)
+        Ok(count)
     }
 
     axfs_vfs::impl_vfs_dir_default! {}
