@@ -121,21 +121,6 @@ impl DirNode {
         children.remove(name);
         Ok(())
     }
-
-    fn handle_symlink(&self, node: VfsNodeRef, flags: i32, trailing: bool) -> Option<String> {
-        if !node.get_attr().unwrap().is_symlink() {
-            return None;
-        }
-        if trailing && (flags & O_NOFOLLOW) != 0 {
-            return None;
-        }
-        let mut target = [0u8; 256];
-        let ret = node.read_at(0, &mut target).unwrap();
-        assert!(ret < target.len());
-        let target = core::str::from_utf8(&target[0..ret]).unwrap();
-        error!("SymLink to target: {}", target);
-        Some(target.to_owned())
-    }
 }
 
 impl VfsNodeOps for DirNode {
@@ -217,47 +202,34 @@ impl VfsNodeOps for DirNode {
     fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<(VfsNodeRef, String)> {
         info!("lookup: {} flags {:#o}\n", path, flags);
 
-        let mut path = String::from(path);
-        loop {
-            error!("begin: path {}", path);
-            let (name, rest) = split_path(&path);
-            let node = match name {
-                "" | "." => Ok(self.clone() as VfsNodeRef),
-                ".." => self.parent().ok_or(VfsError::NotFound),
-                _ => {
-                    match self.children.read().get(name).cloned() {
-                        Some(n) => Ok(n),
-                        None => {
-                            if let Some(lookup_op) = self.lookup_op {
-                                let n = lookup_op(self.clone(), &self.arg, &path, flags)?;
-                                if n.get_attr()?.is_symlink() {
-                                    return Ok((n, String::new()));
-                                }
-                                Ok(n)
-                            } else {
-                                Err(VfsError::NotFound)
+        error!("begin: path {}", path);
+        let (name, rest) = split_path(path);
+        let node = match name {
+            "" | "." => Ok(self.clone() as VfsNodeRef),
+            ".." => self.parent().ok_or(VfsError::NotFound),
+            _ => {
+                match self.children.read().get(name).cloned() {
+                    Some(n) => Ok(n),
+                    None => {
+                        if let Some(lookup_op) = self.lookup_op {
+                            let n = lookup_op(self.clone(), &self.arg, &path, flags)?;
+                            if n.get_attr()?.is_symlink() {
+                                return Ok((n, String::new()));
                             }
+                            Ok(n)
+                        } else {
+                            Err(VfsError::NotFound)
                         }
                     }
                 }
-            }?;
-            error!("name {} rest {:?} {} flags {:#o}", name, rest, node.get_attr()?.is_symlink(), flags);
-            if let Some(linkname) = self.handle_symlink(node.clone(), flags, rest.is_none()) {
-                error!("linkname: {}", linkname);
-                if linkname.starts_with("/") {
-                    info!("root path: {}", linkname);
-                    return Ok((node, linkname));
-                }
-                path = linkname;
-                continue;
             }
+        }?;
 
-            if let Some(rest) = rest {
-                debug!("lookup: rest {}", rest);
-                return node.lookup(rest, flags);
-            } else {
-                return Ok((node, String::new()));
-            }
+        if let Some(rest) = rest {
+            debug!("lookup: rest {}", rest);
+            return node.lookup(rest, flags);
+        } else {
+            return Ok((node, String::new()));
         }
     }
 
