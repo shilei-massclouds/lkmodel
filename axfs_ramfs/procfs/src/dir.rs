@@ -17,6 +17,7 @@ use axfs_vfs::LinuxDirent64;
 use crate::file::{FileNode, SymLinkNode};
 
 pub type LookupOp = fn(Arc<DirNode>, &str, &str, i32) -> VfsResult<VfsNodeRef>;
+pub type GetDentsOp = fn(Arc<DirNode>, u64, &mut [u8]) -> VfsResult<usize>;
 
 /// The directory node in the Proc filesystem.
 ///
@@ -30,6 +31,7 @@ pub struct DirNode {
     gid: RwLock<u32>,
     mode: RwLock<i32>,
     lookup_op: Option<LookupOp>,
+    getdents_op: Option<GetDentsOp>,
     arg: String,
 }
 
@@ -37,7 +39,9 @@ impl DirNode {
     pub(super) fn new(
         parent: Option<Weak<dyn VfsNodeOps>>,
         uid: u32, gid: u32, mode: i32,
-        lookup_op: Option<LookupOp>, arg: &str
+        lookup_op: Option<LookupOp>,
+        getdents_op: Option<GetDentsOp>,
+        arg: &str
     ) -> Arc<Self> {
         Arc::new_cyclic(|this| Self {
             this: this.clone(),
@@ -48,8 +52,14 @@ impl DirNode {
             gid: RwLock::new(gid),
             mode: RwLock::new(mode),
             lookup_op,
+            getdents_op,
             arg: String::from(arg),
         })
+    }
+
+    #[inline]
+    pub fn get_arg(&self) -> String {
+        self.arg.clone()
     }
 
     pub(super) fn set_parent(&self, parent: Option<&VfsNodeRef>) {
@@ -79,7 +89,7 @@ impl DirNode {
         }
         let node: VfsNodeRef = match ty {
             VfsNodeType::File => Arc::new(FileNode::new(None, "", uid, gid, mode)),
-            VfsNodeType::Dir => Self::new(Some(self.this.clone()), uid, gid, mode, None, ""),
+            VfsNodeType::Dir => Self::new(Some(self.this.clone()), uid, gid, mode, None, None, ""),
             VfsNodeType::SymLink => Arc::new(SymLinkNode::new(uid, gid)),
             _ => return Err(VfsError::Unsupported),
         };
@@ -336,83 +346,11 @@ impl VfsNodeOps for DirNode {
     */
 
     fn getdents(&self, offset: u64, buf: &mut [u8]) -> VfsResult<usize> {
-        error!("/proc/[{}]/task/ ...", self.arg);
-
-        if offset != 0 {
-            log::error!("NOTICE! check offset[{}]!", offset);
-            return Ok(0);
+        if let Some(op) = self.getdents_op {
+            op(self.this.clone().upgrade().unwrap(), offset, buf)
+        } else {
+            unimplemented!("no getdents operation!");
         }
-
-        static mut INO_SEQ: u64 = 0;
-
-        let pid = self.arg.parse::<usize>()?;
-        let task = task::get_task(pid).ok_or(VfsError::NotFound)?;
-
-        let mut count = 0;
-        for sibling in task.sched_info.siblings.lock().iter() {
-            debug!("sibling [{}]", sibling);
-            let mut name: String = sibling.to_string();
-            name.push('\0');
-            let name_len = name.len();
-            info!("name:{:?} [{}] {}", name.as_bytes(), name_len, name.len());
-
-            let entry_size = mem::size_of::<LinuxDirent64>() + name_len;
-            info!("entry_size : {}", entry_size);
-
-            if count + entry_size > buf.len() {
-                error!("buf for dirents overflow!");
-                return Ok(count as usize);
-            }
-
-            let dirent: &mut LinuxDirent64 = unsafe {
-                mem::transmute(buf.as_mut_ptr().offset(count as isize))
-            };
-            dirent.d_ino = unsafe { INO_SEQ += 1; INO_SEQ };
-            dirent.d_off = (count + entry_size) as i64;
-            dirent.d_reclen = entry_size as u16;
-            dirent.d_type = DT_::DIR as u8;
-
-            unsafe {
-                copy_nonoverlapping(
-                    name.as_ptr(),
-                    dirent.d_name.as_mut_ptr(),
-                    name_len
-                )
-            };
-
-            count += entry_size;
-        }
-        Ok(count)
-
-        /*
-        let children = self.children.read();
-        let mut children = children.iter().skip((offset.max(2) - 2) as usize);
-
-        for i in offset.. {
-            let (mut name, ty) = match i + offset {
-                0 => (String::from("."), DT_::DIR as u8),
-                1 => (String::from(".."), DT_::DIR as u8),
-                _ => {
-                    if let Some((name, node)) = children.next() {
-                        let ty = match node.get_attr().unwrap().file_type() {
-                            VfsNodeType::File => DT_::REG as u8,
-                            VfsNodeType::Dir => DT_::DIR as u8,
-                            VfsNodeType::CharDevice => DT_::CHR as u8,
-                            VfsNodeType::BlockDevice => DT_::BLK as u8,
-                            VfsNodeType::Fifo => DT_::FIFO as u8,
-                            VfsNodeType::Socket => DT_::SOCK as u8,
-                            VfsNodeType::SymLink => DT_::LNK as u8,
-                        };
-                        (name.clone(), ty)
-                    } else {
-                        return Ok(count as usize);
-                    }
-                }
-            };
-
-        }
-        Ok(0)
-        */
     }
 
     axfs_vfs::impl_vfs_dir_default! {}

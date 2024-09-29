@@ -15,12 +15,17 @@ mod file;
 pub use self::dir::DirNode;
 pub use self::file::{FileNode, SymLinkNode};
 
+use core::mem;
+use core::ptr::copy_nonoverlapping;
 use core::cmp::min;
+use alloc::string::ToString;
 use alloc::format;
 use alloc::sync::Arc;
 use alloc::string::String;
 use axfs_vfs::{VfsNodeRef, VfsOps, VfsResult, FileSystemInfo};
 use axfs_vfs::{VfsError, VfsNodeType, VfsNodeOps};
+use axfs_vfs::DT_;
+use axfs_vfs::LinuxDirent64;
 use spin::once::Once;
 use axtype::PAGE_SIZE;
 use mm::{VM_READ, VM_WRITE, VM_EXEC, VM_MAYSHARE};
@@ -43,7 +48,7 @@ impl ProcFileSystem {
     pub fn new(uid: u32, gid: u32, mode: i32) -> Self {
         Self {
             parent: Once::new(),
-            root: DirNode::new(None, uid, gid, mode, Some(lookup_root), ""),
+            root: DirNode::new(None, uid, gid, mode, Some(lookup_root), None, ""),
         }
     }
 
@@ -109,10 +114,10 @@ pub fn init_procfs(uid: u32, gid: u32, mode: i32) -> VfsResult<Arc<ProcFileSyste
     let f_pagemap = FileNode::new(Some(read_pagemap), "", uid, gid, mode);
     d_self.link_child("pagemap", Arc::new(f_pagemap))?;
 
-    let d_fd = DirNode::new(Some(Arc::downgrade(&d_self)), uid, gid, mode, Some(lookup_self_fd), "self/fd");
+    let d_fd = DirNode::new(Some(Arc::downgrade(&d_self)), uid, gid, mode, Some(lookup_self_fd), None, "self/fd");
     d_self.link_child("fd", d_fd)?;
 
-    let d_fd_table = DirNode::new(Some(Arc::downgrade(&d_self)), uid, gid, mode, Some(lookup_fd_table), "");
+    let d_fd_table = DirNode::new(Some(Arc::downgrade(&d_self)), uid, gid, mode, Some(lookup_fd_table), None, "");
     d_self.link_child("_fd", d_fd_table)?;
 
     //
@@ -142,7 +147,7 @@ fn lookup_root(parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> Vfs
 
     if name.parse::<usize>().is_ok() {
         let parent = Arc::downgrade(&parent);
-        let node = DirNode::new(Some(parent), 0, 0, 0o600, Some(lookup_task), name);
+        let node = DirNode::new(Some(parent), 0, 0, 0o600, Some(lookup_task), None, name);
         return Ok(node);
     }
 
@@ -179,8 +184,58 @@ fn lookup_task(parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> Vfs
     }
     assert!(path.starts_with("task"));
     let parent = Arc::downgrade(&parent);
-    let node = DirNode::new(Some(parent), 0, 0, 0o600, Some(lookup_child), name);
+    let node = DirNode::new(Some(parent), 0, 0, 0o600, Some(lookup_child), Some(getdents_child), name);
     return Ok(node);
+}
+
+fn getdents_child(parent: Arc<DirNode>, offset: u64, buf: &mut [u8]) -> VfsResult<usize> {
+    error!("getdents {}", parent.get_arg());
+
+    if offset != 0 {
+        log::error!("NOTICE! check offset[{}]!", offset);
+        return Ok(0);
+    }
+
+    static mut INO_SEQ: u64 = 0;
+
+    let pid = parent.get_arg().parse::<usize>()?;
+    let task = task::get_task(pid).ok_or(VfsError::NotFound)?;
+
+    let mut count = 0;
+    for sibling in task.sched_info.siblings.lock().iter() {
+        debug!("sibling [{}]", sibling);
+        let mut name: String = sibling.to_string();
+        name.push('\0');
+        let name_len = name.len();
+        info!("name:{:?} [{}] {}", name.as_bytes(), name_len, name.len());
+
+        let entry_size = mem::size_of::<LinuxDirent64>() + name_len;
+        info!("entry_size : {}", entry_size);
+
+        if count + entry_size > buf.len() {
+            error!("buf for dirents overflow!");
+            return Ok(count as usize);
+        }
+
+        let dirent: &mut LinuxDirent64 = unsafe {
+            mem::transmute(buf.as_mut_ptr().offset(count as isize))
+        };
+        dirent.d_ino = unsafe { INO_SEQ += 1; INO_SEQ };
+        dirent.d_off = (count + entry_size) as i64;
+        dirent.d_reclen = entry_size as u16;
+        dirent.d_type = DT_::DIR as u8;
+
+        unsafe {
+            copy_nonoverlapping(
+                name.as_ptr(),
+                dirent.d_name.as_mut_ptr(),
+                name_len
+            )
+        };
+
+        count += entry_size;
+    }
+    Ok(count)
 }
 
 fn lookup_child(parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
@@ -188,7 +243,7 @@ fn lookup_child(parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> Vf
     let (child, rest) = split_path(path);
     error!("lookup_child: child {} rest {:?}", child, rest);
     let parent = Arc::downgrade(&parent);
-    let node = DirNode::new(Some(parent), 0, 0, 0o600, Some(lookup_thread), child);
+    let node = DirNode::new(Some(parent), 0, 0, 0o600, Some(lookup_thread), None, child);
     return Ok(node);
 }
 
