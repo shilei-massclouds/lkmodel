@@ -108,7 +108,7 @@ fn futex_cmd_has_timeout(cmd: usize) -> bool {
 fn futex_wait(
     uaddr: usize, _flags: usize, val: usize, timeout: Option<KTimeSpec>, bitset: u32
 ) -> usize {
-    error!("futex_wait uaddr {:#x} ...", uaddr);
+    info!("futex_wait uaddr {:#x} ...", uaddr);
     assert_eq!(bitset, FUTEX_BITSET_MATCH_ANY);
     if bitset == 0 {
         return linux_err!(EINVAL);

@@ -1,4 +1,7 @@
+use core::ptr::copy_nonoverlapping;
+use core::mem;
 use alloc::collections::BTreeMap;
+use alloc::string::ToString;
 use alloc::sync::{Arc, Weak};
 use alloc::{string::String, vec::Vec};
 use alloc::borrow::ToOwned;
@@ -8,10 +11,12 @@ use axfs_vfs::{VfsNodeAttr, VfsNodeOps, VfsNodeRef, VfsNodeType};
 use axfs_vfs::{VfsError, VfsResult};
 use spin::RwLock;
 use axtype::split_path;
+use axfs_vfs::DT_;
+use axfs_vfs::LinuxDirent64;
 
 use crate::file::{FileNode, SymLinkNode};
 
-pub type LookupOp = fn(Arc<DirNode>, &str, i32) -> VfsResult<VfsNodeRef>;
+pub type LookupOp = fn(Arc<DirNode>, &str, &str, i32) -> VfsResult<VfsNodeRef>;
 
 /// The directory node in the Proc filesystem.
 ///
@@ -25,11 +30,14 @@ pub struct DirNode {
     gid: RwLock<u32>,
     mode: RwLock<i32>,
     lookup_op: Option<LookupOp>,
+    arg: String,
 }
 
 impl DirNode {
     pub(super) fn new(
-        parent: Option<Weak<dyn VfsNodeOps>>, uid: u32, gid: u32, mode: i32, lookup_op: Option<LookupOp>,
+        parent: Option<Weak<dyn VfsNodeOps>>,
+        uid: u32, gid: u32, mode: i32,
+        lookup_op: Option<LookupOp>, arg: &str
     ) -> Arc<Self> {
         Arc::new_cyclic(|this| Self {
             this: this.clone(),
@@ -40,6 +48,7 @@ impl DirNode {
             gid: RwLock::new(gid),
             mode: RwLock::new(mode),
             lookup_op,
+            arg: String::from(arg),
         })
     }
 
@@ -70,7 +79,7 @@ impl DirNode {
         }
         let node: VfsNodeRef = match ty {
             VfsNodeType::File => Arc::new(FileNode::new(None, "", uid, gid, mode)),
-            VfsNodeType::Dir => Self::new(Some(self.this.clone()), uid, gid, mode, None),
+            VfsNodeType::Dir => Self::new(Some(self.this.clone()), uid, gid, mode, None, ""),
             VfsNodeType::SymLink => Arc::new(SymLinkNode::new(uid, gid)),
             _ => return Err(VfsError::Unsupported),
         };
@@ -198,27 +207,23 @@ impl VfsNodeOps for DirNode {
     fn lookup(self: Arc<Self>, path: &str, flags: i32) -> VfsResult<(VfsNodeRef, String)> {
         info!("lookup: {} flags {:#o}\n", path, flags);
 
-        let (name, rest) = split_path(path);
-        let mut name = String::from(name);
+        let mut path = String::from(path);
         loop {
-            let node = match name.as_str() {
+            error!("begin: path {}", path);
+            let (name, rest) = split_path(&path);
+            let node = match name {
                 "" | "." => Ok(self.clone() as VfsNodeRef),
                 ".." => self.parent().ok_or(VfsError::NotFound),
                 _ => {
-                    /*
-                    self
-                    .children
-                    .read()
-                    .get(name.as_str())
-                    .cloned()
-                    .ok_or(VfsError::NotFound),
-                    */
-                    match self.children.read().get(name.as_str()).cloned() {
+                    match self.children.read().get(name).cloned() {
                         Some(n) => Ok(n),
                         None => {
                             if let Some(lookup_op) = self.lookup_op {
-                                let node = lookup_op(self.clone(), path, flags)?;
-                                return Ok((node, String::new()));
+                                let n = lookup_op(self.clone(), &self.arg, &path, flags)?;
+                                if n.get_attr()?.is_symlink() {
+                                    return Ok((n, String::new()));
+                                }
+                                Ok(n)
                             } else {
                                 Err(VfsError::NotFound)
                             }
@@ -226,9 +231,14 @@ impl VfsNodeOps for DirNode {
                     }
                 }
             }?;
-            debug!("name {} rest {:?} {} flags {:#o}", name, rest, node.get_attr()?.is_symlink(), flags);
+            error!("name {} rest {:?} {} flags {:#o}", name, rest, node.get_attr()?.is_symlink(), flags);
             if let Some(linkname) = self.handle_symlink(node.clone(), flags, rest.is_none()) {
-                name = linkname;
+                error!("linkname: {}", linkname);
+                if linkname.starts_with("/") {
+                    info!("root path: {}", linkname);
+                    return Ok((node, linkname));
+                }
+                path = linkname;
                 continue;
             }
 
@@ -323,19 +333,61 @@ impl VfsNodeOps for DirNode {
             self.remove_node(name)
         }
     }
+    */
 
     fn getdents(&self, offset: u64, buf: &mut [u8]) -> VfsResult<usize> {
+        error!("/proc/[{}]/task/ ...", self.arg);
+
         if offset != 0 {
-            log::error!("NOTICE! todo: check offset[{}] and real length of directory!", offset);
+            log::error!("NOTICE! check offset[{}]!", offset);
             return Ok(0);
         }
 
         static mut INO_SEQ: u64 = 0;
 
+        let pid = self.arg.parse::<usize>()?;
+        let task = task::get_task(pid).ok_or(VfsError::NotFound)?;
+
+        let mut count = 0;
+        for sibling in task.sched_info.siblings.lock().iter() {
+            debug!("sibling [{}]", sibling);
+            let mut name: String = sibling.to_string();
+            name.push('\0');
+            let name_len = name.len();
+            info!("name:{:?} [{}] {}", name.as_bytes(), name_len, name.len());
+
+            let entry_size = mem::size_of::<LinuxDirent64>() + name_len;
+            info!("entry_size : {}", entry_size);
+
+            if count + entry_size > buf.len() {
+                error!("buf for dirents overflow!");
+                return Ok(count as usize);
+            }
+
+            let dirent: &mut LinuxDirent64 = unsafe {
+                mem::transmute(buf.as_mut_ptr().offset(count as isize))
+            };
+            dirent.d_ino = unsafe { INO_SEQ += 1; INO_SEQ };
+            dirent.d_off = (count + entry_size) as i64;
+            dirent.d_reclen = entry_size as u16;
+            dirent.d_type = DT_::DIR as u8;
+
+            unsafe {
+                copy_nonoverlapping(
+                    name.as_ptr(),
+                    dirent.d_name.as_mut_ptr(),
+                    name_len
+                )
+            };
+
+            count += entry_size;
+        }
+        Ok(count)
+
+        /*
         let children = self.children.read();
         let mut children = children.iter().skip((offset.max(2) - 2) as usize);
 
-        let mut count = 0;
         for i in offset.. {
             let (mut name, ty) = match i + offset {
                 0 => (String::from("."), DT_::DIR as u8),
@@ -357,39 +409,11 @@ impl VfsNodeOps for DirNode {
                     }
                 }
             };
-            name.push('\0');
-            let name_len = name.len();
-            log::info!("[{}] name:{:?} [{}] {}", i, name.as_bytes(), name_len, name.len());
 
-            let entry_size = mem::size_of::<LinuxDirent64>() + name_len;
-            log::info!("entry_size : {}", entry_size);
-
-            if count + entry_size > buf.len() {
-                log::error!("buf for dirents overflow!");
-                return Ok(count as usize);
-            }
-
-            let dirent: &mut LinuxDirent64 = unsafe {
-                transmute(buf.as_mut_ptr().offset(count as isize))
-            };
-            dirent.d_ino = unsafe { INO_SEQ += 1; INO_SEQ };
-            dirent.d_off = (count + entry_size) as i64;
-            dirent.d_reclen = entry_size as u16;
-            dirent.d_type = ty;
-
-            unsafe {
-                copy_nonoverlapping(
-                    name.as_ptr(),
-                    dirent.d_name.as_mut_ptr(),
-                    name_len
-                )
-            };
-
-            count += entry_size;
         }
         Ok(0)
+        */
     }
-    */
 
     axfs_vfs::impl_vfs_dir_default! {}
 }

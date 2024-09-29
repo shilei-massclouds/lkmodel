@@ -43,7 +43,7 @@ impl ProcFileSystem {
     pub fn new(uid: u32, gid: u32, mode: i32) -> Self {
         Self {
             parent: Once::new(),
-            root: DirNode::new(None, uid, gid, mode, Some(lookup_pid)),
+            root: DirNode::new(None, uid, gid, mode, Some(lookup_root), ""),
         }
     }
 
@@ -109,10 +109,10 @@ pub fn init_procfs(uid: u32, gid: u32, mode: i32) -> VfsResult<Arc<ProcFileSyste
     let f_pagemap = FileNode::new(Some(read_pagemap), "", uid, gid, mode);
     d_self.link_child("pagemap", Arc::new(f_pagemap))?;
 
-    let d_fd = DirNode::new(Some(Arc::downgrade(&d_self)), uid, gid, mode, Some(lookup_fd_link));
+    let d_fd = DirNode::new(Some(Arc::downgrade(&d_self)), uid, gid, mode, Some(lookup_self_fd), "self/fd");
     d_self.link_child("fd", d_fd)?;
 
-    let d_fd_table = DirNode::new(Some(Arc::downgrade(&d_self)), uid, gid, mode, Some(lookup_fd_table));
+    let d_fd_table = DirNode::new(Some(Arc::downgrade(&d_self)), uid, gid, mode, Some(lookup_fd_table), "");
     d_self.link_child("_fd", d_fd_table)?;
 
     //
@@ -128,9 +128,9 @@ pub fn init_procfs(uid: u32, gid: u32, mode: i32) -> VfsResult<Arc<ProcFileSyste
     Ok(Arc::new(fs))
 }
 
-fn lookup_pid(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+fn lookup_root(parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
     let (name, rest) = split_path(path);
-    info!("path {} name {} rest {:?}", path, name, rest);
+    error!("lookup_root: path {} name {} rest {:?}", path, name, rest);
     if let Some(node) = parent.children.read().get(name).cloned() {
         return Ok(node);
     }
@@ -141,20 +141,25 @@ fn lookup_pid(parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNod
     }
 
     if name.parse::<usize>().is_ok() {
-        return Ok(Arc::new(FileNode::new(Some(read_task), path, 0, 0, 0o600)));
+        let parent = Arc::downgrade(&parent);
+        let node = DirNode::new(Some(parent), 0, 0, 0o600, Some(lookup_task), name);
+        return Ok(node);
     }
 
     panic!("path: {}; name {}; ?digit {:?}", path, name, name.parse::<usize>());
 }
 
-fn lookup_fd_link(_parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+fn lookup_self_fd(_parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+    assert_eq!(name, "self/fd");
+    error!("lookup_self_fd: name {} path {}", name, path);
     let node = SymLinkNode::new(0, 0);
     let linkto = format!("/proc/self/_fd/{}", path);
     node.write_at(0, linkto.as_bytes())?;
     Ok(Arc::new(node))
 }
 
-fn lookup_fd_table(_parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+fn lookup_fd_table(_parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+    error!("lookup_fd_table: name {} path {}", name, path);
     let fd = path.parse::<usize>().map_err(|_| {
         NotConnected
     })?;
@@ -163,16 +168,44 @@ fn lookup_fd_table(_parent: Arc<DirNode>, path: &str, _flags: i32) -> VfsResult<
     let file = current.filetable.lock().get_file(fd)
         .ok_or(NotConnected)?;
     let node = file.lock().get_node()?;
+    info!("lookup_fd_table: fd {}", fd);
     Ok(node)
 }
 
-fn read_task(_offset: usize, buf: &mut [u8], arg: &str) -> VfsResult<usize> {
-    let (name, rest) = split_path(arg);
-    assert_eq!(rest.unwrap(), "stat");
+fn lookup_task(parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+    error!("lookup_task: name {} path {}", name, path);
+    if path == "stat" {
+        return lookup_thread(parent, name, path, _flags);
+    }
+    assert!(path.starts_with("task"));
+    let parent = Arc::downgrade(&parent);
+    let node = DirNode::new(Some(parent), 0, 0, 0o600, Some(lookup_child), name);
+    return Ok(node);
+}
 
-    let pid = name.parse::<usize>()?;
+fn lookup_child(parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+    error!("lookup_child: name {} path {}", name, path);
+    let (child, rest) = split_path(path);
+    error!("lookup_child: child {} rest {:?}", child, rest);
+    let parent = Arc::downgrade(&parent);
+    let node = DirNode::new(Some(parent), 0, 0, 0o600, Some(lookup_thread), child);
+    return Ok(node);
+}
+
+fn lookup_thread(parent: Arc<DirNode>, name: &str, path: &str, _flags: i32) -> VfsResult<VfsNodeRef> {
+    error!("lookup_thread: name {} path {}", name, path);
+    let node = match path {
+        "stat" => FileNode::new(Some(read_stat), name, 0, 0, 0o600),
+        _ => panic!("bad subpath {}", path),
+    };
+    return Ok(Arc::new(node));
+}
+
+fn read_stat(_offset: usize, buf: &mut [u8], arg: &str) -> VfsResult<usize> {
+    error!("read_stat: arg {}", arg);
+    let pid = arg.parse::<usize>()?;
     let task = task::get_task(pid).ok_or(NotFound)?;
-    debug!("read_task: pid {} {}", pid, task.linux_state());
+    error!("read_task: pid {} {}", pid, task.linux_state());
     let src = format!("{} (unknown) {}", pid, task.linux_state());
     buf[..src.len()].copy_from_slice(src.as_bytes());
     Ok(buf.len())
