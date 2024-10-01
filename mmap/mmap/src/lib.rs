@@ -220,6 +220,7 @@ pub fn _mmap(
     }
 
     let mm = task::current().mm();
+    let mut locked_mm = mm.lock();
     if let Some(mut overlap) = cut_overlap(va, len) {
         debug!("find overlap {:#X}-{:#X}", overlap.vm_start, overlap.vm_end);
         assert!(
@@ -240,11 +241,11 @@ pub fn _mmap(
             let mut new = overlap.clone();
             new.vm_start = va + len;
             new.vm_pgoff += bias;
-            mm.lock().vmas.insert(va + len, new);
+            locked_mm.vmas.insert(va + len, new);
         }
         if va > overlap.vm_start {
             overlap.vm_end = va;
-            mm.lock().vmas.insert(overlap.vm_start, overlap);
+            locked_mm.vmas.insert(overlap.vm_start, overlap);
         }
     }
 
@@ -262,10 +263,10 @@ pub fn _mmap(
         prot
     );
     let vma = VmAreaStruct::new(va, va + len, offset >> PAGE_SHIFT, file, vm_flags);
-    mm.lock().vmas.insert(va, vma);
+    locked_mm.vmas.insert(va, vma);
 
     if (flags & MAP_LOCKED) != 0 {
-        mm.lock().locked_vm = len >> PAGE_SHIFT;
+        locked_mm.locked_vm = len >> PAGE_SHIFT;
     }
 
     Ok(va)
@@ -681,6 +682,8 @@ pub fn munmap(va: usize, mut len: usize) -> usize {
 
     info!("munmap {:#x} - {:#x}", va, va + len);
 
+    let mm = task::current().mm();
+    let mut locked_mm = mm.lock();
     while let Some(mut overlap) = cut_overlap(va, len) {
         debug!("find overlap {:#X}-{:#X}", overlap.vm_start, overlap.vm_end);
         if va <= overlap.vm_start && overlap.vm_end <= va + len {
@@ -703,17 +706,14 @@ pub fn munmap(va: usize, mut len: usize) -> usize {
             let mut new = overlap.clone();
             new.vm_start = va + len;
             new.vm_pgoff += bias;
-            let mm = task::current().mm();
-            mm.lock().vmas.insert(va + len, new);
+            locked_mm.vmas.insert(va + len, new);
         }
         if va > overlap.vm_start {
             overlap.vm_end = va;
-            let mm = task::current().mm();
-            mm.lock().vmas.insert(overlap.vm_start, overlap);
+            locked_mm.vmas.insert(overlap.vm_start, overlap);
         }
         let _ = remove_region(va, len);
     }
-
     0
 }
 

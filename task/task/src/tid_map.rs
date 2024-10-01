@@ -17,3 +17,7 @@ pub fn register_task(task: TaskRef) {
 pub fn unregister_task(tid: Tid) {
     TID_MAP.lock().remove(&tid);
 }
+
+pub fn get_tid_map() -> &'static SpinLock<BTreeMap<Tid, TaskRef>> {
+    &TID_MAP
+}

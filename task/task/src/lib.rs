@@ -27,7 +27,7 @@ use wait_queue::{WaitQueue, FUTEX_BITSET_MATCH_ANY};
 use preempt_guard::NoPreempt;
 use axconfig::TASK_STACK_SIZE;
 
-pub use crate::tid_map::{register_task, unregister_task, get_task};
+pub use crate::tid_map::{register_task, unregister_task, get_task, get_tid_map};
 pub use taskctx::Tid;
 pub use taskctx::current_ctx;
 pub use taskctx::{TaskStack, THREAD_SIZE};
@@ -57,7 +57,7 @@ pub struct SigInfo {
     pub signo: i32,
     pub errno: i32,
     pub code: i32,
-    pub tid: Tid,
+    //pub tid: Tid,
 }
 
 /// signal action flags

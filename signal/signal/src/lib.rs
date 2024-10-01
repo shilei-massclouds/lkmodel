@@ -70,30 +70,47 @@ struct KSignal {
 //#define SI_FROMUSER(siptr)  ((siptr)->si_code <= 0)
 //#define SI_FROMKERNEL(siptr)    ((siptr)->si_code > 0)
 
-pub fn kill(tid: Tid, sig: usize) -> usize {
-    debug!("kill tid {} sig {}", tid, sig);
-    assert!(tid > 0);
-    let info = prepare_kill_siginfo(sig, tid);
+pub fn kill(tid: isize, sig: usize) -> usize {
+    info!("kill tid {} sig {}", tid, sig);
+    let info = prepare_kill_siginfo(sig);
     kill_proc_info(sig, info, tid).unwrap();
     0
 }
 
-pub fn prepare_kill_siginfo(sig: usize, tid: Tid) -> SigInfo {
+pub fn prepare_kill_siginfo(sig: usize) -> SigInfo {
     SigInfo {
         signo: sig as i32,
         errno: 0,
         code: SI_USER as i32,
-        tid: tid,
     }
 }
 
-fn kill_proc_info(sig: usize, info: SigInfo, tid: Tid) -> LinuxResult {
-    assert!(tid > 0);
-    if sig != 0 {
-        do_send_sig_info(sig, info, tid)
-    } else {
-        Ok(())
+fn kill_proc_info(sig: usize, info: SigInfo, tid: isize) -> LinuxResult {
+    error!("kill_proc_info: tid {} sig {}", tid, sig);
+    if tid > 0 {
+        if sig != 0 {
+            return do_send_sig_info(sig, info, tid as usize);
+        } else {
+            return Ok(());
+        }
     }
+
+    if tid == 0 {
+        panic!("tid == 0");
+    }
+    if tid == -1 {
+        panic!("tid == -1");
+    }
+
+    assert!(tid < -1);
+    let tid = -tid as usize;
+    let tid_map = task::get_tid_map().lock();
+    for (_, t) in tid_map.iter() {
+        if tid == t.tgid() {
+            panic!("tgid: {}", t.tgid());
+        }
+    }
+    Ok(())
 }
 
 fn do_send_sig_info(sig: usize, info: SigInfo, tid: Tid) -> LinuxResult {
@@ -237,13 +254,12 @@ fn setup_sigcontext(frame: &mut RTSigFrame, tf: &TrapFrame) {
     // Todo: Save the floating-point state.
 }
 
-pub fn force_sig_fault(tid: usize, signo: usize, code: usize, _addr: usize) {
-    //let tid = taskctx::current_ctx().tid();
+pub fn force_sig_fault(tid: Tid, signo: usize, code: usize, _addr: usize) {
     let info = SigInfo {
         signo: signo as i32,
         errno: 0,
         code: code as i32,
-        tid: tid,
+        //tid: tid,
     };
 
     debug!("force tid {} sig {}", tid, signo);

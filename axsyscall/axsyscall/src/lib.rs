@@ -555,7 +555,7 @@ fn linux_syscall_tgkill(_args: SyscallArgs) -> usize {
 
 fn linux_syscall_kill(args: SyscallArgs) -> usize {
     let [pid, sig, ..] = args;
-    signal::kill(pid, sig)
+    signal::kill(pid as isize, sig)
 }
 
 #[cfg(target_arch = "x86_64")]
