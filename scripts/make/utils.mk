@@ -33,8 +33,10 @@ define riscv64_install_apps
   @mkdir -p ./mnt
   @sudo mount $(1) ./mnt
 
-  @sudo cp -rf ../busybox/output_riscv64/* ./mnt/
+  -@sudo cp -rf ../busybox/output_riscv64/* ./mnt/
 
+  @sudo mkdir -p ./mnt/bin
+  @sudo mkdir -p ./mnt/sbin
   @sudo mkdir -p ./mnt/lib
   @sudo mkdir -p ./mnt/tmp
   @sudo mkdir -p ./mnt/proc
@@ -50,7 +52,7 @@ define riscv64_install_apps
   @sudo cp ../dash/src/dash ./mnt/btp/sbin/
 
   @sudo rm -f ./mnt/bin/sh
-  @sudo cp ../dash/src/dash ./mnt/bin/sh
+  -@sudo cp ../dash/src/dash ./mnt/bin/sh
 
   @sudo rm -f ./mnt/sbin/init
   @sudo cp ./mnt/btp/sbin/init ./mnt/sbin/init
@@ -67,7 +69,7 @@ define riscv64_install_apps
   -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/write[[:digit:]]* ./mnt/testcases/
   -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/close[[:digit:]]* ./mnt/testcases/
 
-  @sudo ln -s busybox ./mnt/bin/mkfs.ext2
+  -@sudo ln -s busybox ./mnt/bin/mkfs.ext2
   ls -l ./mnt/sbin
   ls -l ./mnt/bin
   ls -l ./mnt/testcases
