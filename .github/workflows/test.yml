@@ -22,8 +22,7 @@ jobs:
           wget https://github.com/rust-embedded/cargo-binutils/releases/download/v0.3.6/x86_64-unknown-linux-gnu.tar.gz
           tar xzvf x86_64-unknown-linux-gnu.tar.gz
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
-          sudo apt-get install qemu-system
-          sudo apt install -y gcc-riscv64-linux-gnu
+          sudo apt install -y qemu-system gcc-riscv64-linux-gnu
 
       - name: Test
         run: |
