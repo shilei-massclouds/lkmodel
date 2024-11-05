@@ -1,0 +1,22 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test
+        run: |
+          ./test_all.sh | tee stdout.txt
+
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          cat stdout.txt | awk "/Summary for tests/,/END/" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
