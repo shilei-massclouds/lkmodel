@@ -74,5 +74,5 @@ printf "  Total : ${TOTAL}\n"
 printf "================\n"
 
 if [ -n "${FAILURES}" ]; then
-    printf "\nFailed tests:${FAILURES}\n"
+    printf "\nFailed tests:${FAILURES}\n" && false
 fi
