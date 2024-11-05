@@ -23,7 +23,13 @@ Install qemu:
 
 ```sh
 # for Debian/Ubuntu
-sudo apt-get install qemu-system
+sudo apt install qemu-system
+```
+
+Install gcc-riscv64-linux-gnu:
+
+```sh
+sudo apt install gcc-riscv64-linux-gnu
 ```
 
 Install ltp - Linux Test Project (a forked version with minor fixes).
