@@ -23,6 +23,7 @@ jobs:
           tar xzvf x86_64-unknown-linux-gnu.tar.gz
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
           sudo apt-get install qemu-system
+          sudo apt install -y gcc-riscv64-linux-gnu
 
       - name: Test
         run: |
