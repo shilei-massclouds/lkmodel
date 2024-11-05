@@ -17,6 +17,12 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Install precompiled binaries
+        run: |
+          wget https://github.com/rust-embedded/cargo-binutils/releases/download/v0.3.6/x86_64-unknown-linux-gnu.tar.gz
+          mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
+          sudo apt-get install qemu-system
+
       - name: Test
         run: |
           ./test_all.sh | tee stdout.txt
