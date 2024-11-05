@@ -49,7 +49,7 @@ define riscv64_install_apps
   @sudo cp -r ./btp/build/riscv64/sbin/ ./mnt/btp/
   @sudo cp ./btp/syscalls ./mnt/opt/
   @sudo cp ./btp/btp_tests ./mnt/opt/
-  @sudo cp ../dash/src/dash ./mnt/btp/sbin/
+  -@sudo cp ../dash/src/dash ./mnt/btp/sbin/
 
   @sudo rm -f ./mnt/bin/sh
   -@sudo cp ../dash/src/dash ./mnt/bin/sh
