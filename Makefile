@@ -33,7 +33,7 @@ LOG ?= error
 V ?=
 
 # App options
-A ?= macrokernel/rt_macrokernel
+A ?= aster_boot/rt_aster_boot
 APP ?= $(A)
 FEATURES ?=
 APP_FEATURES ?=
@@ -147,7 +147,12 @@ GDB ?= gdb-multiarch
 OUT_DIR ?= $(APP)
 
 APP_NAME := $(shell basename $(APP))
-LD_SCRIPT := $(CURDIR)/target/$(TARGET)/$(MODE)/linker_$(PLATFORM_NAME).lds
+ASTER_BOOT := $(shell grep "^aster_boot" $(APP)/Cargo.toml)
+ifeq ($(ASTER_BOOT),)
+  LD_SCRIPT := $(CURDIR)/target/$(TARGET)/$(MODE)/linker_$(PLATFORM_NAME).lds
+else
+  LD_SCRIPT := $(CURDIR)/aster_boot/aster_boot/src/arch/riscv/riscv64.ld
+endif
 OUT_ELF := $(OUT_DIR)/$(APP_NAME)_$(PLATFORM_NAME).elf
 OUT_BIN := $(OUT_DIR)/$(APP_NAME)_$(PLATFORM_NAME).bin
 

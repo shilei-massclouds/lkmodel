@@ -27,7 +27,12 @@ members = [
     "axfs_ramfs/rt_ramfs",
     "axdtb/rt_axdtb",
     "macrokernel/rt_macrokernel",
+
+    "aster_boot/rt_aster_boot",
 ]
+
+[workspace.dependencies]
+aster_boot = { path = "aster_boot/aster_boot" }
 
 [profile.release]
 lto = true
