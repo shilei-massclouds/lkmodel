@@ -7,10 +7,8 @@
 //use alloc::{string::String, vec::Vec};
 use core::arch::global_asm;
 
-/*
 use fdt::Fdt;
 use spin::Once;
-*/
 
 use crate::{
     /*
@@ -21,15 +19,15 @@ use crate::{
     },
     */
     early_println,
-    //mm::paddr_to_vaddr,
+    kspace::paddr_to_vaddr,
 };
 
 global_asm!(include_str!("boot.S"));
 
-/*
 /// The Flattened Device Tree of the platform.
 pub static DEVICE_TREE: Once<Fdt> = Once::new();
 
+/*
 fn init_bootloader_name(bootloader_name: &'static Once<String>) {
     bootloader_name.call_once(|| "Unknown".into());
 }
@@ -110,11 +108,13 @@ fn parse_initramfs_range() -> Option<(usize, usize)> {
 pub extern "C" fn riscv_boot(_hart_id: usize, device_tree_paddr: usize) -> ! {
     early_println!("Enter riscv_boot");
 
-    /*
     let device_tree_ptr = paddr_to_vaddr(device_tree_paddr) as *const u8;
+    /*
     let fdt = unsafe { fdt::Fdt::from_ptr(device_tree_ptr).unwrap() };
     DEVICE_TREE.call_once(|| fdt);
+    */
 
+    /*
     crate::boot::register_boot_init_callbacks(
         init_bootloader_name,
         init_kernel_commandline,

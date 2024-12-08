@@ -8,6 +8,7 @@
 pub mod arch;
 pub mod boot;
 pub mod console;
+pub mod kspace;
 pub mod panic;
 
 pub use panic::__ostd_panic_handler as panic_handler;
@@ -48,7 +49,6 @@ pub mod cpu;
 mod error;
 pub mod io_mem;
 pub mod logger;
-pub mod mm;
 pub mod panic;
 pub mod prelude;
 pub mod smp;

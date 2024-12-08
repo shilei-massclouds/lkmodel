@@ -10,7 +10,8 @@ pub use unwinding::panic::{begin_panic, catch_unwind};
 
 use crate::{
     arch::qemu::{exit_qemu, QemuExitCode},
-    early_print, early_println,
+    //early_print,
+    early_println,
     //sync::SpinLock,
 };
 

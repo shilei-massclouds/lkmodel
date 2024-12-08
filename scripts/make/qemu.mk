@@ -1,6 +1,6 @@
 # QEMU arguments
 
-QEMU := qemu-system-$(ARCH)
+QEMU := /usr/bin/qemu-system-$(ARCH)
 
 ifeq ($(BUS), mmio)
   vdev-suffix := device

@@ -5,6 +5,7 @@
 pub mod boot;
 pub mod qemu;
 pub mod serial;
+pub mod kspace;
 
 /*
 pub mod boot;

@@ -35,5 +35,6 @@ pub(crate) fn init() {}
 
 /// Sends a byte on the serial port.
 pub fn send(data: u8) {
-    sbi_rt::console_write_byte(data);
+    #[allow(deprecated)]
+    sbi_rt::legacy::console_putchar(data as usize);
 }
