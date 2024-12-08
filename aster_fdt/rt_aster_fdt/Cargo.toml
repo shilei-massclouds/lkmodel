@@ -8,4 +8,4 @@ edition = "2021"
 [dependencies]
 spin = "0.9.4"
 aster_boot = { workspace = true }
-fdt = { workspace = true }
+aster_fdt = { workspace = true }

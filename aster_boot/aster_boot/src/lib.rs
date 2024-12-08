@@ -12,6 +12,7 @@ pub mod kspace;
 pub mod panic;
 
 pub use panic::__ostd_panic_handler as panic_handler;
+pub use panic::terminate;
 
 /*
 //! The standard library for Asterinas and other Rust OSes.

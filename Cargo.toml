@@ -34,6 +34,7 @@ members = [
 
 [workspace.dependencies]
 aster_boot = { path = "aster_boot/aster_boot" }
+aster_fdt = { path = "aster_fdt/aster_fdt" }
 fdt = { version = "0.1.5", features = ["pretty-printing"] }
 
 [profile.release]

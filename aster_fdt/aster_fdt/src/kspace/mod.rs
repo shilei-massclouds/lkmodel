@@ -109,7 +109,6 @@ use crate::{
 pub const KERNEL_BASE_VADDR: Vaddr = 0xffff_8000_0000_0000 << ADDR_WIDTH_SHIFT;
 /// End of the kernel address space (non inclusive).
 pub const KERNEL_END_VADDR: Vaddr = 0xffff_ffff_ffff_0000 << ADDR_WIDTH_SHIFT;
-*/
 
 /// The kernel code is linear mapped to this address.
 ///
@@ -119,6 +118,7 @@ pub const KERNEL_END_VADDR: Vaddr = 0xffff_ffff_ffff_0000 << ADDR_WIDTH_SHIFT;
 pub fn kernel_loaded_offset() -> usize {
     KERNEL_CODE_BASE_VADDR
 }
+*/
 
 #[cfg(target_arch = "x86_64")]
 const KERNEL_CODE_BASE_VADDR: usize = 0xffff_ffff_8000_0000 << ADDR_WIDTH_SHIFT;
