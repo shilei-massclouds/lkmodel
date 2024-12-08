@@ -33,7 +33,7 @@ LOG ?= error
 V ?=
 
 # App options
-A ?= aster_boot/rt_aster_boot
+A ?= aster_fdt/rt_aster_fdt
 APP ?= $(A)
 FEATURES ?=
 APP_FEATURES ?=
