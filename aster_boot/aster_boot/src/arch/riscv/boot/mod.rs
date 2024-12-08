@@ -105,14 +105,12 @@ fn parse_initramfs_range() -> Option<(usize, usize)> {
 
 /// The entry point of the Rust code portion of Asterinas.
 #[no_mangle]
-pub extern "C" fn riscv_boot(_hart_id: usize, device_tree_paddr: usize) -> ! {
+pub extern "C" fn main(_hart_id: usize, device_tree_paddr: usize) -> ! {
     early_println!("Enter riscv_boot");
 
     let device_tree_ptr = paddr_to_vaddr(device_tree_paddr) as *const u8;
-    /*
     let fdt = unsafe { fdt::Fdt::from_ptr(device_tree_ptr).unwrap() };
     DEVICE_TREE.call_once(|| fdt);
-    */
 
     /*
     crate::boot::register_boot_init_callbacks(
@@ -123,8 +121,8 @@ pub extern "C" fn riscv_boot(_hart_id: usize, device_tree_paddr: usize) -> ! {
         init_framebuffer_info,
         init_memory_regions,
     );
-
-    crate::boot::call_ostd_main();
     */
+
+    //crate::boot::call_ostd_main();
     panic!();
 }

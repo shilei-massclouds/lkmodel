@@ -28,8 +28,8 @@ _start:
     # 2. set sp (BSP only)
     lga    sp, boot_stack_top
 
-    # 3. jump to rust riscv_boot
-    lga    t0, riscv_boot
+    # 3. jump to rust main
+    lga    t0, main
     jr     t0
 
 
