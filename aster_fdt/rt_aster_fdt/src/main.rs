@@ -6,7 +6,6 @@ extern crate alloc;
 mod lang_item;
 
 use spin::Once;
-use alloc::string::String;
 
 use aster_boot::{
     early_println,
