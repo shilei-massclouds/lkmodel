@@ -33,7 +33,7 @@ LOG ?= error
 V ?=
 
 # App options
-A ?= aster_early_init/rt_aster_early_init
+A ?= aster_final_init/rt_aster_final_init
 APP ?= $(A)
 FEATURES ?=
 APP_FEATURES ?=
