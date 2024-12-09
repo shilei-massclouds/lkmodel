@@ -29,6 +29,8 @@ pub extern "C" fn main(hart_id: usize, device_tree_paddr: usize) -> ! {
     let memory_regions = aster_final_init::boot::memory_regions();
     early_println!("memory_regions: {:?}", memory_regions);
 
+    log::info!("test logging!");
+
     //crate::boot::call_ostd_main();
     early_println!("[{}]: ok!", package);
     aster_boot::terminate()

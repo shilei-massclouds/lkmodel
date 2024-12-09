@@ -19,11 +19,13 @@ extern crate alloc;
 pub mod boot;
 pub mod cpu;
 pub mod error;
+pub mod logger;
 pub mod mm;
 pub mod prelude;
 pub mod kcmdline;
 pub mod sync;
 pub mod task;
+pub mod timer;
 pub mod trap;
 pub mod memory_region;
 mod arch;
@@ -55,4 +57,5 @@ pub fn init(hart_id: usize, device_tree_paddr: usize) {
     unsafe { mm::heap_allocator::init() };
 
     boot::init();
+    logger::init();
 }

@@ -5,6 +5,7 @@
 pub(crate) mod cpu;
 pub mod serial;
 pub mod irq;
+pub mod timer;
 //pub mod smp;
 
 use alloc::{string::String, vec::Vec};

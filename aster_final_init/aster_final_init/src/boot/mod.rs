@@ -9,10 +9,10 @@
 //!  2. the routine booting into the actual kernel;
 //!  3. the routine booting the other processors in the SMP context.
 
-pub mod kcmdline;
 pub mod memory_region;
 pub mod smp;
 */
+//pub mod kcmdline;
 
 use alloc::{string::String, vec::Vec};
 
