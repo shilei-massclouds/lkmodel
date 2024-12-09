@@ -27,6 +27,7 @@ impl PagingConstsTrait for PagingConsts {
     const ADDRESS_WIDTH: usize = 48;
     const HIGHEST_TRANSLATION_LEVEL: PagingLevel = 4;
     //const PTE_SIZE: usize = core::mem::size_of::<PageTableEntry>();
+    const PTE_SIZE: usize = 8;
 }
 
 /*

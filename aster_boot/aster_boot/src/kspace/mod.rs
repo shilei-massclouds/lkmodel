@@ -58,7 +58,7 @@ pub type PagingLevel = u8;
 
 /// A minimal set of constants that determines the paging system.
 /// This provides an abstraction over most paging modes in common architectures.
-pub(crate) trait PagingConstsTrait: Clone + Debug + Default + Sync + 'static {
+pub trait PagingConstsTrait: Clone + Debug + Default + Sync + 'static {
     /// The smallest page size.
     /// This is also the page size at level 1 page tables.
     const BASE_PAGE_SIZE: usize;
@@ -73,6 +73,9 @@ pub(crate) trait PagingConstsTrait: Clone + Debug + Default + Sync + 'static {
     /// The highest level that a PTE can be directly used to translate a VA.
     /// This affects the the largest page size supported by the page table.
     const HIGHEST_TRANSLATION_LEVEL: PagingLevel;
+
+    /// The size of a PTE.
+    const PTE_SIZE: usize;
 
     /// The address width may be BASE_PAGE_SIZE.ilog2() + NR_LEVELS * IN_FRAME_INDEX_BITS.
     /// If it is shorter than that, the higher bits in the highest level are ignored.

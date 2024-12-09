@@ -29,11 +29,13 @@ members = [
     "macrokernel/rt_macrokernel",
 
     "aster_boot/rt_aster_boot",
+    "aster_early_init/rt_aster_early_init",
     "aster_fdt/rt_aster_fdt",
 ]
 
 [workspace.dependencies]
 aster_boot = { path = "aster_boot/aster_boot" }
+aster_early_init = { path = "aster_early_init/aster_early_init" }
 aster_fdt = { path = "aster_fdt/aster_fdt" }
 fdt = { version = "0.1.5", features = ["pretty-printing"] }
 
