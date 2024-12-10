@@ -1,0 +1,27 @@
+[package]
+name = "aster_kspace"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bitflags = "1.3"
+log = "0.4"
+spin = "0.9.4"
+cfg-if = "1.0"
+aster_boot = { workspace = true }
+buddy_system_allocator = { version = "0.10", default-features = false, features = ["alloc"] }
+align_ext = { path = "../../align_ext", version = "0.1.0" }
+const-assert = "1.0"
+gimli = { version = "0.28", default-features = false, features = ["read-core"] }
+id-alloc = { path = "../../id-alloc", version = "0.1.0" }
+static_assertions = "1.1.0"
+num = { version = "0.4", default-features = false }
+num-derive = { version = "0.4", default-features = false }
+num-traits = { version = "0.2", default-features = false }
+
+[target.riscv64gc-unknown-none-elf.dependencies]
+riscv = { version = "0.11.1", features = ["s-mode"] }
+sbi-rt = { version = "0.0.3", features = ["legacy"] }
+fdt = { workspace = true }

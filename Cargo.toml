@@ -32,6 +32,7 @@ members = [
     "aster_early_init/rt_aster_early_init",
     "aster_final_init/rt_aster_final_init",
     "aster_page_alloc/rt_aster_page_alloc",
+    "aster_kspace/rt_aster_kspace",
 ]
 
 [workspace.dependencies]
@@ -39,6 +40,7 @@ aster_boot = { path = "aster_boot/aster_boot" }
 aster_early_init = { path = "aster_early_init/aster_early_init" }
 aster_final_init = { path = "aster_final_init/aster_final_init" }
 aster_page_alloc = { path = "aster_page_alloc/aster_page_alloc" }
+aster_kspace = { path = "aster_kspace/aster_kspace" }
 fdt = { version = "0.1.5", features = ["pretty-printing"] }
 
 [profile.release]
