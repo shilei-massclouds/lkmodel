@@ -6,6 +6,7 @@ use alloc::collections::BTreeMap;
 use core::{any::TypeId, marker::PhantomData, ops::Range};
 
 use align_ext::AlignExt;
+use crate::prelude::*;
 
 use super::{KERNEL_PAGE_TABLE, TRACKED_MAPPED_PAGES_RANGE, VMALLOC_VADDR_RANGE};
 use crate::{
@@ -19,7 +20,7 @@ use crate::{
     },
     sync::SpinLock,
     task::disable_preempt,
-    Error, Result,
+    error::Error,
 };
 
 pub struct KVirtAreaFreeNode {
@@ -202,6 +203,7 @@ impl<M: AllocatorSelector + 'static> KVirtArea<M> {
     }
 }
 
+/*
 impl KVirtArea<Tracked> {
     /// Maps pages into the kernel virtual area.
     pub fn map_pages<T: PageMeta>(
@@ -250,6 +252,7 @@ impl KVirtArea<Tracked> {
         }
     }
 }
+*/
 
 impl KVirtArea<Untracked> {
     /// Maps untracked pages into the kernel virtual area.
@@ -308,6 +311,7 @@ impl KVirtArea<Untracked> {
     }
 }
 
+/*
 impl<M: AllocatorSelector + 'static> Drop for KVirtArea<M> {
     fn drop(&mut self) {
         // 1. unmap all mapped pages.
@@ -363,3 +367,4 @@ impl<M: AllocatorSelector + 'static> Drop for KVirtArea<M> {
         allocator.free(range);
     }
 }
+*/

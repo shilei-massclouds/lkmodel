@@ -3,7 +3,7 @@
 //! CPU-related definitions.
 
 pub mod local;
-//pub mod set;
+pub mod set;
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "x86_64")] {
@@ -13,12 +13,12 @@ cfg_if::cfg_if! {
     }
 }
 
-//pub use set::{AtomicCpuSet, CpuSet};
+pub use set::{AtomicCpuSet, CpuSet};
 use spin::Once;
 
 use crate::{
     /*arch::boot::smp::get_num_processors,*/ cpu_local_cell, task::DisabledPreemptGuard,
-    //trap::DisabledLocalIrqGuard,
+    trap::DisabledLocalIrqGuard,
 };
 
 /// The ID of a CPU in the system.
@@ -55,7 +55,6 @@ impl TryFrom<usize> for CpuId {
 /// The number of CPUs.
 static NUM_CPUS: Once<u32> = Once::new();
 
-/*
 /// Initializes the number of CPUs.
 ///
 /// # Safety
@@ -63,10 +62,10 @@ static NUM_CPUS: Once<u32> = Once::new();
 /// The caller must ensure that this function is called only once on the BSP
 /// at the correct time when the number of CPUs is available from the platform.
 pub(crate) unsafe fn init_num_cpus() {
-    let num_processors = get_num_processors().unwrap_or(1);
+    //let num_processors = get_num_processors().unwrap_or(1);
+    let num_processors = 1;
     NUM_CPUS.call_once(|| num_processors);
 }
-*/
 
 /// Initializes the number of the current CPU.
 ///
@@ -95,7 +94,6 @@ pub fn all_cpus() -> impl Iterator<Item = CpuId> {
     (0..num_cpus()).map(|id| CpuId(id as u32))
 }
 
-/*
 /// A marker trait for guard types that can "pin" the current task to the
 /// current CPU.
 ///
@@ -124,7 +122,6 @@ unsafe impl PinCurrentCpu for DisabledLocalIrqGuard {}
 // SAFETY: When preemption is disabled, the task cannot be preempted and migrates
 // to another CPU.
 unsafe impl PinCurrentCpu for DisabledPreemptGuard {}
-*/
 
 cpu_local_cell! {
     /// The number of the current CPU.

@@ -7,6 +7,10 @@ use core::sync::atomic::{AtomicU64, Ordering};
 use spin::Once;
 
 //use crate::{arch::boot::DEVICE_TREE, io_mem::IoMem};
+use crate::arch::DEVICE_TREE;
+use crate::io_mem::IoMem;
+use crate::mm::PageFlags;
+use crate::mm::CachePolicy;
 
 /// The timer frequency (Hz). Here we choose 1000Hz since 1000Hz is easier for unit conversion and
 /// convenient for timer. What's more, the frequency cannot be set too high or too low, 1000Hz is
@@ -16,7 +20,6 @@ use spin::Once;
 /// is spent executing timer code.
 pub const TIMER_FREQ: u64 = 1000;
 
-/*
 pub(crate) static TIMEBASE_FREQ: AtomicU64 = AtomicU64::new(1);
 
 /// [`IoMem`] of goldfish RTC, which will be used by `aster-time`.
@@ -41,9 +44,10 @@ pub(super) fn init() {
             IoMem::new(
                 (region.starting_address as usize)
                     ..(region.starting_address as usize) + region.size.unwrap(),
+                PageFlags::R,
+                CachePolicy::Uncacheable,
             )
         };
         GOLDFISH_IO_MEM.call_once(|| io_mem);
     }
 }
-*/

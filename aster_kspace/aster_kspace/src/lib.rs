@@ -9,6 +9,8 @@
 #![feature(specialization)]
 #![feature(generic_const_exprs)]
 #![feature(fn_traits)]
+#![feature(let_chains)]
+#![feature(btree_cursors)]
 
 //! The architecture-independent boot module, which provides
 //!  1. a universal information getter interface from the bootloader to the
@@ -21,6 +23,7 @@ extern crate alloc;
 pub mod boot;
 pub mod cpu;
 pub mod error;
+pub mod io_mem;
 pub mod logger;
 pub mod mm;
 pub mod prelude;

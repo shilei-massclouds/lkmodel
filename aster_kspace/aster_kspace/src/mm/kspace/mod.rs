@@ -38,7 +38,7 @@
 //! If the address width is (according to [`crate::arch::mm::PagingConsts`])
 //! 39 bits or 57 bits, the memory space just adjust proportionally.
 
-//pub(crate) mod kvirt_area;
+pub(crate) mod kvirt_area;
 
 use alloc::vec::Vec;
 use core::ops::Range;

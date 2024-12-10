@@ -79,7 +79,6 @@ pub(crate) unsafe fn early_init_bsp_local_base() {
 
 /// The BSP initializes the CPU-local areas for APs.
 static CPU_LOCAL_STORAGES: Once<Vec<ContPages<KernelMeta>>> = Once::new();
-/*
 
 /// Initializes the CPU local data for the bootstrap processor (BSP).
 ///
@@ -98,6 +97,7 @@ pub unsafe fn init_on_bsp() {
 
     let mut cpu_local_storages = Vec::with_capacity(num_cpus - 1);
     for _ in 1..num_cpus {
+        /*
         let ap_pages = {
             let nbytes = (bsp_end_va - bsp_base_va).align_up(PAGE_SIZE);
             page::allocator::alloc_contiguous(nbytes, |_| KernelMeta::default()).unwrap()
@@ -116,6 +116,8 @@ pub unsafe fn init_on_bsp() {
         }
 
         cpu_local_storages.push(ap_pages);
+        */
+        unimplemented!();
     }
 
     CPU_LOCAL_STORAGES.call_once(|| cpu_local_storages);
@@ -125,6 +127,7 @@ pub unsafe fn init_on_bsp() {
     has_init::set_true();
 }
 
+/*
 /// Initializes the CPU local data for the application processor (AP).
 ///
 /// # Safety

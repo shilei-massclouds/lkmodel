@@ -131,8 +131,6 @@ pub(crate) fn init_on_bsp() {
     }
     irq::init();
 
-    panic!();
-    /*
     // SAFETY: they are only called once on BSP and ACPI has been initialized.
     unsafe {
         crate::cpu::init_num_cpus();
@@ -146,5 +144,4 @@ pub(crate) fn init_on_bsp() {
     //crate::boot::smp::boot_all_aps();
 
     timer::init();
-    */
 }

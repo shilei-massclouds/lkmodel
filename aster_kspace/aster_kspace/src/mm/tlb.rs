@@ -5,7 +5,6 @@
 use alloc::vec::Vec;
 use core::ops::Range;
 
-/*
 use super::{page::DynPage, Vaddr, PAGE_SIZE};
 use crate::{
     cpu::{CpuSet, PinCurrentCpu},
@@ -68,7 +67,7 @@ impl<G: PinCurrentCpu> TlbFlusher<G> {
             return;
         }
 
-        crate::smp::inter_processor_call(&self.target_cpus, do_remote_flush);
+        //crate::smp::inter_processor_call(&self.target_cpus, do_remote_flush);
     }
 
     /// Issues a TLB flush request that must happen before dropping the page.
@@ -160,6 +159,7 @@ cpu_local! {
     static PAGE_KEEPER: SpinLock<Vec<DynPage>, LocalIrqDisabled> = SpinLock::new(Vec::new());
 }
 
+/*
 fn do_remote_flush() {
     let preempt_guard = disable_preempt();
     let current_cpu = preempt_guard.current_cpu();
@@ -168,6 +168,7 @@ fn do_remote_flush() {
     op_queue.flush_all();
     PAGE_KEEPER.get_on_cpu(current_cpu).lock().clear();
 }
+*/
 
 /// If a TLB flushing request exceeds this threshold, we flush all.
 pub(crate) const FLUSH_ALL_RANGE_THRESHOLD: usize = 32 * PAGE_SIZE;
@@ -221,4 +222,3 @@ impl OpsStack {
         self.size = 0;
     }
 }
-*/
