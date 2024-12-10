@@ -33,7 +33,7 @@ LOG ?= error
 V ?=
 
 # App options
-A ?= aster_kspace/rt_aster_kspace
+A ?= aster_service/rt_aster_service
 APP ?= $(A)
 FEATURES ?=
 APP_FEATURES ?=

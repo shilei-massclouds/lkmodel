@@ -21,5 +21,5 @@ pub use crate::{
 */
 
 pub use aster_boot::kspace::{Paddr, Vaddr};
-pub use aster_boot::early_println;
+pub use aster_boot::{early_println, early_print};
 pub use aster_boot::panic::abort;

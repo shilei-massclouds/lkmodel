@@ -9,6 +9,7 @@ pub mod mm;
 pub mod timer;
 pub mod boot;
 pub mod trap;
+pub mod qemu;
 //pub mod smp;
 
 use alloc::{string::String, vec::Vec};

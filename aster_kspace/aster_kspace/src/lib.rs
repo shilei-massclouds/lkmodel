@@ -34,12 +34,13 @@ pub mod sync;
 pub mod task;
 pub mod timer;
 pub mod trap;
-mod arch;
+pub mod arch;
 
 //pub mod smp;
 
 use core::sync::atomic::AtomicBool;
 use alloc::{string::String, vec::Vec};
+pub use self::{error::Error, prelude::Result};
 
 use kcmdline::KCmdlineArg;
 use spin::Once;
