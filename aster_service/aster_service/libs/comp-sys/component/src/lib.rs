@@ -153,6 +153,7 @@ fn match_and_call(
             panic!("The path of {} cannot recognized by component system", str);
         }
         let str = str.trim_end_matches('/').to_owned();
+        let str = alloc::format!("/home/cloud/gitWork/lkmodel/{}", &str);
 
         let mut info = components
             .remove(&str)

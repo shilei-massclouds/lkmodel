@@ -107,6 +107,7 @@ pub fn init() {
     #[cfg(target_arch = "x86_64")]
     net::init();
     sched::init();
+    info!("after sched!");
     /*
     fs::rootfs::init(boot::initramfs()).unwrap();
     device::init().unwrap();
