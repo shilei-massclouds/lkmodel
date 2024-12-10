@@ -14,6 +14,7 @@ use alloc::sync::Arc;
 use core::{cmp::max, ops::Add, time::Duration};
 
 use aster_util::coeff::Coeff;
+use aster_kspace as ostd;
 use ostd::sync::{LocalIrqDisabled, RwLock};
 
 use crate::NANOS_PER_SECOND;

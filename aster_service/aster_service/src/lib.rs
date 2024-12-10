@@ -75,10 +75,10 @@ mod process;
 mod sched;
 pub mod syscall;
 pub mod thread;
-pub mod time;
 pub(crate) mod vdso;
 pub mod vm;
 */
+pub mod time;
 mod util;
 
 #[controlled]
@@ -103,8 +103,8 @@ pub fn main() {
 pub fn init() {
     util::random::init();
     driver::init();
-/*
     time::init();
+/*
     #[cfg(target_arch = "x86_64")]
     net::init();
     sched::init();

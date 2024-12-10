@@ -46,6 +46,7 @@ use core::marker::PhantomData;
 use align_ext::AlignExt;
 use const_assert::{Assert, IsTrue};
 use inherit_methods_macro::inherit_methods;
+use core::mem::size_of;
 
 use crate::{
     arch::mm::{__memcpy_fallible, __memset_fallible},

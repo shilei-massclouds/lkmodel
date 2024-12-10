@@ -2,18 +2,21 @@
 
 #![allow(non_camel_case_types)]
 
-pub use core::{timer, Clock};
+//pub use core::{timer, Clock};
 
+/*
 use ::core::time::Duration;
 pub use system_time::{SystemTime, START_TIME};
 pub use timer::{Timer, TimerManager};
 
 use crate::prelude::*;
+*/
 
+mod system_time;
+/*
 pub mod clocks;
 mod core;
 mod softirq;
-mod system_time;
 pub mod wait;
 
 pub type clockid_t = i32;
@@ -24,13 +27,15 @@ pub type clock_t = i64;
 const NSEC_PER_USEC: i64 = 1_000;
 const USEC_PER_SEC: i64 = 1_000_000;
 const NSEC_PER_SEC: i64 = 1_000_000_000;
+*/
 
 pub(super) fn init() {
     system_time::init();
-    clocks::init();
-    softirq::init();
+    //clocks::init();
+    //softirq::init();
 }
 
+/*
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Pod)]
 pub struct timespec_t {
@@ -165,3 +170,4 @@ pub struct itimerspec_t {
     pub it_interval: timespec_t,
     pub it_value: timespec_t,
 }
+*/

@@ -15,8 +15,8 @@ pub mod kspace;
 pub(crate) mod page_table;
 pub mod frame;
 pub(crate) mod dma;
-/*
 mod io;
+/*
 mod offset;
 pub mod stat;
 pub mod vm_space;
@@ -28,12 +28,14 @@ use core::{fmt::Debug, ops::Range};
 
 pub use self::{
     frame::{options::FrameAllocOptions, Frame, Segment},
+    io::{
+        Fallible, FallibleVmRead, FallibleVmWrite, 
+        Infallible, VmIo, VmIoOnce, 
+        VmReader, VmWriter,
+        PodOnce,
+    },
 /*
     dma::{Daddr, DmaCoherent, DmaDirection, DmaStream, DmaStreamSlice, HasDaddr},
-    io::{
-        Fallible, FallibleVmRead, FallibleVmWrite, Infallible, PodOnce, VmIo, VmIoOnce, VmReader,
-        VmWriter,
-    },
     vm_space::VmSpace,
 */
     page_prop::{CachePolicy, PageFlags, PageProperty},

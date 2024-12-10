@@ -14,6 +14,7 @@ pub mod qemu;
 
 use alloc::{string::String, vec::Vec};
 use core::arch::global_asm;
+use core::sync::atomic::Ordering;
 
 use fdt::Fdt;
 use spin::Once;
@@ -145,4 +146,14 @@ pub(crate) fn init_on_bsp() {
     //crate::boot::smp::boot_all_aps();
 
     timer::init();
+}
+
+/// Return the frequency of TSC. The unit is Hz.
+pub fn tsc_freq() -> u64 {
+    timer::TIMEBASE_FREQ.load(Ordering::Relaxed)
+}
+
+/// Reads the current value of the processor’s time-stamp counter (TSC).
+pub fn read_tsc() -> u64 {
+    riscv::register::time::read64()
 }

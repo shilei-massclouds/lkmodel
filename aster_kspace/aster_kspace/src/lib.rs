@@ -12,6 +12,10 @@
 #![feature(let_chains)]
 #![feature(btree_cursors)]
 #![feature(stmt_expr_attributes)]
+#![feature(core_intrinsics)]
+#![feature(pointer_is_aligned)]
+#![feature(ptr_sub_ptr)]
+#![feature(const_ptr_sub_ptr)]
 
 //! The architecture-independent boot module, which provides
 //!  1. a universal information getter interface from the bootloader to the
@@ -41,6 +45,7 @@ pub mod arch;
 use core::sync::atomic::AtomicBool;
 use alloc::{string::String, vec::Vec};
 pub use self::{error::Error, prelude::Result};
+pub use ostd_pod::Pod;
 
 use kcmdline::KCmdlineArg;
 use spin::Once;

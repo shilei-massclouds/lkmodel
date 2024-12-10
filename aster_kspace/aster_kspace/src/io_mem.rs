@@ -12,12 +12,13 @@ use crate::{
         kspace::kvirt_area::{KVirtArea, Untracked},
         page_prop::{CachePolicy, PageFlags, PageProperty, PrivilegedPageFlags},
         HasPaddr,
-        //FallibleVmRead, FallibleVmWrite, Infallible, Paddr, PodOnce, VmIo, VmIoOnce,
-        //VmReader, VmWriter,
-        PAGE_SIZE,
+        FallibleVmRead, FallibleVmWrite,
+        Infallible, Paddr, VmIo,
+        VmReader, VmWriter,
+        VmIoOnce, PAGE_SIZE, PodOnce,
     },
     prelude::*,
-    //Error,
+    Error,
 };
 
 /// I/O memory.
@@ -116,7 +117,6 @@ impl IoMem {
     */
 }
 
-/*
 // For now, we reuse `VmReader` and `VmWriter` to access I/O memory.
 //
 // Note that I/O memory is not normal typed or untyped memory. Strictly speaking, it is not
@@ -151,11 +151,20 @@ impl IoMem {
 impl VmIo for IoMem {
     fn read(&self, offset: usize, writer: &mut VmWriter) -> Result<()> {
         let offset = offset + self.offset;
+        /*
         if self
             .limit
             .checked_sub(offset)
             .is_none_or(|remain| remain < writer.avail())
         {
+            return Err(Error::InvalidArgs);
+        }
+        */
+        if let Some(remain) = self.limit.checked_sub(offset) {
+            if remain < writer.avail() {
+                return Err(Error::InvalidArgs);
+            }
+        } else {
             return Err(Error::InvalidArgs);
         }
 
@@ -170,11 +179,20 @@ impl VmIo for IoMem {
 
     fn write(&self, offset: usize, reader: &mut VmReader) -> Result<()> {
         let offset = offset + self.offset;
+        /*
         if self
             .limit
             .checked_sub(offset)
             .is_none_or(|remain| remain < reader.remain())
         {
+            return Err(Error::InvalidArgs);
+        }
+        */
+        if let Some(remain) = self.limit.checked_sub(offset) {
+            if remain < reader.remain() {
+                return Err(Error::InvalidArgs);
+            }
+        } else {
             return Err(Error::InvalidArgs);
         }
 
@@ -197,4 +215,3 @@ impl VmIoOnce for IoMem {
         self.writer().skip(offset).write_once(new_val)
     }
 }
-*/

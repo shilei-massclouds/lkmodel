@@ -9,7 +9,6 @@ use core::cell::RefCell;
 
 pub use jiffies::Jiffies;
 
-/*
 use crate::{cpu_local, trap};
 
 type InterruptCallback = Box<dyn Fn() + Sync + Send>;
@@ -29,4 +28,3 @@ where
         .borrow_mut()
         .push(Box::new(func));
 }
-*/
