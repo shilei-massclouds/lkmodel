@@ -22,7 +22,7 @@ pub fn init() {
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "x86_64")] {
             use rand::SeedableRng;
-            use ostd::arch::read_random;
+            use aster_kspace::arch::read_random;
 
             let mut seed = <StdRng as SeedableRng>::Seed::default();
             let mut chunks = seed.as_mut().chunks_exact_mut(size_of::<u64>());
@@ -40,7 +40,7 @@ pub fn init() {
             RNG.call_once(|| SpinLock::new(StdRng::from_seed(seed)));
         } else if #[cfg(target_arch = "riscv64")] {
             use rand::SeedableRng;
-            use ostd::arch::boot::DEVICE_TREE;
+            use aster_kspace::arch::DEVICE_TREE;
 
             let chosen = DEVICE_TREE.get().unwrap().find_node("/chosen").unwrap();
             let seed = chosen.property("rng-seed").unwrap().value.try_into().unwrap();

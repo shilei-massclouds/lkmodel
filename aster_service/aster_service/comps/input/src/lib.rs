@@ -14,6 +14,7 @@ use core::{any::Any, fmt::Debug};
 
 use component::{init_component, ComponentInitError};
 use key::{Key, KeyStatus};
+use aster_kspace as ostd;
 use ostd::sync::SpinLock;
 use spin::Once;
 

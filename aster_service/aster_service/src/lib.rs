@@ -59,14 +59,14 @@ extern crate controlled;
 extern crate getset;
 
 pub mod arch;
-pub mod prelude;
+pub mod driver;
 pub mod error;
+pub mod prelude;
 /*
 pub mod console;
 pub mod context;
 pub mod cpu;
 pub mod device;
-pub mod driver;
 pub mod events;
 pub mod fs;
 pub mod ipc;
@@ -76,17 +76,17 @@ mod sched;
 pub mod syscall;
 pub mod thread;
 pub mod time;
-mod util;
 pub(crate) mod vdso;
 pub mod vm;
 */
+mod util;
 
 #[controlled]
 pub fn main() {
     early_println!("[kernel] OSTD initialized. Preparing components.");
     component::init_all(component::parse_metadata!()).unwrap();
-    /*
     init();
+    /*
     ostd::IN_BOOTSTRAP_CONTEXT.store(false, Ordering::Relaxed);
 
     // Spawn all AP idle threads.
@@ -100,10 +100,10 @@ pub fn main() {
     unimplemented!();
 }
 
-/*
 pub fn init() {
     util::random::init();
     driver::init();
+/*
     time::init();
     #[cfg(target_arch = "x86_64")]
     net::init();
@@ -113,8 +113,10 @@ pub fn init() {
     syscall::init();
     vdso::init();
     process::init();
+    */
 }
 
+/*
 fn ap_init() {
     fn ap_idle_thread() {
         let preempt_guard = ostd::task::disable_preempt();
