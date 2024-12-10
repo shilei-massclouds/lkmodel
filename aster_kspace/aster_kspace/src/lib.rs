@@ -11,6 +11,7 @@
 #![feature(fn_traits)]
 #![feature(let_chains)]
 #![feature(btree_cursors)]
+#![feature(stmt_expr_attributes)]
 
 //! The architecture-independent boot module, which provides
 //!  1. a universal information getter interface from the bootloader to the
@@ -21,6 +22,7 @@
 extern crate alloc;
 
 pub mod boot;
+pub mod bus;
 pub mod cpu;
 pub mod error;
 pub mod io_mem;
@@ -36,6 +38,7 @@ mod arch;
 
 //pub mod smp;
 
+use core::sync::atomic::AtomicBool;
 use alloc::{string::String, vec::Vec};
 
 use kcmdline::KCmdlineArg;
@@ -78,4 +81,37 @@ pub fn init(hart_id: usize, device_tree_paddr: usize) {
     mm::dma::init();
 
     arch::init_on_bsp();
+
+    //smp::init();
+
+    // SAFETY: This function is called only once on the BSP.
+    unsafe {
+        mm::kspace::activate_kernel_page_table();
+    }
+
+    bus::init();
+
+    arch::irq::enable_local();
+
+    invoke_ffi_init_funcs();
+}
+
+/// Indicates whether the kernel is in bootstrap context.
+pub static IN_BOOTSTRAP_CONTEXT: AtomicBool = AtomicBool::new(true);
+
+/// Invoke the initialization functions defined in the FFI.
+/// The component system uses this function to call the initialization functions of
+/// the components.
+fn invoke_ffi_init_funcs() {
+    extern "C" {
+        fn __sinit_array();
+        fn __einit_array();
+    }
+    let call_len = (__einit_array as usize - __sinit_array as usize) / 8;
+    for i in 0..call_len {
+        unsafe {
+            let function = (__sinit_array as usize + 8 * i) as *const fn();
+            (*function)();
+        }
+    }
 }
