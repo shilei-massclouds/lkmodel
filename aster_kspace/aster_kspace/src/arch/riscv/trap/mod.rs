@@ -4,8 +4,7 @@
 
 mod trap;
 
-//pub use trap::{GeneralRegs, TrapFrame, UserContext};
-pub use trap::TrapFrame;
+pub use trap::{GeneralRegs, TrapFrame, UserContext};
 
 use crate::cpu_local_cell;
 

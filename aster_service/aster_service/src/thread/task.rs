@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
 
+use aster_kspace as ostd;
 use ostd::{
     task::{Task, TaskOptions},
     user::{ReturnReason, UserContextApi, UserMode, UserSpace},
 };
 
+/*
 use super::{oops, Thread};
 use crate::{
     cpu::LinuxAbi,
@@ -99,3 +101,4 @@ pub fn create_new_user_task(user_space: Arc<UserSpace>, thread_ref: Arc<Thread>)
     .build()
     .expect("spawn task failed")
 }
+*/

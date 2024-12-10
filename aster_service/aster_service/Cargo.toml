@@ -25,7 +25,7 @@ controlled = { path = "libs/comp-sys/controlled" }
 #aster-rights-proc = { path = "libs/aster-rights-proc" }
 #aster-util = { path = "libs/aster-util" }
 #aster-bigtcp = { path = "libs/aster-bigtcp" }
-#atomic-integer-wrapper = { path = "libs/atomic-integer-wrapper" }
+atomic-integer-wrapper = { path = "libs/atomic-integer-wrapper" }
 #id-alloc = { path = "../ostd/libs/id-alloc" }
 int-to-c-enum = { path = "libs/int-to-c-enum" }
 #cpio-decoder = { path = "libs/cpio-decoder" }
@@ -61,7 +61,7 @@ getset = "0.1.2"
 cfg-if = "1.0"
 ## Fixed point numbers
 ## TODO: fork this crate to rewrite all the (unnecessary) unsafe usage
-#fixed = "1.28.0"
+fixed = "1.28.0"
 
 [target.riscv64gc-unknown-none-elf.dependencies]
 riscv = { version = "0.11.1", features = ["s-mode"] }

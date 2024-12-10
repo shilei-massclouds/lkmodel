@@ -2,20 +2,18 @@
 
 //! Panic support.
 
-/*
 use core::ffi::c_void;
 
 pub use unwinding::panic::{begin_panic, catch_unwind};
-*/
 
 use crate::{
     arch::qemu::{exit_qemu, QemuExitCode},
     //early_print,
-    early_println,
-    //sync::SpinLock,
+    //early_println,
+    sync::SpinLock,
 };
+use aster_boot::{early_print, early_println};
 
-/*
 extern crate cfg_if;
 extern crate gimli;
 
@@ -24,7 +22,6 @@ use unwinding::abi::{
     UnwindContext, UnwindReasonCode, _Unwind_Backtrace, _Unwind_FindEnclosingFunction,
     _Unwind_GetGR, _Unwind_GetIP,
 };
-*/
 
 /// The default panic handler for OSTD based kernels.
 ///
@@ -66,7 +63,6 @@ pub fn terminate() -> ! {
     exit_qemu(QemuExitCode::Success);
 }
 
-/*
 /// Prints the stack trace of the current thread to the console.
 ///
 /// The printing procedure is protected by a spin lock to prevent interleaving.
@@ -121,4 +117,3 @@ pub fn print_stack_trace() {
     let mut data = CallbackData { counter: 0 };
     _Unwind_Backtrace(callback, &mut data as *mut _ as _);
 }
-*/

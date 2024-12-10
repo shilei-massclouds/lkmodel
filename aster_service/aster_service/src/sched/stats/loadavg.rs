@@ -6,6 +6,7 @@
 
 use core::sync::atomic::{AtomicU64, Ordering::Relaxed};
 
+use aster_kspace as ostd;
 use ostd::{arch::timer::TIMER_FREQ, sync::RwLock, timer};
 
 /// Fixed-point representation of the load average.

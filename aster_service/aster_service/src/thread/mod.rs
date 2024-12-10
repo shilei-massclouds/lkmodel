@@ -4,6 +4,7 @@
 
 use core::sync::atomic::Ordering;
 
+use aster_kspace as ostd;
 use ostd::{
     cpu::{AtomicCpuSet, CpuSet},
     task::Task,
@@ -15,12 +16,15 @@ use crate::{
     sched::priority::{AtomicPriority, Priority},
 };
 
-pub mod exception;
 pub mod kernel_thread;
+/*
+pub mod exception;
+pub mod work_queue;
+*/
 pub mod oops;
+
 pub mod status;
 pub mod task;
-pub mod work_queue;
 
 pub type Tid = u32;
 

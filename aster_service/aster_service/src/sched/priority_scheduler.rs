@@ -2,12 +2,14 @@
 
 use core::sync::atomic::Ordering;
 
+use aster_kspace as ostd;
 use ostd::{
     cpu::{num_cpus, CpuId, CpuSet, PinCurrentCpu},
     task::{
         disable_preempt,
         scheduler::{
-            info::CommonSchedInfo, inject_scheduler, EnqueueFlags, LocalRunQueue, Scheduler,
+            info::CommonSchedInfo, inject_scheduler,
+            EnqueueFlags, LocalRunQueue, Scheduler,
             UpdateFlags,
         },
         Task,

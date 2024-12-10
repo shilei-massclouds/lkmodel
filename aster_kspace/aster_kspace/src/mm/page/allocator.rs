@@ -102,6 +102,7 @@ where
             ContPages::from_unused(start * PAGE_SIZE..start * PAGE_SIZE + len, metadata_fn)
         })
 }
+*/
 
 /// Allocate pages.
 ///
@@ -130,7 +131,6 @@ where
     }
     Some(vector)
 }
-*/
 
 pub(crate) fn init() {
     let regions = crate::boot::memory_regions();

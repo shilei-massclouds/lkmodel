@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
-use ostd::timer;
+use aster_kspace::timer;
 use spin::Once;
 
 use super::loadavg;

@@ -97,7 +97,6 @@ pub struct UserContext {
     pub sepc: usize,
 }
 
-/*
 impl UserContext {
     /// Go to user space with the context, and come back when a trap occurs.
     ///
@@ -126,7 +125,6 @@ impl UserContext {
         unsafe { run_user(self) }
     }
 }
-*/
 
 /// General registers
 #[derive(Debug, Default, Clone, Copy/*, Pod*/)]
@@ -167,7 +165,6 @@ pub struct GeneralRegs {
     pub t6: usize,
 }
 
-/*
 impl UserContext {
     /// Get number of syscall
     pub fn get_syscall_num(&self) -> usize {
@@ -216,7 +213,6 @@ impl UserContext {
         self.general.gp = tls;
     }
 }
-*/
 
 #[allow(improper_ctypes)]
 extern "C" {

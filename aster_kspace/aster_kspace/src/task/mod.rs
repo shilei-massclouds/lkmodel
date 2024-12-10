@@ -3,12 +3,12 @@
 //! Tasks are the unit of code execution.
 
 mod preempt;
-/*
 pub(crate) mod atomic_mode;
 mod kernel_stack;
+/*
 mod processor;
-mod utils;
 */
+mod utils;
 pub mod scheduler;
 
 use core::{
@@ -19,19 +19,19 @@ use core::{
     ptr::NonNull,
 };
 
-/*
 use kernel_stack::KernelStack;
+/*
 pub(crate) use preempt::cpu_local::reset_preempt_info;
 use processor::current_task;
-use utils::ForceSync;
 */
+use utils::ForceSync;
 
 pub use self::{
     preempt::{disable_preempt, DisabledPreemptGuard},
-    //scheduler::info::{AtomicCpuId, TaskScheduleInfo},
+    scheduler::info::{AtomicCpuId, TaskScheduleInfo},
 };
-//pub(crate) use crate::arch::task::{context_switch, TaskContext};
-use crate::{prelude::* /*, user::UserSpace*/};
+pub(crate) use crate::arch::task::{context_switch, TaskContext};
+use crate::{prelude::*, user::UserSpace};
 
 /// A task that executes a function to the end.
 ///
@@ -40,7 +40,6 @@ use crate::{prelude::* /*, user::UserSpace*/};
 /// execute user code. Multiple tasks can share a single user space.
 #[derive(Debug)]
 pub struct Task {
-    /*
     #[allow(clippy::type_complexity)]
     func: ForceSync<Cell<Option<Box<dyn FnOnce() + Send>>>>,
     data: Box<dyn Any + Send + Sync>,
@@ -51,7 +50,6 @@ pub struct Task {
     kstack: KernelStack,
 
     schedule_info: TaskScheduleInfo,
-    */
 }
 
 impl Task {
@@ -68,7 +66,6 @@ impl Task {
         unimplemented!();
     }
 
-    /*
     pub(super) fn ctx(&self) -> &SyncUnsafeCell<TaskContext> {
         &self.ctx
     }
@@ -125,25 +122,29 @@ impl Task {
 
     /// Saves the FPU state for user task.
     pub fn save_fpu_state(&self) {
+        /*
         let Some(user_space) = self.user_space.as_ref() else {
             return;
         };
 
         user_space.fpu_state().save();
+        */
+        unimplemented!();
     }
 
     /// Restores the FPU state for user task.
     pub fn restore_fpu_state(&self) {
+        /*
         let Some(user_space) = self.user_space.as_ref() else {
             return;
         };
 
         user_space.fpu_state().restore();
+        */
+        unimplemented!();
     }
-    */
 }
 
-/*
 /// Options to create or spawn a new task.
 pub struct TaskOptions {
     func: Option<Box<dyn FnOnce() + Send>>,
@@ -257,7 +258,6 @@ impl TaskOptions {
         Ok(task)
     }
 }
-*/
 
 /// The current task.
 ///
@@ -289,7 +289,6 @@ impl CurrentTask {
     }
 }
 
-/*
 impl Deref for CurrentTask {
     type Target = Task;
 
@@ -354,4 +353,3 @@ mod test {
         let _ = crate::task::TaskOptions::new(task).data(()).spawn();
     }
 }
-*/

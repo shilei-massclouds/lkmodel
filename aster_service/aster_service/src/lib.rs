@@ -6,6 +6,8 @@
 #![no_std]
 #![feature(register_tool)]
 #![register_tool(component_access_control)]
+#![feature(panic_can_unwind)]
+#![feature(let_chains)]
 
 /*
 #![deny(unsafe_code)]
@@ -16,12 +18,10 @@
 #![feature(fn_traits)]
 #![feature(format_args_nl)]
 #![feature(int_roundings)]
-#![feature(let_chains)]
 #![feature(linked_list_cursors)]
 #![feature(linked_list_remove)]
 #![feature(linked_list_retain)]
 #![feature(negative_impls)]
-#![feature(panic_can_unwind)]
 // FIXME: This feature is used to support vm capbility now as a work around.
 // Since this is an incomplete feature, use this feature is unsafe.
 // We should find a proper method to replace this feature with min_specialization, which is a sound feature.
@@ -48,7 +48,7 @@ use sched::priority::PriorityRange;
 use crate::{
     prelude::*,
     //sched::priority::Priority,
-    //thread::{kernel_thread::ThreadOptions, Thread},
+    thread::{kernel_thread::ThreadOptions, Thread},
 };
 
 extern crate alloc;
@@ -72,12 +72,12 @@ pub mod fs;
 pub mod ipc;
 pub mod net;
 mod process;
-mod sched;
 pub mod syscall;
-pub mod thread;
 pub(crate) mod vdso;
 pub mod vm;
 */
+mod sched;
+pub mod thread;
 pub mod time;
 mod util;
 
@@ -104,10 +104,10 @@ pub fn init() {
     util::random::init();
     driver::init();
     time::init();
-/*
     #[cfg(target_arch = "x86_64")]
     net::init();
     sched::init();
+    /*
     fs::rootfs::init(boot::initramfs()).unwrap();
     device::init().unwrap();
     syscall::init();

@@ -16,6 +16,7 @@
 #![feature(pointer_is_aligned)]
 #![feature(ptr_sub_ptr)]
 #![feature(const_ptr_sub_ptr)]
+#![feature(linkage)]
 
 //! The architecture-independent boot module, which provides
 //!  1. a universal information getter interface from the bootloader to the
@@ -39,6 +40,8 @@ pub mod task;
 pub mod timer;
 pub mod trap;
 pub mod arch;
+pub mod user;
+pub mod panic;
 
 //pub mod smp;
 
@@ -46,6 +49,7 @@ use core::sync::atomic::AtomicBool;
 use alloc::{string::String, vec::Vec};
 pub use self::{error::Error, prelude::Result};
 pub use ostd_pod::Pod;
+pub use ostd_macros::{main, panic_handler};
 
 use kcmdline::KCmdlineArg;
 use spin::Once;

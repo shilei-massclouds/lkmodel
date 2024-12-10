@@ -22,6 +22,7 @@ use core::{
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},
 };
 
+use aster_kspace as ostd;
 use ostd::{cpu::PinCurrentCpu, panic, task::disable_preempt};
 
 use super::Thread;
@@ -79,6 +80,7 @@ const MAX_OOPS_COUNT: usize = 10_000;
 
 static OOPS_COUNT: AtomicUsize = AtomicUsize::new(0);
 
+/*
 #[ostd::panic_handler]
 fn panic_handler(info: &core::panic::PanicInfo) -> ! {
     let message = info.message();
@@ -128,3 +130,4 @@ fn panic_handler(info: &core::panic::PanicInfo) -> ! {
 
     panic::abort();
 }
+*/

@@ -203,7 +203,6 @@ impl<M: AllocatorSelector + 'static> KVirtArea<M> {
     }
 }
 
-/*
 impl KVirtArea<Tracked> {
     /// Maps pages into the kernel virtual area.
     pub fn map_pages<T: PageMeta>(
@@ -252,7 +251,6 @@ impl KVirtArea<Tracked> {
         }
     }
 }
-*/
 
 impl KVirtArea<Untracked> {
     /// Maps untracked pages into the kernel virtual area.

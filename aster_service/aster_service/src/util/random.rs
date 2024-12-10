@@ -43,7 +43,8 @@ pub fn init() {
             use aster_kspace::arch::DEVICE_TREE;
 
             let chosen = DEVICE_TREE.get().unwrap().find_node("/chosen").unwrap();
-            let seed = chosen.property("rng-seed").unwrap().value.try_into().unwrap();
+            //let seed = chosen.property("rng-seed").unwrap().value.try_into().unwrap();
+            let seed = [0u8; 32];
 
             RNG.call_once(|| SpinLock::new(StdRng::from_seed(seed)));
         } else {

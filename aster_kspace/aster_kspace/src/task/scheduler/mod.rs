@@ -5,10 +5,8 @@
 //! This module defines what OSTD expects from a scheduling implementation
 //! and provides useful functions for controlling the execution flow.
 
-/*
 mod fifo_scheduler;
 pub mod info;
-*/
 
 use spin::Once;
 
@@ -20,7 +18,6 @@ use crate::{
     timer,
 };
 
-/*
 /// Injects a scheduler implementation into framework.
 ///
 /// This function can only be called once and must be called during the initialization of kernel.
@@ -35,7 +32,6 @@ pub fn inject_scheduler(scheduler: &'static dyn Scheduler<Task>) {
         })
     });
 }
-*/
 
 static SCHEDULER: Once<&'static dyn Scheduler<Task>> = Once::new();
 
@@ -108,7 +104,6 @@ pub enum UpdateFlags {
     Yield,
 }
 
-/*
 /// Preempts the current task.
 pub(crate) fn might_preempt() {
     if !cpu_local::should_preempt() {
@@ -116,7 +111,6 @@ pub(crate) fn might_preempt() {
     }
     yield_now();
 }
-*/
 
 /// Blocks the current task unless `has_woken()` returns `true`.
 ///
@@ -171,7 +165,6 @@ pub(crate) fn unpark_target(runnable: Arc<Task>) {
     }
 }
 
-/*
 /// Enqueues a newly built task.
 ///
 /// Note that the new task is not guaranteed to run at once.
@@ -192,7 +185,6 @@ pub(super) fn run_new_task(runnable: Arc<Task>) {
 
     might_preempt();
 }
-*/
 
 fn set_need_preempt(cpu_id: CpuId) {
     /*
@@ -207,7 +199,6 @@ fn set_need_preempt(cpu_id: CpuId) {
     unimplemented!();
 }
 
-/*
 /// Dequeues the current task from its runqueue.
 ///
 /// This should only be called if the current is to exit.
@@ -235,7 +226,6 @@ pub(super) fn yield_now() {
         }
     })
 }
-*/
 
 /// Do rescheduling by acting on the scheduling decision (`ReschedAction`) made by a
 /// user-given closure.

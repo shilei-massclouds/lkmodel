@@ -4,7 +4,6 @@
 
 pub mod local;
 
-/*
 use core::fmt::Debug;
 
 use riscv::register::scause::{Exception, Trap};
@@ -229,4 +228,5 @@ cpu_context_impl_getter_setter!(
 
 /// CPU exception.
 pub type CpuException = Exception;
-*/
+
+pub struct FpuState;
