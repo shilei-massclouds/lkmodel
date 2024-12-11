@@ -3,6 +3,7 @@
 use alloc::{collections::linked_list::LinkedList, sync::Arc};
 
 use aster_network::dma_pool::DmaPool;
+use aster_kspace as ostd;
 use ostd::{
     mm::{DmaDirection, DmaStream},
     sync::{LocalIrqDisabled, SpinLock},

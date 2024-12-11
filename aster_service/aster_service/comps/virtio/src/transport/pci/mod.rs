@@ -9,6 +9,7 @@ pub(super) mod msix;
 
 use alloc::sync::Arc;
 
+use aster_kspace as ostd;
 use ostd::bus::pci::PCI_BUS;
 use spin::Once;
 

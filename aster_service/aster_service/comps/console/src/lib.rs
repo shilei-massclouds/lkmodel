@@ -11,6 +11,7 @@ use alloc::{collections::BTreeMap, fmt::Debug, string::String, sync::Arc, vec::V
 use core::any::Any;
 
 use component::{init_component, ComponentInitError};
+use aster_kspace as ostd;
 use ostd::{
     mm::{Infallible, VmReader},
     sync::SpinLock,

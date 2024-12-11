@@ -9,6 +9,7 @@ use alloc::{
 use core::ops::Range;
 
 use bitvec::{array::BitArray, prelude::Lsb0};
+use aster_kspace as ostd;
 use ostd::{
     mm::{
         Daddr, DmaDirection, DmaStream, FrameAllocOptions, HasDaddr, Infallible, VmReader,

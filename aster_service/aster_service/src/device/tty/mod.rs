@@ -2,6 +2,7 @@
 
 #![allow(dead_code)]
 
+use aster_kspace as ostd;
 use ostd::early_print;
 use spin::Once;
 

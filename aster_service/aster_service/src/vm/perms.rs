@@ -2,6 +2,7 @@
 
 use aster_rights::Rights;
 use bitflags::bitflags;
+use aster_kspace as ostd;
 use ostd::mm::PageFlags;
 
 bitflags! {

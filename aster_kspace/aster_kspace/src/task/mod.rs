@@ -5,9 +5,7 @@
 mod preempt;
 pub(crate) mod atomic_mode;
 mod kernel_stack;
-/*
 mod processor;
-*/
 mod utils;
 pub mod scheduler;
 
@@ -20,10 +18,8 @@ use core::{
 };
 
 use kernel_stack::KernelStack;
-/*
 pub(crate) use preempt::cpu_local::reset_preempt_info;
 use processor::current_task;
-*/
 use utils::ForceSync;
 
 pub use self::{
@@ -57,13 +53,10 @@ impl Task {
     ///
     /// It returns `None` if the function is called in the bootstrap context.
     pub fn current() -> Option<CurrentTask> {
-        /*
         let current_task = current_task()?;
 
         // SAFETY: `current_task` is the current task.
         Some(unsafe { CurrentTask::new(current_task) })
-        */
-        unimplemented!();
     }
 
     pub(super) fn ctx(&self) -> &SyncUnsafeCell<TaskContext> {

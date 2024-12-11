@@ -16,13 +16,11 @@ pub(crate) use core::{any::Any, ffi::CStr, fmt::Debug};
 pub(crate) use bitflags::bitflags;
 pub(crate) use int_to_c_enum::TryFromInt;
 pub(crate) use log::{debug, error, info, log_enabled, trace, warn};
-use aster_kspace as ostd;
+pub use aster_kspace as ostd;
 pub(crate) use ostd::{
-    //mm::{FallibleVmRead, FallibleVmWrite, Vaddr, VmReader, VmWriter, PAGE_SIZE},
-    mm::{Vaddr, PAGE_SIZE},
-    //sync::{Mutex, MutexGuard, RwLock, RwMutex, SpinLock, SpinLockGuard},
-    sync::{Mutex, MutexGuard, SpinLock, SpinLockGuard},
-    //Pod,
+    mm::{FallibleVmRead, FallibleVmWrite, Vaddr, VmReader, VmWriter, PAGE_SIZE},
+    sync::{Mutex, MutexGuard, RwLock, RwMutex, SpinLock, SpinLockGuard},
+    Pod,
 };
 
 /// return current process
@@ -51,12 +49,12 @@ macro_rules! current_thread {
 }
 
 pub(crate) use crate::{
-    //context::{Context, CurrentUserSpace, ReadCString},
+    context::{Context, CurrentUserSpace, ReadCString},
     current, current_thread,
     error::{Errno, Error},
-    //print, println,
-    //process::signal::Pause,
-    //time::{wait::WaitTimeout, Clock},
+    print, println,
+    process::signal::Pause,
+    time::{wait::WaitTimeout, Clock},
 };
 pub(crate) type Result<T> = core::result::Result<T, Error>;
 pub(crate) use crate::{return_errno, return_errno_with_message};

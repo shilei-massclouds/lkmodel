@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 use aster_util::safe_ptr::SafePtr;
+use aster_kspace as ostd;
 use ostd::{io_mem::IoMem, Pod};
 
 use super::capability::VirtioPciCapabilityData;

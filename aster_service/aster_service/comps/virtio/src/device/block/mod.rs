@@ -8,6 +8,7 @@ use aster_block::SECTOR_SIZE;
 use aster_util::safe_ptr::SafePtr;
 use bitflags::bitflags;
 use int_to_c_enum::TryFromInt;
+use aster_kspace as ostd;
 use ostd::Pod;
 
 use crate::transport::{ConfigManager, VirtioTransport};

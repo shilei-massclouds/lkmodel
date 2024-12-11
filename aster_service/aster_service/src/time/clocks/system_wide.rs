@@ -4,6 +4,7 @@ use alloc::sync::Arc;
 use core::time::Duration;
 
 use aster_time::read_monotonic_time;
+use aster_kspace as ostd;
 use ostd::{cpu::PinCurrentCpu, cpu_local, sync::SpinLock, task::disable_preempt, timer::Jiffies};
 use paste::paste;
 use spin::Once;

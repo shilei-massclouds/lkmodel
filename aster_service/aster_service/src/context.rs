@@ -4,6 +4,7 @@
 
 use core::mem;
 
+use aster_kspace as ostd;
 use ostd::{
     mm::{Fallible, Infallible, VmReader, VmSpace, VmWriter},
     task::Task,

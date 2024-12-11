@@ -18,6 +18,7 @@ use core::{mem, sync::atomic::Ordering};
 use align_ext::AlignExt;
 use c_types::{siginfo_t, ucontext_t};
 pub use events::{SigEvents, SigEventsFilter};
+use aster_kspace as ostd;
 use ostd::{cpu::UserContext, user::UserContextApi};
 pub use pause::{with_signal_blocked, Pause};
 pub use poll::{PollAdaptor, PollHandle, Pollable, Pollee, Poller};

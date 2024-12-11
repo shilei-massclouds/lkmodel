@@ -2,6 +2,7 @@
 
 use alloc::{collections::btree_map::BTreeMap, sync::Arc};
 
+use aster_kspace as ostd;
 use ostd::sync::{LocalIrqDisabled, SpinLock};
 use smoltcp::{
     iface::{packet::Packet, Config, Context},

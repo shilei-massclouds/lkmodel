@@ -86,7 +86,6 @@ impl IoMem {
         }
     }
 
-/*
     /// Returns the physical address of the I/O memory.
     pub fn paddr(&self) -> Paddr {
         self.pa
@@ -114,7 +113,6 @@ impl IoMem {
             pa: self.pa + range.start,
         }
     }
-    */
 }
 
 // For now, we reuse `VmReader` and `VmWriter` to access I/O memory.

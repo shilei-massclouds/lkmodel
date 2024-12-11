@@ -6,6 +6,7 @@
 use alloc::sync::Arc;
 use core::time::Duration;
 
+use aster_kspace as ostd;
 use ostd::sync::{MutexGuard, SpinLock, WaitQueue};
 
 use crate::time::wait::WaitTimeout;

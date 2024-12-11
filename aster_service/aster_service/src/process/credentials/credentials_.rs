@@ -2,6 +2,7 @@
 
 use core::sync::atomic::Ordering;
 
+use aster_kspace as ostd;
 use ostd::sync::{PreemptDisabled, RwLockReadGuard, RwLockWriteGuard};
 
 use super::{group::AtomicGid, user::AtomicUid, Gid, Uid};

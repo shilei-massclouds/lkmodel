@@ -2,6 +2,7 @@
 
 use alloc::vec::Vec;
 
+use aster_kspace as ostd;
 use ostd::{bus::pci::capability::msix::CapabilityMsixData, trap::IrqLine};
 
 pub struct VirtioMsixManager {

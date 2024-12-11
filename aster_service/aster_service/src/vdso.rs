@@ -20,6 +20,7 @@ use core::{mem::ManuallyDrop, time::Duration};
 use aster_rights::Rights;
 use aster_time::{read_monotonic_time, Instant};
 use aster_util::coeff::Coeff;
+use aster_kspace as ostd;
 use ostd::{
     mm::{Frame, VmIo, PAGE_SIZE},
     sync::SpinLock,

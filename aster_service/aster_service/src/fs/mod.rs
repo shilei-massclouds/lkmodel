@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: MPL-2.0
 pub mod device;
+pub mod inode_handle;
+pub mod fs_resolver;
+pub mod path;
+pub mod utils;
 pub mod devpts;
 pub mod epoll;
 pub mod exfat;
 pub mod ext2;
 pub mod file_handle;
 pub mod file_table;
-pub mod fs_resolver;
-pub mod inode_handle;
 pub mod named_pipe;
-pub mod path;
 pub mod pipe;
 pub mod procfs;
 pub mod ramfs;
 pub mod rootfs;
-pub mod utils;
 
 use aster_block::BlockDevice;
 use aster_virtio::device::block::device::BlockDevice as VirtIoBlockDevice;

@@ -5,6 +5,7 @@ use core::mem::offset_of;
 use aster_network::EthernetAddr;
 use aster_util::safe_ptr::SafePtr;
 use bitflags::bitflags;
+use aster_kspace as ostd;
 use ostd::Pod;
 
 use crate::transport::{ConfigManager, VirtioTransport};

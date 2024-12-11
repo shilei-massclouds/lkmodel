@@ -5,6 +5,7 @@ use core::hint::spin_loop;
 
 use aster_console::{AnyConsoleDevice, ConsoleCallback};
 use log::debug;
+use aster_kspace as ostd;
 use ostd::{
     mm::{DmaDirection, DmaStream, DmaStreamSlice, FrameAllocOptions, VmReader},
     sync::{LocalIrqDisabled, RwLock, SpinLock},

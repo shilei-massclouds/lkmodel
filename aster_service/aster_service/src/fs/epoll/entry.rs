@@ -7,6 +7,7 @@ use alloc::{
 use core::sync::atomic::{AtomicBool, Ordering};
 
 use keyable_arc::{KeyableArc, KeyableWeak};
+use aster_kspace as ostd;
 use ostd::sync::{LocalIrqDisabled, Mutex, MutexGuard, SpinLock, SpinLockGuard};
 
 use super::{EpollEvent, EpollFlags};

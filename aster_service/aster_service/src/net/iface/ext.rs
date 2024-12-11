@@ -3,6 +3,7 @@
 use alloc::string::String;
 use core::sync::atomic::{AtomicU64, Ordering};
 
+use aster_kspace as ostd;
 use ostd::sync::WaitQueue;
 
 use super::Iface;

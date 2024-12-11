@@ -19,6 +19,7 @@ pub use range_lock::{
     FileRange, RangeLockItem, RangeLockItemBuilder, RangeLockList, RangeLockType, OFFSET_MAX,
 };
 pub use status_flags::StatusFlags;
+use crate::Pod;
 
 mod access_mode;
 mod channel;

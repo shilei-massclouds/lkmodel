@@ -9,6 +9,7 @@ use core::{
     sync::atomic::{AtomicBool, AtomicU64, AtomicU8, Ordering},
 };
 
+use aster_kspace as ostd;
 use ostd::sync::{LocalIrqDisabled, RwLock, SpinLock, SpinLockGuard};
 use smoltcp::{
     iface::Context,

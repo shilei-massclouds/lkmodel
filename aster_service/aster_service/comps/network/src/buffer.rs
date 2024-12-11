@@ -2,6 +2,7 @@
 
 use alloc::{collections::linked_list::LinkedList, sync::Arc};
 
+use aster_kspace as ostd;
 use ostd::{
     mm::{
         Daddr, DmaDirection, DmaStream, FrameAllocOptions, HasDaddr, Infallible, VmReader,

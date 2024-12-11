@@ -6,14 +6,11 @@ use core::ops::Range;
 
 use crate::{
     mm::{
-        //io::{FallibleVmRead, FallibleVmWrite},
+        io::{FallibleVmRead, FallibleVmWrite},
         page::{meta::FrameMeta, ContPages},
-        //Frame, HasPaddr, Infallible, Paddr, VmIo, VmReader, VmWriter,
-        Frame, HasPaddr, Paddr,
+        Frame, HasPaddr, Infallible, Paddr, VmIo, VmReader, VmWriter,
     },
-/*
     Error, Result,
-*/
 };
 
 /// A contiguous segment of untyped memory pages.
@@ -43,7 +40,6 @@ pub struct Segment {
     pages: ContPages<FrameMeta>,
 }
 
-/*
 impl HasPaddr for Segment {
     fn paddr(&self) -> Paddr {
         self.pages.start_paddr()
@@ -131,7 +127,6 @@ impl From<Frame> for Segment {
         }
     }
 }
-*/
 
 impl From<ContPages<FrameMeta>> for Segment {
     fn from(pages: ContPages<FrameMeta>) -> Self {
@@ -139,7 +134,6 @@ impl From<ContPages<FrameMeta>> for Segment {
     }
 }
 
-/*
 impl VmIo for Segment {
     fn read(&self, offset: usize, writer: &mut VmWriter) -> Result<()> {
         let read_len = writer.avail();
@@ -181,4 +175,3 @@ impl Iterator for Segment {
         self.pages.next().map(|page| Frame { page })
     }
 }
-*/

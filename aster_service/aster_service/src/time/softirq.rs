@@ -3,6 +3,7 @@
 use alloc::{boxed::Box, vec::Vec};
 
 use aster_softirq::{softirq_id::TIMER_SOFTIRQ_ID, SoftIrqLine};
+use aster_kspace as ostd;
 use ostd::{
     sync::{LocalIrqDisabled, RwLock},
     timer,

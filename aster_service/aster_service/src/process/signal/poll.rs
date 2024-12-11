@@ -5,6 +5,7 @@ use core::{
     time::Duration,
 };
 
+use aster_kspace as ostd;
 use ostd::{
     sync::{Waiter, Waker},
     task::Task,

@@ -8,28 +8,25 @@
 #![register_tool(component_access_control)]
 #![feature(panic_can_unwind)]
 #![feature(let_chains)]
-
-/*
+#![feature(btree_cursors)]
+#![feature(specialization)]
+#![feature(linked_list_cursors)]
+#![feature(linked_list_remove)]
+#![feature(linked_list_retain)]
 #![deny(unsafe_code)]
 #![allow(incomplete_features)]
-#![feature(btree_cursors)]
 #![feature(btree_extract_if)]
 #![feature(extend_one)]
 #![feature(fn_traits)]
 #![feature(format_args_nl)]
 #![feature(int_roundings)]
-#![feature(linked_list_cursors)]
-#![feature(linked_list_remove)]
-#![feature(linked_list_retain)]
 #![feature(negative_impls)]
 // FIXME: This feature is used to support vm capbility now as a work around.
 // Since this is an incomplete feature, use this feature is unsafe.
 // We should find a proper method to replace this feature with min_specialization, which is a sound feature.
-#![feature(specialization)]
 #![feature(step_trait)]
 #![feature(trait_alias)]
 #![feature(trait_upcasting)]
-*/
 
 use core::sync::atomic::Ordering;
 
@@ -40,8 +37,8 @@ use ostd::{
     cpu::PinCurrentCpu,
     prelude::*,
 };
-/*
 use process::Process;
+/*
 use sched::priority::PriorityRange;
 */
 
@@ -62,20 +59,18 @@ pub mod arch;
 pub mod driver;
 pub mod error;
 pub mod prelude;
-/*
+pub mod device;
+pub mod fs;
 pub mod console;
 pub mod context;
 pub mod cpu;
-pub mod device;
 pub mod events;
-pub mod fs;
 pub mod ipc;
 pub mod net;
-mod process;
 pub mod syscall;
 pub(crate) mod vdso;
 pub mod vm;
-*/
+mod process;
 mod sched;
 pub mod thread;
 pub mod time;
@@ -107,14 +102,13 @@ pub fn init() {
     #[cfg(target_arch = "x86_64")]
     net::init();
     sched::init();
-    info!("after sched!");
-    /*
-    fs::rootfs::init(boot::initramfs()).unwrap();
+    //fs::rootfs::init(boot::initramfs()).unwrap();
     device::init().unwrap();
+    /*
     syscall::init();
     vdso::init();
-    process::init();
     */
+    process::init();
 }
 
 /*

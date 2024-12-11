@@ -17,6 +17,8 @@
 #![feature(ptr_sub_ptr)]
 #![feature(const_ptr_sub_ptr)]
 #![feature(linkage)]
+#![feature(coroutines)]
+#![feature(iter_from_coroutine)]
 
 //! The architecture-independent boot module, which provides
 //!  1. a universal information getter interface from the bootloader to the
@@ -29,6 +31,7 @@ extern crate alloc;
 pub mod boot;
 pub mod bus;
 pub mod cpu;
+pub mod collections;
 pub mod error;
 pub mod io_mem;
 pub mod logger;
@@ -50,6 +53,7 @@ use alloc::{string::String, vec::Vec};
 pub use self::{error::Error, prelude::Result};
 pub use ostd_pod::Pod;
 pub use ostd_macros::{main, panic_handler};
+pub use aster_boot::{early_print, early_println};
 
 use kcmdline::KCmdlineArg;
 use spin::Once;

@@ -5,6 +5,7 @@ use core::fmt::Debug;
 
 use aster_util::{field_ptr, safe_ptr::SafePtr};
 use log::{info, warn};
+use aster_kspace as ostd;
 use ostd::{
     bus::{
         pci::{

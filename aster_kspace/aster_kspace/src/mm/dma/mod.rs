@@ -3,9 +3,6 @@
 use spin::Once;
 use super::Paddr;
 use alloc::collections::BTreeSet;
-//use crate::{arch::iommu::has_dma_remapping, mm::PAGE_SIZE, sync::SpinLock};
-use crate::{mm::PAGE_SIZE, sync::SpinLock};
-/*
 mod dma_coherent;
 mod dma_stream;
 
@@ -46,12 +43,10 @@ pub trait HasDaddr {
 impl<T: HasDaddr> HasDaddr for &T {
     fn daddr(&self) -> Daddr;
 }
-*/
 
 /// Set of all physical addresses with dma mapping.
 static DMA_MAPPING_SET: Once<SpinLock<BTreeSet<Paddr>>> = Once::new();
 
-/*
 pub fn dma_type() -> DmaType {
     if has_dma_remapping() {
         DmaType::Iommu
@@ -59,13 +54,11 @@ pub fn dma_type() -> DmaType {
         DmaType::Direct
     }
 }
-*/
 
 pub fn init() {
     DMA_MAPPING_SET.call_once(|| SpinLock::new(BTreeSet::new()));
 }
 
-/*
 /// Checks whether the physical addresses has dma mapping.
 /// Fail if they have been mapped, otherwise insert them.
 fn check_and_insert_dma_mapping(start_paddr: Paddr, num_pages: usize) -> bool {
@@ -95,4 +88,3 @@ fn remove_dma_mapping(start_paddr: Paddr, num_pages: usize) {
         mapping_set.remove(&paddr);
     }
 }
-*/

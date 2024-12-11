@@ -11,6 +11,7 @@ use aster_network::{
 };
 use aster_util::slot_vec::SlotVec;
 use log::{debug, warn};
+use aster_kspace as ostd;
 use ostd::{
     mm::DmaStream,
     sync::{LocalIrqDisabled, SpinLock},

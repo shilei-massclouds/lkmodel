@@ -4,7 +4,6 @@
 
 //! Virtio over MMIO
 
-/*
 pub mod bus;
 pub mod common_device;
 
@@ -31,7 +30,6 @@ const VIRTIO_MMIO_MAGIC: u32 = 0x74726976;
 /// MMIO bus instance
 pub static MMIO_BUS: SpinLock<MmioBus> = SpinLock::new(MmioBus::new());
 static IRQS: SpinLock<Vec<IrqLine>> = SpinLock::new(Vec::new());
-*/
 
 pub(crate) fn init() {
     #[cfg(all(target_arch = "x86_64", feature = "cvm_guest"))]

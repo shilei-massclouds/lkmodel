@@ -35,7 +35,6 @@
 
 extern crate alloc;
 
-/*
 pub mod bio;
 pub mod id;
 mod impl_block_device;
@@ -43,6 +42,7 @@ mod prelude;
 pub mod request_queue;
 
 use component::{init_component, ComponentInitError};
+use aster_kspace as ostd;
 use ostd::sync::SpinLock;
 use spin::Once;
 
@@ -126,4 +126,3 @@ impl Component {
         })
     }
 }
-*/

@@ -17,6 +17,7 @@ use aster_block::{
 };
 use id_alloc::IdAlloc;
 use log::{debug, info};
+use aster_kspace as ostd;
 use ostd::{
     mm::{DmaDirection, DmaStream, DmaStreamSlice, FrameAllocOptions, VmIo},
     sync::SpinLock,

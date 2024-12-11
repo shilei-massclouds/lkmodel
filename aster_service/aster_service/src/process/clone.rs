@@ -436,9 +436,12 @@ fn clone_cpu_context(
         child_context.set_tls_pointer(tls as usize);
     }
 
-    // New threads inherit the FPU state of the parent thread and
-    // the state is private to the thread thereafter.
-    child_context.fpu_state().save();
+    #[cfg(target_arch = "x86_64")]
+    {
+        // New threads inherit the FPU state of the parent thread and
+        // the state is private to the thread thereafter.
+        child_context.fpu_state().save();
+    }
 
     child_context
 }

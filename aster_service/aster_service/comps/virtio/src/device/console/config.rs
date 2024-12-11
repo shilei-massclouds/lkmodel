@@ -3,6 +3,7 @@
 use core::mem::offset_of;
 
 use aster_util::safe_ptr::SafePtr;
+use aster_kspace as ostd;
 use ostd::Pod;
 
 use crate::transport::{ConfigManager, VirtioTransport};

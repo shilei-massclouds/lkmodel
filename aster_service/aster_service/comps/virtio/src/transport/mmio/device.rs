@@ -6,6 +6,7 @@ use core::mem::size_of;
 use aster_rights::{ReadOp, WriteOp};
 use aster_util::{field_ptr, safe_ptr::SafePtr};
 use log::warn;
+use aster_kspace as ostd;
 use ostd::{
     bus::{
         mmio::{

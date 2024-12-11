@@ -2,6 +2,7 @@
 
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 
+use aster_kspace as ostd;
 use ostd::{
     bus::{
         pci::{

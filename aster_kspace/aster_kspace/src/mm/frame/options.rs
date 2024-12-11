@@ -2,7 +2,6 @@
 
 //! Options for allocating frames
 
-/*
 use super::{Frame, Segment};
 use crate::{
     mm::{
@@ -12,7 +11,6 @@ use crate::{
     prelude::*,
     error::Error,
 };
-*/
 
 /// Options for allocating physical memory pages (or frames).
 ///
@@ -37,7 +35,6 @@ impl FrameAllocOptions {
         }
     }
 
-    /*
     /// Sets whether the allocated frames should be contiguous.
     ///
     /// The default value is `false`.
@@ -111,9 +108,7 @@ impl FrameAllocOptions {
 
         Ok(segment)
     }
-    */
 }
-/*
 
 #[cfg(ktest)]
 #[ktest]
@@ -139,4 +134,3 @@ fn test_alloc_dealloc() {
         remember_vec.pop();
     }
 }
-*/

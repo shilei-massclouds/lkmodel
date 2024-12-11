@@ -22,9 +22,13 @@ num-derive = { version = "0.4", default-features = false }
 num-traits = { version = "0.2", default-features = false }
 smallvec = "1.13.2"
 inherit-methods-macro = { git = "https://github.com/asterinas/inherit-methods-macro", rev = "98f7e3e", version = "0.1.0" }
-ostd-pod = { git = "https://github.com/asterinas/ostd-pod", rev = "c4644be", version = "0.1.1" }
+#ostd-pod = { git = "https://github.com/asterinas/ostd-pod", rev = "c4644be", version = "0.1.1" }
+ostd-pod = { path = "libs/ostd-pod" }
 unwinding = { version = "0.2.3", default-features = false, features = ["fde-gnu-eh-frame-hdr", "hide-trace", "panic", "personality", "unwinder"] }
 ostd-macros = { version = "0.10.0", path = "libs/ostd-macros" }
+#xarray = { git = "https://github.com/asterinas/xarray", version = "0.1.0" }
+xarray = { git = "ssh://git@github.com/asterinas/xarray", version = "0.1.0" }
+int-to-c-enum = { path = "../../aster_service/aster_service/libs/int-to-c-enum", version = "0.1.0" }
 
 [target.riscv64gc-unknown-none-elf.dependencies]
 riscv = { version = "0.11.1", features = ["s-mode"] }

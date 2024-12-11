@@ -63,6 +63,9 @@ impl Clone for CapabilityMsixData {
 #[cfg(target_arch = "x86_64")]
 const MSIX_DEFAULT_MSG_ADDR: u32 = 0xFEE0_0000;
 
+#[cfg(target_arch = "riscv64")]
+const MSIX_DEFAULT_MSG_ADDR: u32 = 0xFEE0_0000;
+
 impl CapabilityMsixData {
     pub(super) fn new(dev: &mut PciCommonDevice, cap_ptr: u16) -> Self {
         // Get Table and PBA offset, provide functions to modify them
@@ -166,7 +169,13 @@ impl CapabilityMsixData {
         (self.loc.read16(self.ptr + 2) & 0b11_1111_1111) + 1
     }
 
+    #[cfg(target_arch = "riscv64")]
+    pub fn set_interrupt_vector(&mut self, irq: IrqLine, index: u16) {
+        unimplemented!();
+    }
+
     /// Enables an interrupt line, it will replace the old handle with the new handle.
+    #[cfg(target_arch = "x86_64")]
     pub fn set_interrupt_vector(&mut self, irq: IrqLine, index: u16) {
         if index >= self.table_size {
             return;

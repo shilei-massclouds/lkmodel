@@ -77,7 +77,6 @@ pub(crate) fn alloc_single<M: PageMeta>(metadata: M) -> Option<Page<M>> {
         })
 }
 
-/*
 /// Allocate a contiguous range of pages of a given length in bytes.
 ///
 /// The caller must provide a closure to initialize metadata for all the pages.
@@ -102,7 +101,6 @@ where
             ContPages::from_unused(start * PAGE_SIZE..start * PAGE_SIZE + len, metadata_fn)
         })
 }
-*/
 
 /// Allocate pages.
 ///

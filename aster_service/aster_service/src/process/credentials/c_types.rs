@@ -2,6 +2,7 @@
 #![allow(non_camel_case_types)]
 
 use crate::{prelude::*, process::Pid};
+use aster_kspace::Pod;
 
 #[derive(Debug, Clone, Copy, Pod)]
 #[repr(C)]

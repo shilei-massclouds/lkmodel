@@ -213,7 +213,6 @@ impl From<(ostd::Error, usize)> for Error {
     }
 }
 
-/*
 impl From<aster_block::bio::BioEnqueueError> for Error {
     fn from(error: aster_block::bio::BioEnqueueError) -> Self {
         match error {
@@ -246,7 +245,6 @@ impl From<aster_block::bio::BioStatus> for Error {
         }
     }
 }
-*/
 
 impl From<core::str::Utf8Error> for Error {
     fn from(_: core::str::Utf8Error) -> Self {
@@ -272,7 +270,6 @@ impl From<core::ffi::FromBytesWithNulError> for Error {
     }
 }
 
-/*
 impl From<cpio_decoder::error::Error> for Error {
     fn from(cpio_error: cpio_decoder::error::Error) -> Self {
         match cpio_error {
@@ -300,7 +297,6 @@ impl From<cpio_decoder::error::Error> for Error {
         }
     }
 }
-*/
 
 impl From<Error> for ostd::Error {
     fn from(error: Error) -> Self {

@@ -12,6 +12,7 @@ use aster_rights::{Dup, TRightSet, TRights, Write};
 use aster_util::{field_ptr, safe_ptr::SafePtr};
 use bitflags::bitflags;
 use log::debug;
+use aster_kspace as ostd;
 use ostd::{
     mm::{DmaCoherent, FrameAllocOptions},
     offset_of, Pod,

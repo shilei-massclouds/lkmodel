@@ -3,6 +3,7 @@
 // ! #![feature(linked_list_cursors)]
 use alloc::{collections::BTreeMap, string::String, sync::Arc, vec::Vec};
 
+use aster_kspace as ostd;
 use ostd::sync::SpinLock;
 use spin::Once;
 

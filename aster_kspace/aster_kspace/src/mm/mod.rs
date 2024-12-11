@@ -16,10 +16,8 @@ pub(crate) mod page_table;
 pub mod frame;
 pub(crate) mod dma;
 mod io;
-/*
 mod offset;
 pub mod stat;
-*/
 pub mod vm_space;
 pub(crate) mod page_prop;
 pub mod tlb;
@@ -34,7 +32,7 @@ pub use self::{
         VmReader, VmWriter,
         PodOnce,
     },
-    //dma::{Daddr, DmaCoherent, DmaDirection, DmaStream, DmaStreamSlice, HasDaddr},
+    dma::{Daddr, DmaCoherent, DmaDirection, DmaStream, DmaStreamSlice, HasDaddr},
     vm_space::VmSpace,
     page_prop::{CachePolicy, PageFlags, PageProperty},
 };

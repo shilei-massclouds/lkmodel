@@ -27,6 +27,7 @@
 //
 use bitflags::bitflags;
 use int_to_c_enum::TryFromInt;
+use aster_kspace as ostd;
 use ostd::Pod;
 
 use super::error::{self, SocketError};

@@ -3,6 +3,7 @@
 use core::time::Duration;
 
 use aster_time::NANOS_PER_SECOND;
+use aster_kspace as ostd;
 use ostd::arch::timer::TIMER_FREQ;
 
 pub mod timer;

@@ -8,7 +8,7 @@
 use ostd::cpu::num_cpus;
 
 use crate::{
-    arch::cpu::CpuInfo,
+    //arch::cpu::CpuInfo,
     fs::{
         procfs::template::{FileOps, ProcFileBuilder},
         utils::Inode,
@@ -27,6 +27,7 @@ impl CpuInfoFileOps {
 
     /// Collect and format CPU information for all cores.
     fn collect_cpu_info() -> String {
+        /*
         let num_cpus = num_cpus() as u32;
 
         // Iterate over each core and collect CPU information
@@ -37,6 +38,8 @@ impl CpuInfoFileOps {
             })
             .collect::<Vec<String>>()
             .join("\n\n")
+            */
+        unimplemented!();
     }
 }
 

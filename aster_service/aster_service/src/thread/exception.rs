@@ -3,6 +3,7 @@
 #![allow(unused_variables)]
 
 use aster_rights::Full;
+use aster_kspace as ostd;
 use ostd::{cpu::*, mm::VmSpace};
 
 use crate::{

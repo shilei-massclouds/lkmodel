@@ -4,6 +4,7 @@ use alloc::sync::Arc;
 use core::time::Duration;
 
 use log::trace;
+use aster_kspace as ostd;
 use ostd::timer::Jiffies;
 
 use super::{ext::IfaceEx, Iface, IFACES};

@@ -5,6 +5,7 @@ use core::{
     ops::{Add, Sub},
 };
 
+use aster_kspace as ostd;
 use ostd::Pod;
 use static_assertions::const_assert;
 

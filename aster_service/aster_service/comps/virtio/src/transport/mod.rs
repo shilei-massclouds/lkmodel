@@ -4,6 +4,7 @@ use alloc::boxed::Box;
 use core::fmt::Debug;
 
 use aster_util::safe_ptr::SafePtr;
+use aster_kspace as ostd;
 use ostd::{
     arch::device::io_port::{PortRead, PortWrite},
     bus::pci::cfg_space::Bar,

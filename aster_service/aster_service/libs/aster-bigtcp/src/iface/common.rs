@@ -10,6 +10,7 @@ use alloc::{
 };
 
 use keyable_arc::KeyableArc;
+use aster_kspace as ostd;
 use ostd::sync::{LocalIrqDisabled, PreemptDisabled, SpinLock, SpinLockGuard};
 use smoltcp::{
     iface::{packet::Packet, Context},

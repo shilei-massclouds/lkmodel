@@ -7,6 +7,7 @@
 use alloc::sync::Arc;
 use core::ops::Range;
 
+use aster_kspace as ostd;
 use ostd::{
     mm::{
         FallibleVmRead, FallibleVmWrite, Frame, Infallible, Paddr, Segment, VmIo, VmReader,

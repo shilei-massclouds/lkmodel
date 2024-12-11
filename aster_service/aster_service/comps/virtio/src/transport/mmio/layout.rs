@@ -2,6 +2,7 @@
 
 use core::fmt::Debug;
 
+use aster_kspace as ostd;
 use ostd::Pod;
 
 #[derive(Clone, Copy, Pod)]

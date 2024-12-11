@@ -6,6 +6,7 @@
 
 use align_ext::AlignExt;
 use aster_rights::{Rights, TRightSet, TRights};
+use aster_kspace as ostd;
 use ostd::{
     collections::xarray::XArray,
     mm::{Frame, FrameAllocOptions},

@@ -37,6 +37,7 @@ use aster_rights::Full;
 use atomic_integer_wrapper::define_atomic_version_of_integer_like_type;
 pub use builder::ProcessBuilder;
 pub use job_control::JobControl;
+use aster_kspace as ostd;
 use ostd::{sync::WaitQueue, task::Task};
 pub use process_group::ProcessGroup;
 pub use session::Session;

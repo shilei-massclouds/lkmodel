@@ -3,7 +3,7 @@
 //! Bus operations
 
 pub mod mmio;
-//pub mod pci;
+pub mod pci;
 
 /// An error that occurs during bus probing.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]

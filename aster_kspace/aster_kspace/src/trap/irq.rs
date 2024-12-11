@@ -5,15 +5,13 @@
 use core::fmt::Debug;
 
 use crate::{
-    //arch::irq::{self, IrqCallbackHandle, IRQ_ALLOCATOR},
-    arch::irq::self,
+    arch::irq::{self, IrqCallbackHandle, IRQ_ALLOCATOR},
     prelude::*,
     sync::GuardTransfer,
-    //trap::TrapFrame,
+    trap::TrapFrame,
     error::Error,
 };
 
-/*
 /// Type alias for the irq callback function.
 pub type IrqCallbackFunction = dyn Fn(&TrapFrame) + Sync + Send + 'static;
 
@@ -109,7 +107,6 @@ impl Drop for IrqLine {
         }
     }
 }
-*/
 
 /// Disables all IRQs on the current CPU (i.e., locally).
 ///

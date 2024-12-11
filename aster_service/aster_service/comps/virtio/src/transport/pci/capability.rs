@@ -2,6 +2,7 @@
 
 use alloc::sync::Arc;
 
+use aster_kspace as ostd;
 use ostd::bus::pci::{
     capability::vendor::CapabilityVndrData,
     cfg_space::{Bar, IoBar, MemoryBar},

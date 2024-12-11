@@ -15,6 +15,7 @@ use aster_input::{
 use aster_util::{field_ptr, safe_ptr::SafePtr};
 use bitflags::bitflags;
 use log::{debug, info};
+use aster_kspace as ostd;
 use ostd::{
     io_mem::IoMem,
     mm::{DmaDirection, DmaStream, FrameAllocOptions, HasDaddr, VmIo, PAGE_SIZE},

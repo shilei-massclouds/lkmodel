@@ -3,6 +3,7 @@
 use alloc::sync::Arc;
 use core::time::Duration;
 
+use aster_kspace as ostd;
 use ostd::sync::SpinLock;
 
 use crate::time::Clock;

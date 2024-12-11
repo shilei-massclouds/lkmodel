@@ -16,6 +16,8 @@ use crate::{
     time::clocks::RealTimeCoarseClock,
     vm::vmo::Vmo,
 };
+use aster_kspace::mm::{VmReader, VmWriter};
+use aster_kspace::sync::RwLock;
 
 #[repr(u16)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, TryFromInt)]

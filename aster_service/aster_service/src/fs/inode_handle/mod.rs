@@ -4,6 +4,8 @@
 
 //! Opened Inode-backed File Handle
 
+use aster_kspace::mm::{VmReader, VmWriter};
+
 mod dyn_cap;
 mod static_cap;
 

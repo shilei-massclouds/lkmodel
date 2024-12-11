@@ -10,13 +10,14 @@ use alloc::boxed::Box;
 use core::sync::atomic::{AtomicU8, Ordering};
 
 use component::{init_component, ComponentInitError};
+use aster_kspace as ostd;
 use ostd::{cpu_local_cell, trap::register_bottom_half_handler};
 use spin::Once;
 
 pub mod softirq_id;
 mod taskless;
 
-pub use taskless::Taskless;
+//pub use taskless::Taskless;
 
 /// A representation of a software interrupt (softirq) line.
 ///

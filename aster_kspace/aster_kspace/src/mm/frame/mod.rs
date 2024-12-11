@@ -19,7 +19,6 @@ use super::page::{
     meta::{FrameMeta, MetaSlot, PageMeta, PageUsage},
     DynPage, Page,
 };
-/*
 use crate::{
     mm::{
         io::{FallibleVmRead, FallibleVmWrite, VmIo, VmReader, VmWriter},
@@ -27,7 +26,6 @@ use crate::{
     },
     Error, Result,
 };
-*/
 
 /// A handle to a physical memory page of untyped memory.
 ///
@@ -43,7 +41,6 @@ pub struct Frame {
     page: Page<FrameMeta>,
 }
 
-/*
 impl Frame {
     /// Returns the physical address of the page frame.
     pub fn start_paddr(&self) -> Paddr {
@@ -96,7 +93,6 @@ impl Frame {
         self.page.reference_count()
     }
 }
-*/
 
 impl From<Page<FrameMeta>> for Frame {
     fn from(page: Page<FrameMeta>) -> Self {
@@ -122,7 +118,6 @@ impl From<Frame> for Page<FrameMeta> {
     }
 }
 
-/*
 impl HasPaddr for Frame {
     fn paddr(&self) -> Paddr {
         self.start_paddr()
@@ -182,7 +177,6 @@ impl VmIo for Frame {
         Ok(())
     }
 }
-*/
 
 impl PageMeta for FrameMeta {
     const USAGE: PageUsage = PageUsage::Frame;
@@ -193,7 +187,6 @@ impl PageMeta for FrameMeta {
     }
 }
 
-/*
 // Here are implementations for `xarray`.
 
 use core::{marker::PhantomData, ops::Deref};
@@ -244,4 +237,3 @@ unsafe impl xarray::ItemEntry for Frame {
         }
     }
 }
-*/

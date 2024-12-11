@@ -143,6 +143,7 @@ pub fn add_node(device: Arc<dyn Device>, path: &str) -> Result<Dentry> {
     Ok(dentry)
 }
 
+/*
 /// Delete the device node from FS for the device.
 ///
 /// This function is used in unregistering device.
@@ -163,3 +164,4 @@ pub fn delete_node(path: &str) -> Result<()> {
     parent_dentry.unlink(&name)?;
     Ok(())
 }
+*/

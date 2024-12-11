@@ -17,10 +17,8 @@ use crate::{
 };
 
 pub mod kernel_thread;
-/*
 pub mod exception;
 pub mod work_queue;
-*/
 pub mod oops;
 
 pub mod status;

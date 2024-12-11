@@ -9,7 +9,7 @@ use spin::Once;
 
 use crate::{
     cpu::CpuId,
-    sync::{Mutex, PreemptDisabled, SpinLock, SpinLockGuard},
+    sync::{LocalIrqDisabled, Mutex, PreemptDisabled, SpinLock, SpinLockGuard},
     trap::TrapFrame,
 };
 

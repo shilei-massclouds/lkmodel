@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
+use aster_kspace as ostd;
 use ostd::cpu::{CpuExceptionInfo, UserContext};
 
 use crate::process::signal::{sig_num::SigNum, signals::fault::FaultSignal, SignalContext};

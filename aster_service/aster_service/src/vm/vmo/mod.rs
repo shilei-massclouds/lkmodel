@@ -9,6 +9,7 @@ use core::ops::Range;
 
 use align_ext::AlignExt;
 use aster_rights::Rights;
+use aster_kspace as ostd;
 use ostd::{
     collections::xarray::{CursorMut, XArray},
     mm::{Frame, FrameAllocOptions, VmReader, VmWriter},

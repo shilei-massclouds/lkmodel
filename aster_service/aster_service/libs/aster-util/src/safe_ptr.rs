@@ -5,6 +5,7 @@ use core::{fmt::Debug, marker::PhantomData};
 use aster_rights::{Dup, Exec, Full, Read, Signal, TRightSet, TRights, Write};
 use aster_rights_proc::require;
 use inherit_methods_macro::inherit_methods;
+use aster_kspace as ostd;
 use ostd::{
     mm::{Daddr, DmaStream, HasDaddr, HasPaddr, Paddr, PodOnce, VmIo, VmIoOnce},
     Pod, Result,

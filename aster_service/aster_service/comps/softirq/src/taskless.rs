@@ -8,6 +8,7 @@ use core::{
 };
 
 use intrusive_collections::{intrusive_adapter, LinkedList, LinkedListAtomicLink};
+use aster_kspace as ostd;
 use ostd::{cpu::local::CpuLocal, cpu_local, trap};
 
 use super::{
@@ -15,6 +16,7 @@ use super::{
     SoftIrqLine,
 };
 
+/*
 /// `Taskless` represents a _taskless_ job whose execution is deferred to a later time.
 ///
 /// # Overview
@@ -148,14 +150,18 @@ fn do_schedule(
         .borrow_mut()
         .push_front(taskless.clone());
 }
+*/
 
 pub(super) fn init() {
+    /*
     SoftIrqLine::get(TASKLESS_URGENT_SOFTIRQ_ID)
         .enable(|| taskless_softirq_handler(&TASKLESS_URGENT_LIST, TASKLESS_URGENT_SOFTIRQ_ID));
     SoftIrqLine::get(TASKLESS_SOFTIRQ_ID)
         .enable(|| taskless_softirq_handler(&TASKLESS_LIST, TASKLESS_SOFTIRQ_ID));
+        */
 }
 
+/*
 /// Executes the pending taskless jobs in the input `taskless_list`.
 ///
 /// This function will retrieve each `Taskless` in the input `taskless_list`
@@ -247,3 +253,4 @@ mod test {
         assert_eq!(counter, COUNTER.load(Ordering::Relaxed));
     }
 }
+*/

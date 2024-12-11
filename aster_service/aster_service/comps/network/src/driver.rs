@@ -3,6 +3,7 @@
 use alloc::vec;
 
 use aster_bigtcp::{device, time::Instant};
+use aster_kspace as ostd;
 use ostd::mm::VmWriter;
 
 use crate::{buffer::RxBuffer, AnyNetworkDevice};

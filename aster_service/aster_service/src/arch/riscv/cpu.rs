@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
-/*
+use aster_kspace as ostd;
 use ostd::{
     cpu::{CpuExceptionInfo, RawGeneralRegs, UserContext},
     Pod,
@@ -147,4 +147,3 @@ impl TryFrom<&CpuExceptionInfo> for PageFaultInfo {
         })
     }
 }
-*/

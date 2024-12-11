@@ -10,6 +10,7 @@ use core::{
 
 use hashbrown::HashMap;
 use inherit_methods_macro::inherit_methods;
+use aster_kspace as ostd;
 use ostd::sync::RwMutexWriteGuard;
 
 use crate::{
@@ -20,6 +21,7 @@ use crate::{
     prelude::*,
     process::{Gid, Uid},
 };
+use aster_kspace::sync::RwLock;
 
 /// A `Dentry` is used to represent a location in the mount tree.
 #[derive(Debug, Clone)]

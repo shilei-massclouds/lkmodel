@@ -11,6 +11,7 @@ use core::{num::NonZeroUsize, ops::Range};
 
 use align_ext::AlignExt;
 use aster_rights::Rights;
+use aster_kspace as ostd;
 use ostd::{
     cpu::CpuExceptionInfo,
     mm::{tlb::TlbFlushOp, PageFlags, PageProperty, VmSpace, MAX_USERSPACE_VADDR},

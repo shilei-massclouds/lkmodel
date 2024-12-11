@@ -8,6 +8,7 @@ use alloc::{
 use core::time::Duration;
 
 use id_alloc::IdAlloc;
+use aster_kspace as ostd;
 use ostd::{
     arch::{timer::TIMER_FREQ, trap::is_kernel_interrupted},
     sync::Mutex,

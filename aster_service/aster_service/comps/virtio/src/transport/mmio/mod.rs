@@ -2,6 +2,7 @@
 
 use alloc::sync::Arc;
 
+use aster_kspace as ostd;
 use ostd::bus::mmio::MMIO_BUS;
 use spin::Once;
 

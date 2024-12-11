@@ -2,15 +2,18 @@
 
 //! The RISC-V boot module defines the entrypoints of Asterinas.
 
-pub(crate) mod cpu;
+pub mod boot;
+pub mod cpu;
+pub mod device;
 pub mod serial;
 pub mod irq;
 pub mod mm;
+pub mod pci;
 pub mod timer;
-pub mod boot;
 pub mod trap;
 pub mod task;
 pub mod qemu;
+pub mod iommu;
 //pub mod smp;
 
 use alloc::{string::String, vec::Vec};
@@ -157,4 +160,8 @@ pub fn tsc_freq() -> u64 {
 /// Reads the current value of the processor’s time-stamp counter (TSC).
 pub fn read_tsc() -> u64 {
     riscv::register::time::read64()
+}
+
+pub(crate) fn interrupts_ack(irq_number: usize) {
+    unimplemented!()
 }

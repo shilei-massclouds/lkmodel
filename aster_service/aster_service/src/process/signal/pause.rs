@@ -2,6 +2,7 @@
 
 use core::sync::atomic::Ordering;
 
+use aster_kspace as ostd;
 use ostd::sync::{WaitQueue, Waiter};
 
 use super::sig_mask::SigMask;
