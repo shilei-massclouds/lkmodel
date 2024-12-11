@@ -38,13 +38,11 @@ use ostd::{
     prelude::*,
 };
 use process::Process;
-/*
 use sched::priority::PriorityRange;
-*/
 
 use crate::{
     prelude::*,
-    //sched::priority::Priority,
+    sched::priority::Priority,
     thread::{kernel_thread::ThreadOptions, Thread},
 };
 
@@ -81,18 +79,15 @@ pub fn main() {
     early_println!("[kernel] OSTD initialized. Preparing components.");
     component::init_all(component::parse_metadata!()).unwrap();
     init();
-    /*
     ostd::IN_BOOTSTRAP_CONTEXT.store(false, Ordering::Relaxed);
 
     // Spawn all AP idle threads.
-    ostd::boot::smp::register_ap_entry(ap_init);
+    //ostd::boot::smp::register_ap_entry(ap_init);
 
     // Spawn the first kernel thread on BSP.
     ThreadOptions::new(init_thread)
         .priority(Priority::new(PriorityRange::new(PriorityRange::MAX)))
         .spawn();
-        */
-    unimplemented!();
 }
 
 pub fn init() {
@@ -104,10 +99,8 @@ pub fn init() {
     sched::init();
     //fs::rootfs::init(boot::initramfs()).unwrap();
     device::init().unwrap();
-    /*
     syscall::init();
     vdso::init();
-    */
     process::init();
 }
 
@@ -131,6 +124,7 @@ fn ap_init() {
         .priority(Priority::new(PriorityRange::new(PriorityRange::MAX)))
         .spawn();
 }
+*/
 
 fn init_thread() {
     println!("[kernel] Spawn init thread");
@@ -186,4 +180,3 @@ fn print_banner() {
     );
     println!("\x1B[0m");
 }
-*/
