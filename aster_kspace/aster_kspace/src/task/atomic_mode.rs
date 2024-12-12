@@ -38,7 +38,7 @@ pub fn might_sleep() {
     if (preempt_count != 0 || !is_local_irq_enabled)
         && !crate::IN_BOOTSTRAP_CONTEXT.load(Ordering::Relaxed)
     {
-        panic!(
+        log::error!(
             "This function might break atomic mode (preempt_count = {}, is_local_irq_enabled = {})",
             preempt_count, is_local_irq_enabled
         );

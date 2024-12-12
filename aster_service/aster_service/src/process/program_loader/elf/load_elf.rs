@@ -91,6 +91,7 @@ fn lookup_and_parse_ldso(
             return Ok(None);
         };
         let fs_path = FsPath::new(AT_FDCWD, &ldso_path)?;
+    info!("********** [{:?}] ...", fs_path);
         fs_resolver.lookup(&fs_path)?
     };
     let ldso_elf = {

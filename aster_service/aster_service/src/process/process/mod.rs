@@ -255,7 +255,9 @@ impl Process {
             builder
         };
 
+        info!("before process_builder ...");
         let process = process_builder.build()?;
+        info!("before process_builder ok!");
 
         // Lock order: session table -> group table -> process table -> group of process
         // -> group inner -> session inner
