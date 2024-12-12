@@ -168,7 +168,7 @@ fn init_thread() {
     .expect("Run init process failed.");
     */
     let initproc = Process::spawn_user_process(
-        "/btp/sbin/hello",
+        "/ext2/btp/sbin/hello",
         vec![CString::new("").unwrap()],
         vec![],
     )

@@ -160,7 +160,7 @@ impl DmaStream {
                 // TODO: Query the CPU for the cache line size via CPUID, we use 64 bytes as the cache line size here.
                 for i in _byte_range.step_by(64) {
                     // TODO: Call the cache line flush command in the corresponding architecture.
-                    todo!()
+                    //todo!()
                 }
                 Ok(())
             }

@@ -84,11 +84,11 @@ pub fn init() -> Result<()> {
     // Mount ProcFS
     let proc_dentry = fs.lookup(&FsPath::try_from("/proc")?)?;
     info!("rootfs::procfs ok!");
-    //proc_dentry.mount(ProcFS::new())?;
+    proc_dentry.mount(ProcFS::new())?;
     info!("rootfs::devfs ...");
     // Mount DevFS
-    //let dev_dentry = fs.lookup(&FsPath::try_from("/dev")?)?;
-    //dev_dentry.mount(RamFS::new())?;
+    let dev_dentry = fs.lookup(&FsPath::try_from("/dev")?)?;
+    dev_dentry.mount(RamFS::new())?;
 
     info!("[kernel] rootfs is ready");
 
@@ -108,6 +108,7 @@ pub fn init_root_mount() {
         let rootfs = RamFS::new();
         rootfs.root_inode().create("proc", InodeType::Dir, InodeMode::from_bits_truncate(0o755)).unwrap();
         rootfs.root_inode().create("dev", InodeType::Dir, InodeMode::from_bits_truncate(0o755)).unwrap();
+        rootfs.root_inode().create("ext2", InodeType::Dir, InodeMode::from_bits_truncate(0o755)).unwrap();
         MountNode::new_root(rootfs)
     });
 }

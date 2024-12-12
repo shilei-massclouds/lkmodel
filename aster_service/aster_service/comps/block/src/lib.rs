@@ -45,6 +45,7 @@ use component::{init_component, ComponentInitError};
 use aster_kspace as ostd;
 use ostd::sync::SpinLock;
 use spin::Once;
+use log::info;
 
 use self::{
     bio::{BioEnqueueError, SubmittedBio},
@@ -79,6 +80,7 @@ impl dyn BlockDevice {
 }
 
 pub fn register_device(name: String, device: Arc<dyn BlockDevice>) {
+    info!("register_device [{name}] ...");
     COMPONENT
         .get()
         .unwrap()
@@ -88,6 +90,7 @@ pub fn register_device(name: String, device: Arc<dyn BlockDevice>) {
 }
 
 pub fn get_device(str: &str) -> Option<Arc<dyn BlockDevice>> {
+    info!("get_device ...");
     COMPONENT
         .get()
         .unwrap()

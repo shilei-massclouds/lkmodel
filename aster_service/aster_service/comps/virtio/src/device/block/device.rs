@@ -80,6 +80,7 @@ impl BlockDevice {
             BioType::Flush => self.device.flush(request),
             BioType::Discard => todo!(),
         }
+        self.device.handle_irq();
     }
 
     /// Negotiate features for the device specified bits 0~23
@@ -121,7 +122,7 @@ impl DeviceInner {
     /// Creates and inits the device.
     pub fn init(mut transport: Box<dyn VirtioTransport>) -> Result<Arc<Self>, VirtioDeviceError> {
         let config_manager = VirtioBlockConfig::new_manager(transport.as_ref());
-        debug!("virio_blk_config = {:?}", config_manager.read_config());
+        info!("virio_blk_config = {:?}", config_manager.read_config());
         assert_eq!(
             config_manager.block_size(),
             VirtioBlockConfig::sector_size(),
@@ -188,7 +189,7 @@ impl DeviceInner {
     }
 
     /// Handles the irq issued from the device
-    fn handle_irq(&self) {
+    pub fn handle_irq(&self) {
         info!("Virtio block device handle irq");
         // When we enter the IRQs handling function,
         // IRQs have already been disabled,

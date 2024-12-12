@@ -48,7 +48,8 @@ fn start_block_device(device_name: &str) -> Result<Arc<dyn BlockDevice>> {
 pub fn lazy_init() {
     info!("### lazy_init ...");
     //The device name is specified in qemu args as --serial={device_name}
-    let ext2_device_name = "vext2";
+    //let ext2_device_name = "vext2";
+    let ext2_device_name = "legacy_blk";
     let exfat_device_name = "vexfat";
 
     if let Ok(block_device_ext2) = start_block_device(ext2_device_name) {
