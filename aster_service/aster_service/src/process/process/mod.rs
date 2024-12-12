@@ -280,6 +280,7 @@ impl Process {
 
     /// start to run current process
     pub fn run(&self) {
+        info!("process run ...");
         let tasks = self.tasks.lock();
         // when run the process, the process should has only one thread
         debug_assert!(tasks.len() == 1);

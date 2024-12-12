@@ -55,10 +55,26 @@ use crate::arch::DEVICE_TREE;
 
 fn probe_mmio_dev() {
     info!("Probe mmio device ...");
+    let mut lock = MMIO_BUS.lock();
     for node in DEVICE_TREE.get().unwrap().find_all_nodes("/soc/virtio_mmio") {
         info!("{}", node.name);
         for reg in node.reg().unwrap() {
             info!("{:?}, {}", reg.starting_address, reg.size.unwrap());
+            let start = reg.starting_address as usize;
+            let end = start + reg.size.unwrap();
+            // SAFETY: It only read the value and judge if the magic value fit 0x74726976
+            let magic = unsafe { core::ptr::read_volatile(paddr_to_vaddr(start) as *const u32) };
+            if magic == VIRTIO_MMIO_MAGIC {
+                // SAFETY: It only read the device id
+                let device_id = unsafe { *(paddr_to_vaddr(start + 8) as *const u32) };
+                if device_id == 0 {
+                    continue;
+                }
+                info!("virtio: {}", device_id);
+                let handle = IrqLine::alloc().unwrap();
+                let device = MmioCommonDevice::new(start, handle);
+                lock.register_mmio_device(device);
+            }
         }
     }
 }

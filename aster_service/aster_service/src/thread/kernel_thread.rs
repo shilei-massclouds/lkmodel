@@ -79,6 +79,7 @@ impl ThreadOptions {
     pub fn spawn(self) -> Arc<Thread> {
         let task = self.build();
         let thread = task.as_thread().unwrap().clone();
+        info!("spawn ...");
         thread.run();
         thread
     }

@@ -84,10 +84,16 @@ pub fn main() {
     // Spawn all AP idle threads.
     //ostd::boot::smp::register_ap_entry(ap_init);
 
+    info!("Spawn init thread ...");
     // Spawn the first kernel thread on BSP.
     ThreadOptions::new(init_thread)
         .priority(Priority::new(PriorityRange::new(PriorityRange::MAX)))
         .spawn();
+
+    // The long running init thread should yield its own execution to allow other tasks to go on.
+    loop {
+        Thread::yield_now();
+    }
 }
 
 pub fn init() {
@@ -104,8 +110,9 @@ pub fn init() {
     fs::rootfs::init().unwrap();
     info!("device ...");
     device::init().unwrap();
+    info!("syscall ...");
     syscall::init();
-    vdso::init();
+    //vdso::init();
     process::init();
 }
 
@@ -132,7 +139,7 @@ fn ap_init() {
 */
 
 fn init_thread() {
-    println!("[kernel] Spawn init thread");
+    info!("[kernel] Spawn init thread");
     // Work queue should be initialized before interrupt is enabled,
     // in case any irq handler uses work queue as bottom half
     thread::work_queue::init();
@@ -142,7 +149,7 @@ fn init_thread() {
     ipc::init();
     // driver::pci::virtio::block::block_device_test();
     let thread = ThreadOptions::new(|| {
-        println!("[kernel] Hello world from kernel!");
+        info!("[kernel] Hello world from kernel!");
     })
     .spawn();
     thread.join();
@@ -151,10 +158,19 @@ fn init_thread() {
 
     let karg = boot::kernel_cmdline();
 
+    info!("spawn_user_process ... ");
+    /*
     let initproc = Process::spawn_user_process(
         karg.get_initproc_path().unwrap(),
         karg.get_initproc_argv().to_vec(),
         karg.get_initproc_envp().to_vec(),
+    )
+    .expect("Run init process failed.");
+    */
+    let initproc = Process::spawn_user_process(
+        "/btp/sbin/hello",
+        vec![CString::new("").unwrap()],
+        vec![],
     )
     .expect("Run init process failed.");
     // Wait till initproc become zombie.

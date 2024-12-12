@@ -6,7 +6,7 @@
 
 use alloc::{collections::VecDeque, fmt::Debug, sync::Arc, vec::Vec};
 
-use log::{debug, error};
+use log::{debug, info, error};
 
 use super::common_device::MmioCommonDevice;
 use crate::bus::BusProbeError;

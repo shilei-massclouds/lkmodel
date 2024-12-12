@@ -5,12 +5,12 @@ extern crate alloc;
 
 mod lang_item;
 
-use alloc::string::String;
-use spin::Once;
+//use alloc::string::String;
+//use spin::Once;
 
 use aster_boot::{
     early_println,
-    kspace::paddr_to_vaddr,
+    //kspace::paddr_to_vaddr,
 };
 
 /// The entry point of the Rust code portion of Asterinas.

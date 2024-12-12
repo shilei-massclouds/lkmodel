@@ -77,6 +77,7 @@ impl Thread {
 
     /// Runs this thread at once.
     pub fn run(&self) {
+        info!("thread run ...");
         self.status.store(ThreadStatus::Running, Ordering::Release);
         self.task.upgrade().unwrap().run();
     }

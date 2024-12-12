@@ -9,10 +9,11 @@ mod fifo_scheduler;
 pub mod info;
 
 use spin::Once;
+use log::info;
 
-use super::{preempt::cpu_local, /*processor,*/ Task};
+use super::{preempt::cpu_local, processor, Task};
 use crate::{
-    cpu::{CpuId, /*PinCurrentCpu*/},
+    cpu::{CpuId, PinCurrentCpu},
     prelude::*,
     task::disable_preempt,
     timer,
@@ -183,11 +184,11 @@ pub(super) fn run_new_task(runnable: Arc<Task>) {
         set_need_preempt(preempt_cpu_id);
     }
 
+    info!("run_new_task!");
     might_preempt();
 }
 
 fn set_need_preempt(cpu_id: CpuId) {
-    /*
     let preempt_guard = disable_preempt();
 
     if preempt_guard.current_cpu() == cpu_id {
@@ -195,8 +196,6 @@ fn set_need_preempt(cpu_id: CpuId) {
     } else {
         // TODO: Send IPIs to set remote CPU's `need_preempt`
     }
-    */
-    unimplemented!();
 }
 
 /// Dequeues the current task from its runqueue.
@@ -259,8 +258,7 @@ where
     // should be fixed. See <https://github.com/asterinas/asterinas/issues/1471> for details.
 
     cpu_local::clear_need_preempt();
-    unimplemented!();
-    //processor::switch_to_task(next_task);
+    processor::switch_to_task(next_task);
 }
 
 /// Possible actions of a rescheduling.

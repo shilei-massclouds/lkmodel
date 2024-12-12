@@ -13,11 +13,13 @@ pub struct FaultSignal {
     addr: Option<u64>,
 }
 
+/*
 impl FaultSignal {
     pub fn new(num: SigNum, code: i32, addr: Option<u64>) -> FaultSignal {
         FaultSignal { num, code, addr }
     }
 }
+*/
 
 impl Signal for FaultSignal {
     fn num(&self) -> SigNum {
