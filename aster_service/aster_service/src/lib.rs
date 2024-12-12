@@ -96,8 +96,13 @@ pub fn init() {
     time::init();
     #[cfg(target_arch = "x86_64")]
     net::init();
+    info!("sched ...");
     sched::init();
-    //fs::rootfs::init(boot::initramfs()).unwrap();
+    #[cfg(target_arch = "x86_64")]
+    fs::rootfs::init(boot::initramfs()).unwrap();
+    #[cfg(target_arch = "riscv64")]
+    fs::rootfs::init().unwrap();
+    info!("device ...");
     device::init().unwrap();
     syscall::init();
     vdso::init();

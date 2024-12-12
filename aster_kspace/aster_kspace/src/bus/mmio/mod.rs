@@ -11,7 +11,7 @@ use alloc::vec::Vec;
 use core::ops::Range;
 
 use cfg_if::cfg_if;
-use log::debug;
+use log::{debug, info};
 
 use self::bus::MmioBus;
 use crate::{
@@ -46,6 +46,21 @@ pub(crate) fn init() {
     // FIXME: The address 0xFEB0_0000 is obtained from an instance of microvm, and it may not work in other architecture.
     #[cfg(target_arch = "x86_64")]
     iter_range(0xFEB0_0000..0xFEB0_4000);
+
+    #[cfg(target_arch = "riscv64")]
+    probe_mmio_dev();
+}
+
+use crate::arch::DEVICE_TREE;
+
+fn probe_mmio_dev() {
+    info!("Probe mmio device ...");
+    for node in DEVICE_TREE.get().unwrap().find_all_nodes("/soc/virtio_mmio") {
+        info!("{}", node.name);
+        for reg in node.reg().unwrap() {
+            info!("{:?}, {}", reg.starting_address, reg.size.unwrap());
+        }
+    }
 }
 
 #[cfg(target_arch = "x86_64")]

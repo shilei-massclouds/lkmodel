@@ -15,12 +15,15 @@ use super::{
 use crate::prelude::*;
 
 /// Unpack and prepare the rootfs from the initramfs CPIO buffer.
-pub fn init(initramfs_buf: &[u8]) -> Result<()> {
+//pub fn init(initramfs_buf: &[u8]) -> Result<()> {
+pub fn init() -> Result<()> {
+    info!("rootfs::init ...");
     init_root_mount();
     procfs::init();
 
-    println!("[kernel] unpacking the initramfs.cpio.gz to rootfs ...");
+    info!("[kernel] unpacking the initramfs.cpio.gz to rootfs ...");
     let fs = FsResolver::new();
+    /*
     let mut decoder = CpioDecoder::new(
         GZipDecoder::new(initramfs_buf)
             .map_err(|_| Error::with_message(Errno::EINVAL, "invalid gzip buffer"))?,
@@ -76,14 +79,17 @@ pub fn init(initramfs_buf: &[u8]) -> Result<()> {
             }
         }
     }
+    */
+    info!("rootfs::procfs ...");
     // Mount ProcFS
     let proc_dentry = fs.lookup(&FsPath::try_from("/proc")?)?;
     proc_dentry.mount(ProcFS::new())?;
+    info!("rootfs::devfs ...");
     // Mount DevFS
     let dev_dentry = fs.lookup(&FsPath::try_from("/dev")?)?;
     dev_dentry.mount(RamFS::new())?;
 
-    println!("[kernel] rootfs is ready");
+    info!("[kernel] rootfs is ready");
 
     Ok(())
 }
