@@ -20,7 +20,7 @@ RUSTFLAGS := -C link-arg=-T$(LD_SCRIPT) -C link-arg=-no-pie $(GLOBAL_CFG)
 RUSTDOCFLAGS := --enable-index-page -Zunstable-options -D rustdoc::broken_intra_doc_links
 
 ifeq ($(ARCH), x86_64)
-  RUSTFLAGS += -C link-arg=--no-relax
+  RUSTFLAGS += -C link-arg=--no-relax -C relro-level=off -C relocation-model=static --check-cfg cfg(ktest) -C no-redzone=y #-C panic=unwind
 endif
 
 ifeq ($(ARCH), loongarch64)

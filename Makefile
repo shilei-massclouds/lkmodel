@@ -25,7 +25,7 @@
 #     - `GW`: Gateway IPv4 address (default is 10.0.2.2 for QEMU user netdev)
 
 # General options
-ARCH ?= riscv64
+ARCH ?= x86_64
 PLATFORM ?=
 SMP ?= 1
 MODE ?= release
@@ -33,7 +33,7 @@ LOG ?= error
 V ?=
 
 # App options
-A ?= aster_service/rt_aster_service
+A ?= aster/kernel
 APP ?= $(A)
 FEATURES ?=
 APP_FEATURES ?=
@@ -147,11 +147,11 @@ GDB ?= gdb-multiarch
 OUT_DIR ?= $(APP)
 
 APP_NAME := $(shell basename $(APP))
-ASTER_BOOT := $(shell grep "^aster_boot" $(APP)/Cargo.toml)
+ASTER_BOOT := $(shell grep "^ostd" $(APP)/Cargo.toml)
 ifeq ($(ASTER_BOOT),)
   LD_SCRIPT := $(CURDIR)/target/$(TARGET)/$(MODE)/linker_$(PLATFORM_NAME).lds
 else
-  LD_SCRIPT := $(CURDIR)/aster_boot/aster_boot/src/arch/riscv/riscv64.ld
+  LD_SCRIPT := $(CURDIR)/aster/ostd/src/arch/$(ARCH)/$(ARCH).ld
 endif
 OUT_ELF := $(OUT_DIR)/$(APP_NAME)_$(PLATFORM_NAME).elf
 OUT_BIN := $(OUT_DIR)/$(APP_NAME)_$(PLATFORM_NAME).bin

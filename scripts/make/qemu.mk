@@ -1,6 +1,7 @@
 # QEMU arguments
 
-QEMU := /usr/bin/qemu-system-$(ARCH)
+#QEMU := /usr/bin/qemu-system-$(ARCH)
+QEMU := qemu-system-$(ARCH)
 
 ifeq ($(BUS), mmio)
   vdev-suffix := device
@@ -12,6 +13,7 @@ endif
 
 qemu_args-x86_64 := \
   -machine q35 \
+  -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
   -kernel $(OUT_ELF)
 
 qemu_args-riscv64 := \
