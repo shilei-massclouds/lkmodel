@@ -134,6 +134,9 @@ fn get_components_name(workspace_root: &str, packages: &JsonValue) -> Vec<String
     let file_components_name = read_component_file(workspace_root);
     let mut comps_name = Vec::new();
     for package in packages.members() {
+        if package["name"].as_str().unwrap() == "kernel" {
+            continue;
+        }
         if is_component(package) {
             if !file_components_name.contains(&package["name"].as_str().unwrap().to_string()) {
                 // if the package is in the workspace_root

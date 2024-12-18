@@ -52,6 +52,7 @@ impl BlockDevice {
         } else {
             device.request_device_id()
         };
+        info!("blockdev: {}", device_id);
 
         let block_device = Arc::new(Self {
             device,

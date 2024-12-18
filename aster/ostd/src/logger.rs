@@ -37,7 +37,7 @@ impl Logger {
 /// heap-free and not involve sleep operations. Otherwise, users should refrain from calling `log`
 /// in sensitive locations, such as during heap allocations, as this may cause the system to block.
 pub fn inject_logger(new_logger: &'static dyn log::Log) {
-    LOGGER.backend.call_once(|| new_logger);
+    //LOGGER.backend.call_once(|| new_logger);
 }
 
 impl log::Log for Logger {
@@ -76,7 +76,7 @@ impl log::Log for Logger {
 
 /// Initialize the logger. Users should avoid using the log macros before this function is called.
 pub(crate) fn init() {
-    let level = get_log_level().unwrap_or(LevelFilter::Off);
+    let level = get_log_level().unwrap_or(LevelFilter::Info);
     log::set_max_level(level);
     log::set_logger(&LOGGER).unwrap();
 }

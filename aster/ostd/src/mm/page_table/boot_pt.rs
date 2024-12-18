@@ -16,7 +16,7 @@ use crate::{
     cpu::num_cpus,
     cpu_local_cell,
     mm::{
-        nr_subpage_per_huge, paddr_to_vaddr, page::allocator::PAGE_ALLOCATOR, PageProperty,
+        /*nr_subpage_per_huge,*/ paddr_to_vaddr, page::allocator::PAGE_ALLOCATOR, PageProperty,
         PagingConstsTrait, Vaddr, PAGE_SIZE,
     },
     sync::SpinLock,
@@ -154,6 +154,7 @@ impl<E: PageTableEntryTrait, C: PagingConstsTrait> BootPageTable<E, C> {
         unsafe { pte_ptr.write(E::new_page(to * C::BASE_PAGE_SIZE, 1, prop)) };
     }
 
+    /*
     /// Set protections of a base page mapping.
     ///
     /// This function may split a huge page into base pages, causing page allocations
@@ -214,6 +215,7 @@ impl<E: PageTableEntryTrait, C: PagingConstsTrait> BootPageTable<E, C> {
         op(&mut prop);
         unsafe { pte_ptr.write(E::new_page(pte.paddr(), 1, prop)) };
     }
+    */
 
     fn alloc_frame(&mut self) -> FrameNumber {
         let frame = PAGE_ALLOCATOR.get().unwrap().lock().alloc(1).unwrap();

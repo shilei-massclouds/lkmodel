@@ -41,7 +41,7 @@ CFG_ITEMS ?= $(shell cat $(A)/defconfig/$(ARCH) 2>/dev/null)
 
 # QEMU options
 BLK ?= $(if $(findstring blk, $(CFG_ITEMS)),y,n)
-NET ?= n
+NET ?= y
 GRAPHIC ?= n
 BUS ?= mmio
 

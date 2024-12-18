@@ -154,6 +154,7 @@ fn match_and_call(
         }
         let str = str.trim_end_matches('/').to_owned();
 
+        let str = alloc::format!("/home/cloud/gitWork/lkmodel/{}", &str);
         let mut info = components
             .remove(&str)
             .ok_or(ComponentSystemInitError::NotIncludeAllComponent(str))?;
@@ -161,14 +162,14 @@ fn match_and_call(
         infos.push(info);
     }
 
-    debug!("Remain components:{components:?}");
+    info!("Remain components:{components:?}");
 
     if !components.is_empty() {
         info!("Exists components that are not initialized");
     }
 
     infos.sort();
-    debug!("component infos: {infos:?}");
+    info!("component infos: {infos:?}");
     info!("Components initializing...");
 
     for i in infos {
