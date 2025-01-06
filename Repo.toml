@@ -95,7 +95,7 @@ userboot = "userboot"
 #rt_macrokernel = "macrokernel"
 #test_axmount = "axmount"
 
-#rt_tour_0_1 = "tour_stage"
+rt_tour_0_1 = "tour_stage"
 
 rt_tour_1_1 = "tour_stage"
 rt_tour_1_2 = "tour_stage"
