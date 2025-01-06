@@ -52,7 +52,6 @@ define riscv64_install_apps
   @sudo cp -r ./btp/build/riscv64/sbin ./mnt/
   @sudo cp ./btp/syscalls ./mnt/opt/
   @sudo cp /tmp/origin.bin ./mnt/sbin
-  -@sudo cp -f $(LTP)/build_riscv64/testcases/bin/mmap[[:digit:]]* ./mnt/testcases/
   ls -l ./mnt/lib
   ls -l ./mnt/sbin
   ls -l ./mnt/testcases
@@ -70,7 +69,6 @@ define x86_64_install_apps
   @sudo cp /lib/x86_64-linux-gnu/libc.so.6 ./mnt/lib/
   @sudo cp /lib64/ld-linux-x86-64.so.2 ./mnt/lib64/
   @sudo cp -r ./btp/build/x86_64/sbin ./mnt/
-  -@sudo cp -f $(LTP)/build_x86_64/testcases/bin/mmap[[:digit:]]* ./mnt/testcases/
   ls -l ./mnt/lib
   ls -l ./mnt/lib64
   ls -l ./mnt/sbin
