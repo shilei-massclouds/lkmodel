@@ -19,7 +19,7 @@ static APP_READY: AtomicBool = AtomicBool::new(false);
 
 #[no_mangle]
 pub extern "Rust" fn runtime_main(cpu_id: usize, dtb_pa: usize) {
-    axlog2::init("debug");
+    axlog2::init("info");
     info!("[rt_tour_2_5]: ...");
 
     // Setup simplest trap framework.

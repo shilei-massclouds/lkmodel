@@ -72,7 +72,7 @@ impl AxRunQueue {
         if curr.tid() == 0 {
             return;
         }
-        info!("state: {:?}", curr.state());
+        debug!("state: {:?}", curr.state());
         assert!(curr.is_running());
 
         // When we get the mutable reference of the run queue, we must
