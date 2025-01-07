@@ -5,6 +5,7 @@
 pub const LINUX_SYSCALL_READ: usize = 0x0;
 pub const LINUX_SYSCALL_WRITE: usize = 0x1;
 pub const LINUX_SYSCALL_CLOSE: usize = 0x3;
+pub const LINUX_SYSCALL_FSTAT: usize = 0x5;
 pub const LINUX_SYSCALL_LSEEK: usize = 8;
 pub const LINUX_SYSCALL_MMAP: usize = 0x9;
 pub const LINUX_SYSCALL_MPROTECT: usize = 0xa;

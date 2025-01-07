@@ -346,6 +346,45 @@ fn mk_attr(uid: u32, gid: u32) -> (VfsNodeAttr, VfsNodeAttrValid) {
     (attr, valid)
 }
 
+pub fn fstat(fd: usize, statbuf_ptr: usize) -> usize {
+    let statbuf = statbuf_ptr as *mut KernelStat;
+    if fd == 1 {
+        return fstatat_stdio(fd, 0, statbuf, 0);
+    }
+    assert!(fd > 2);
+
+    let current = task::current();
+    let filetable = current.filetable.lock();
+    let file = match filetable.get_file(fd) {
+        Some(f) => f,
+        None => {
+            return (-2isize) as usize;
+        }
+    };
+    let locked_file = file.lock();
+    let metadata = locked_file.get_attr().unwrap();
+    let ino = locked_file.get_ino();
+    let ty = metadata.file_type() as u8;
+    let perm = metadata.perm().bits() as u32;
+    let st_mode = ((ty as u32) << 12) | perm;
+    let st_size = metadata.size();
+
+    unsafe {
+        *statbuf = KernelStat {
+            st_ino: ino as u64,
+            st_nlink: 1,
+            st_mode,
+            st_uid: 1000,
+            st_gid: 1000,
+            st_size: st_size,
+            st_blocks: metadata.blocks() as _,
+            st_blksize: 512,
+            ..Default::default()
+        };
+    }
+    0
+}
+
 pub fn fstatat(dfd: usize, path: usize, statbuf_ptr: usize, flags: usize) -> usize {
     let statbuf = statbuf_ptr as *mut KernelStat;
 

@@ -36,6 +36,7 @@ pub const LINUX_SYSCALL_PREAD64: usize = 0x43;
 pub const LINUX_SYSCALL_SENDFILE: usize = 0x47;
 pub const LINUX_SYSCALL_READLINKAT: usize = 0x4e;
 pub const LINUX_SYSCALL_FSTATAT: usize = 0x4f;
+pub const LINUX_SYSCALL_FSTAT: usize = 0x50;
 pub const LINUX_SYSCALL_UTIMENSAT: usize = 0x58;
 pub const LINUX_SYSCALL_CAPGET: usize = 0x5a;
 pub const LINUX_SYSCALL_EXIT: usize = 0x5d;
